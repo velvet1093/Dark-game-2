@@ -1,0 +1,65 @@
+# Ashen Vow
+
+A dark, bloody, story-driven 2D action game set in a plague-ridden dark age.
+You are **Ser Aldric Vane**, a knight who comes home after seven years abroad carrying a relic that was meant to save a kingdom that no longer exists.
+
+No build step, no dependencies, no asset files — all art and sound are generated in code.
+
+## Play
+
+Open `index.html` in a browser, or serve the folder:
+
+```
+python3 -m http.server 8000
+```
+
+## Controls
+
+| Action | Keyboard / mouse |
+| --- | --- |
+| Move | `A` `D` or arrow keys |
+| Slash (3-hit combo) | `J` or left click |
+| Heavy attack | `K` or right click |
+| Roll (invulnerable) | `Space` |
+| Block | `L` or `Shift` |
+| Drink flask | `Q` |
+| Interact / **Execute** | `E` |
+| Pause | `Esc` |
+
+On-screen buttons appear on touch devices.
+
+## Mechanics
+
+- **Bleeding** — every hit sprays blood and builds a bleed meter. Fill it and the enemy haemorrhages: a burst of damage, then damage over time.
+- **Dismemberment** — hits land on a body part. Limbs have their own health and come off, and it matters:
+  - sword arm gone: the enemy drops its weapon, hits weaker and shorter
+  - both arms gone: it can only bite
+  - a leg gone: it crawls
+  - open stumps bleed until the enemy dies
+- **Executions** — an enemy at low health is *Broken* and kneels. Step close and press `E` to execute it: an instant kill that restores health and pays 50% more ichor. Leave it kneeling too long and it rises in a frenzy.
+- **Stamina** — attacks, rolls and blocked hits cost stamina. An empty bar means a broken guard.
+- **Vigil candles** — rest to refill flasks, set your checkpoint and spend ichor on Vigor, Strength or Endurance. Resting also returns the dead to their feet.
+- **Death** — you drop your ichor where you fall. Reach the stain to reclaim it; die first and it is gone.
+
+## Story
+
+Three chapters — the Gallows Road, Hollowmere, and the Cathedral of Saint Avaric — told through characters you meet, notes you find, a boss who used to be your friend, and a final choice with two endings.
+
+Progress saves at vigil candles (browser local storage).
+
+## Project layout
+
+| File | Purpose |
+| --- | --- |
+| `js/engine.js` | input, synthesised audio, blood / gib particles |
+| `js/data.js` | weapons, enemy types, levels, all story text |
+| `js/render.js` | procedural character rig, weapons, backdrops |
+| `js/entities.js` | player and enemy logic (combat, limbs, bleeding, AI) |
+| `js/ui.js` | title, dialogue, notes, menus |
+| `js/game.js` | game state, level flow, HUD, main loop |
+
+## Adding weapons
+
+The sword is the only weapon for now. Weapons are plain data in `G.WEAPONS` (`js/data.js`): a light combo, a heavy attack, reach, bleed build-up and a sever multiplier per move. Add an entry and set `player.weapon` — combat, animation and drawing all read from that table.
+
+Planned: greataxe (slow, huge sever), flail (fast bleed build-up), spear (reach).

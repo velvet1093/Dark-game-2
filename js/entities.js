@@ -1,0 +1,376 @@
+'use strict';
+// ---------------------------------------------------------------------------
+// Ashen Vow — entities: the knight and the things he cuts apart
+// ---------------------------------------------------------------------------
+const { rand, clamp, lerp } = G;
+const basePose = () => ({ lean: 0.08, head: 0, crouch: 0, armA: 0.5, armE: 1.0, w: 2.5, bA: -0.25, bE: 0.5, footF: 7, footB: -7, liftF: 0, liftB: 0 });
+const walkPose = (P, ph, stride = 12) => {
+  P.footF = Math.sin(ph) * stride; P.footB = -Math.sin(ph) * stride;
+  P.liftF = Math.max(0, Math.cos(ph)) * 5; P.liftB = Math.max(0, -Math.cos(ph)) * 5;
+};
+
+// ================================ PLAYER ===================================
+G.Player = class {
+  constructor() {
+    this.stats = { vig: 0, str: 0, end: 0 };
+    this.weapon = G.WEAPONS.longsword;
+    this.look = G.LOOKS.player;
+    this.flaskMax = 3; this.x = 120; this.facing = 1;
+    this.reset();
+  }
+  get maxHp() { return 100 + this.stats.vig * 16; }
+  get maxSt() { return 100 + this.stats.end * 12; }
+  get dmgMul() { return 1 + this.stats.str * 0.09; }
+  reset() {
+    this.hp = this.maxHp; this.st = this.maxSt; this.flasks = this.flaskMax;
+    this.state = 'idle'; this.t = 0; this.vx = 0; this.dead = false; this.walk = 0;
+    this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = [];
+  }
+  set(state) { this.state = state; this.t = 0; }
+  startAttack(atk, combo) {
+    this.atk = atk; this.combo = combo; this.set('attack'); this.hitSet = new Set(); this.swung = false;
+    this.st = Math.max(0, this.st - atk.st); this.stDelay = 0.7; this.buf = null;
+  }
+  startExecute(e) {
+    this.target = e; e.state = 'executed'; e.t = 0; e.vx = 0;
+    this.facing = e.x >= this.x ? 1 : -1; this.x = e.x - this.facing * 46 * e.scale; e.facing = -this.facing;
+    this.execKind = Math.random() < 0.5 ? 'decap' : 'impale'; this.struck = false; this.set('execute'); this.vx = 0;
+  }
+  get invulnerable() { return this.dead || this.state === 'execute' || (this.state === 'roll' && this.t < 0.32); }
+
+  damage(dmg, fromX, g) {
+    if (this.invulnerable) return false;
+    const dir = this.x >= fromX ? 1 : -1;
+    if (this.state === 'block' && this.facing === -dir) {
+      this.st -= dmg * 1.15; this.stDelay = 0.9; this.vx = dir * 110;
+      G.sfx('block'); G.spark(this.x + this.facing * 16, G.GROUND - 50, 8);
+      if (this.st > 0) return false;
+      this.st = 0; G.text(this.x, G.GROUND - 90, 'GUARD BROKEN', '#d9c9b0'); dmg *= 0.4;
+    }
+    this.hp -= dmg; this.flash = 0.12; this.vx = dir * 220; this.set('hurt');
+    G.blood(this.x, G.GROUND - 50, 14, dir, 240); G.sfx('hurt'); g.shake = 8;
+    if (this.hp <= 0) { this.hp = 0; this.dead = true; this.set('dead'); G.sfx('death'); G.blood(this.x, G.GROUND - 40, 50, dir, 320); G.decal(this.x, 10, 30); }
+    return true;
+  }
+
+  update(dt, g) {
+    const I = G.input, w = this.weapon;
+    this.t += dt; this.flash -= dt; this.bloody = Math.max(0, this.bloody - dt * 0.03);
+    if (this.dead) { this.vx *= Math.pow(0.002, dt); this.x += this.vx * dt; return; }
+    for (const a of ['attack', 'heavy', 'roll']) if (I.hit(a)) this.buf = { a, t: 0.25 };
+    if (this.buf && (this.buf.t -= dt) <= 0) this.buf = null;
+    const dir = (I.down('right') ? 1 : 0) - (I.down('left') ? 1 : 0);
+    const want = a => this.buf && this.buf.a === a;
+    let friction = 0.0005;
+
+    if (this.state === 'idle' || this.state === 'block') {
+      const blocking = I.down('block');
+      this.state = blocking ? 'block' : 'idle';
+      if (dir) { this.facing = dir; this.walk += dt * (blocking ? 7 : 11); }
+      this.vx = dir * (blocking ? 62 : 158);
+      if (want('roll') && this.st > 0) {
+        this.buf = null; this.st = Math.max(0, this.st - 22); this.stDelay = 0.6;
+        if (dir) this.facing = dir; this.set('roll'); G.sfx('roll');
+      } else if (want('attack') && this.st > 0) this.startAttack(w.light[0], 0);
+      else if (want('heavy') && this.st > 0) this.startAttack(w.heavy, -1);
+      else if (I.hit('flask') && this.flasks > 0 && this.hp < this.maxHp) { this.flasks--; this.healed = false; this.set('heal'); }
+    } else if (this.state === 'attack') {
+      const a = this.atk, t1 = a.wind, t2 = t1 + a.active, t3 = t2 + a.rec;
+      if (!this.swung && this.t >= t1) { this.swung = true; this.vx = this.facing * a.lunge; G.sfx('swing'); }
+      if (this.t >= t1 && this.t < t2) {
+        for (const e of g.enemies) {
+          if (e.dead || e.state === 'executed' || this.hitSet.has(e.id)) continue;
+          const rel = (e.x - this.x) * this.facing;
+          if (rel > -12 && rel < a.reach + 14 * e.scale) { this.hitSet.add(e.id); e.takeHit(a.dmg * this.dmgMul, a, this.facing, g, w); this.bloody = Math.min(1, this.bloody + 0.25); }
+        }
+      }
+      if (this.t > t2 + a.rec * 0.35) {
+        if (want('attack') && this.combo >= 0 && this.combo < w.light.length - 1 && this.st > 0) { if (dir) this.facing = dir; this.startAttack(w.light[this.combo + 1], this.combo + 1); }
+        else if (want('roll') && this.st > 0) { this.buf = null; this.st = Math.max(0, this.st - 22); if (dir) this.facing = dir; this.set('roll'); G.sfx('roll'); }
+      }
+      if (this.t >= t3) this.set('idle');
+    } else if (this.state === 'roll') {
+      if (this.t < 0.34) this.vx = this.facing * 340;
+      if (this.t >= 0.46) this.set('idle');
+      friction = 0.02;
+    } else if (this.state === 'hurt') {
+      if (this.t >= 0.36) this.set('idle');
+    } else if (this.state === 'heal') {
+      this.vx = 0;
+      if (!this.healed && this.t >= 0.55) { this.healed = true; this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.45); G.sfx('heal'); G.text(this.x, G.GROUND - 90, 'Blessed water', '#d9c9b0', 13); }
+      if (this.t >= 0.9) this.set('idle');
+    } else if (this.state === 'execute') {
+      this.vx = 0;
+      if (!this.struck && this.t >= 0.55) { this.struck = true; this.bloody = 1; g.executeStrike(this.target, this); }
+      if (this.t >= 1.3) this.set('idle');
+    }
+
+    // stamina
+    this.stDelay -= dt;
+    if (this.stDelay <= 0 && this.state !== 'attack' && this.state !== 'roll') this.st = Math.min(this.maxSt, this.st + (this.state === 'block' ? 14 : 48) * dt);
+
+    // movement: enemies are solid unless we are rolling through them
+    this.x += this.vx * dt;
+    if (this.state !== 'idle' && this.state !== 'block') this.vx *= Math.pow(friction, dt);
+    if (this.state !== 'roll' && this.state !== 'execute') {
+      for (const e of g.enemies) {
+        if (e.dead || e.crawling || e.state === 'broken') continue;
+        const d = this.x - e.x, min = 22 * e.scale;
+        if (Math.abs(d) < min) this.x = e.x + (d >= 0 ? min : -min);
+      }
+    }
+    this.x = clamp(this.x, g.bounds[0], g.bounds[1]);
+  }
+
+  pose() {
+    const P = basePose(), s = this.state, t = this.t;
+    P.bA = 0.2; P.bE = 0.9;
+    if (s === 'idle' || s === 'block') {
+      if (Math.abs(this.vx) > 5) walkPose(P, this.walk); else P.crouch = Math.sin(G.game.time * 2) * 0.6 + 0.6;
+      if (s === 'block') { P.shieldFront = true; P.bA = 1.2; P.bE = 0.6; P.lean = 0.2; P.crouch = 4; P.armA = 0.1; P.w = 2.9; }
+    } else if (s === 'attack') {
+      const a = this.atk; P.footF = 13; P.footB = -11; P.crouch = 3;
+      if (t < a.wind) G.swing(P, a.anim, 0, t / a.wind);
+      else if (t < a.wind + a.active) G.swing(P, a.anim, 1, (t - a.wind) / a.active);
+      else G.swing(P, a.anim, 2, Math.min(1, (t - a.wind - a.active) / a.rec));
+    } else if (s === 'roll') {
+      P.spin = Math.min(1, t / 0.42) * Math.PI * 2; P.crouch = 16; P.lean = 0.9; P.head = 0.5; P.armA = 1.2; P.armE = 1.6; P.w = 1.5; P.footF = 6; P.footB = 0;
+    } else if (s === 'hurt') {
+      P.lean = -0.3; P.head = -0.3; P.armA = -0.3; P.w = 1.8; P.footF = 2; P.footB = -12;
+    } else if (s === 'heal') {
+      P.bA = 2.4; P.bE = 0.9; P.head = -0.35; P.lean = -0.1; P.armA = 0.2; P.w = 0.6;
+    } else if (s === 'execute') {
+      P.footF = 14; P.footB = -12; P.crouch = 4;
+      const an = this.execKind === 'decap' ? { a: [3.4, 0.95], e: [0.2, 0.1], w: [4.2, 1.05], lean: [-0.25, 0.45] } : { a: [2.6, 1.15], e: [1.4, 0.1], w: [0.9, 1.15], lean: [-0.2, 0.5] };
+      if (t < 0.5) G.swing(P, an, 0, t / 0.5); else if (t < 0.58) G.swing(P, an, 1, (t - 0.5) / 0.08); else G.swing(P, an, 2, clamp((t - 0.95) / 0.35, 0, 1));
+    } else if (s === 'dead') {
+      const u = G.ease(Math.min(1, t / 0.5)); P.lying = -u; P.armA = 2.6; P.w = 3.0; P.bA = -0.6; P.head = -0.3 * u;
+    }
+    return P;
+  }
+
+  draw(ctx, g) {
+    const o = { x: this.x, y: G.GROUND, facing: this.facing, scale: 1.05, pose: this.pose(), look: this.look, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
+    if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
+    G.drawHumanoid(ctx, o);
+    // sword trail
+    const swinging = (this.state === 'attack' && this.t >= this.atk.wind - 0.03 && this.t < this.atk.wind + this.atk.active + 0.06) || (this.state === 'execute' && this.t > 0.48 && this.t < 0.64);
+    if (swinging && o.out.tip) this.trail.push(o.out.tip); else this.trail.shift();
+    if (this.trail.length > 7) this.trail.shift();
+    if (this.trail.length > 1) {
+      ctx.lineCap = 'round';
+      for (let i = 1; i < this.trail.length; i++) {
+        ctx.strokeStyle = `rgba(235,225,220,${i / this.trail.length * 0.55})`; ctx.lineWidth = 2 + i * 1.6;
+        ctx.beginPath(); ctx.moveTo(this.trail[i - 1][0], this.trail[i - 1][1]); ctx.lineTo(this.trail[i][0], this.trail[i][1]); ctx.stroke();
+      }
+    }
+  }
+};
+
+// ================================ ENEMY ====================================
+const LIMBS = ['head', 'armF', 'armB', 'legF', 'legB'];
+const LIMB_WEIGHT = { torso: 3, head: 1, armF: 2, armB: 2, legF: 1.5, legB: 1.5 };
+
+G.Enemy = class {
+  constructor(type, x) {
+    const d = G.ENEMIES[type];
+    Object.assign(this, {
+      id: G.uid++, type, def: d, x, vx: 0, facing: -1, hp: d.hp, maxHp: d.hp, scale: d.scale || 1,
+      state: 'idle', t: 0, cd: rand(0, 0.5), flash: 0, walk: rand(0, 6), dead: false, dormant: !!d.boss,
+      bleed: 0, bleedT: 0, drip: 0, frenzy: false, wasBroken: false, atk: null, hitDone: false, fountain: 0, phase2: false, out: null,
+    });
+    this.limbs = {};
+    for (const k of LIMBS) this.limbs[k] = { hp: d.limbHp, gone: false };
+  }
+  get crawling() { return this.limbs.legF.gone || this.limbs.legB.gone; }
+  get stumps() { return LIMBS.reduce((n, k) => n + (this.limbs[k].gone ? 1 : 0), 0); }
+  get speed() {
+    let s = this.def.speed * (this.frenzy ? 1.35 : 1);
+    if (this.crawling) s *= this.limbs.legF.gone && this.limbs.legB.gone ? 0.22 : 0.4;
+    return s;
+  }
+  // Losing arms cripples an enemy's offence; crawling shortens its reach.
+  get mods() {
+    const lost = (this.limbs.armF.gone ? 1 : 0) + (this.limbs.armB.gone ? 1 : 0);
+    let dmg = this.limbs.armF.gone ? 0.5 : 1, reach = this.limbs.armF.gone ? 0.7 : 1;
+    if (lost === 2) { dmg = 0.35; reach = 0.55; }
+    if (this.crawling) reach *= 0.85;
+    return { dmg: dmg * (this.frenzy ? 1.15 : 1), reach, speed: this.frenzy ? 0.8 : 1 };
+  }
+  set(state) { this.state = state; this.t = 0; }
+  joint(k) {
+    const o = this.out, y = G.GROUND;
+    if (!o) return [this.x, y - 50 * this.scale];
+    return k === 'head' ? o.head : k[0] === 'a' ? o.sh : o.hip;
+  }
+
+  // Raw damage (weapon hits, bleeding). Handles the broken / dead thresholds.
+  hurt(dmg, o = {}) {
+    if (this.dead || this.state === 'executed') return;
+    this.hp -= dmg;
+    if (this.hp <= 0) {
+      if (this.def.boss) { this.hp = 0; if (this.state !== 'broken') this.setBroken(); }
+      else this.die(o);
+    } else if (!this.def.boss && !this.wasBroken && this.state !== 'broken' && this.hp <= this.maxHp * 0.3) this.setBroken();
+  }
+  setBroken() {
+    this.wasBroken = true; this.set('broken'); this.vx *= 0.3; this.atk = null;
+    G.text(this.x, G.GROUND - 100 * this.scale, 'BROKEN', '#d9c9b0', 14);
+  }
+
+  takeHit(dmg, atk, dir, g, weapon) {
+    if (this.dead || this.state === 'executed') return;
+    if (this.def.boss && this.state === 'broken') return;
+    if (this.dormant) this.dormant = false;
+    // which part did the blade find?
+    const opts = Object.keys(LIMB_WEIGHT).filter(k => k === 'torso' || !this.limbs[k].gone);
+    let roll = Math.random() * opts.reduce((s, k) => s + LIMB_WEIGHT[k], 0), part = 'torso';
+    for (const k of opts) { roll -= LIMB_WEIGHT[k]; if (roll <= 0) { part = k; break; } }
+    if (part === 'head') dmg *= 1.3;
+    const [jx, jy] = this.joint(part === 'torso' ? 'armF' : part);
+    this.flash = 0.1; g.hitstop = atk.poiseBreak ? 0.09 : 0.05; g.shake = Math.max(g.shake, atk.poiseBreak ? 7 : 4);
+    G.blood(jx, jy + (part === 'torso' ? 12 : 0), 10 + dmg * 0.4, dir, 300); G.sfx('hit');
+    let severed = false;
+    if (part !== 'torso') {
+      const L = this.limbs[part]; L.hp -= dmg * atk.sever;
+      const lethal = this.hp - dmg <= 0;
+      const allowed = !(this.def.noSever || []).includes(part);
+      if (L.hp <= 0 && allowed && (part !== 'head' || lethal)) { this.sever(part, dir, g); severed = true; }
+    }
+    // bleed build-up -> haemorrhage
+    this.bleed += weapon.bleed * (this.def.boss ? 0.5 : 1);
+    if (this.bleed >= 100) {
+      this.bleed = 0; this.bleedT = 5; dmg += this.maxHp * (this.def.boss ? 0.06 : 0.12);
+      G.text(this.x, G.GROUND - 112 * this.scale, 'HAEMORRHAGE', '#e0222c', 16); G.blood(this.x, G.GROUND - 55 * this.scale, 40, 0, 320); G.sfx('bleed');
+    }
+    const wasBroken = this.state === 'broken';
+    this.hurt(dmg, { dir, decap: part === 'head' && this.limbs.head.gone });
+    if (this.dead || this.state === 'executed') return;
+    if (this.state === 'broken') { if (!wasBroken) this.vx = dir * 80; return; }
+    if (!this.def.poise || atk.poiseBreak || severed) { this.set('stagger'); this.stun = severed ? 0.6 : atk.poiseBreak ? 0.5 : 0.3; this.vx = dir * (this.def.poise ? 60 : 150); this.atk = null; }
+  }
+
+  sever(k, dir, g) {
+    const L = this.limbs[k], [jx, jy] = this.joint(k);
+    L.gone = true; g.shake = 10; g.hitstop = 0.1; G.sfx('sever');
+    G.blood(jx, jy, 45, dir, 380);
+    G.gib(k === 'head' ? 'head' : k[0] === 'a' ? 'arm' : 'leg', jx, jy, dir, this.def.look, { scale: this.scale });
+    if (k === 'armF' && this.def.weapon !== 'none') G.gib('weapon', jx, jy, dir, this.def.look, { wtype: this.def.weapon, wlen: this.def.wlen, scale: this.scale });
+    if (k !== 'head') { G.text(this.x, G.GROUND - 120 * this.scale, 'SEVERED', '#e0222c', 17); this.hp -= this.maxHp * 0.08; }
+  }
+
+  die(o = {}) {
+    if (this.dead) return;
+    this.dead = true; this.hp = 0; this.set('dead'); this.fall = o.dir === this.facing ? 1 : -1;
+    if (o.decap) {
+      if (!this.limbs.head.gone) { this.limbs.head.gone = true; const [jx, jy] = this.joint('head'); G.gib('head', jx, jy, o.dir || 1, this.def.look, { scale: this.scale, vy: -420 }); }
+      this.fountain = 1.6;
+    }
+    G.decal(this.x, 8, 26 * this.scale);
+    G.game.addIchor(Math.round(this.def.ichor * (o.exec ? 1.5 : 1)), this.x);
+  }
+
+  update(dt, g) {
+    this.t += dt; this.flash -= dt; this.cd -= dt;
+    const p = g.player, dx = p.x - this.x, dist = Math.abs(dx), gy = G.GROUND;
+    if (this.dead) {
+      if (this.fountain > 0) { this.fountain -= dt; const [jx, jy] = this.joint('head'); G.blood(jx, Math.min(jy, gy - 10), 3, 0, 300 * this.fountain); }
+      this.vx *= Math.pow(0.001, dt); this.x += this.vx * dt; return;
+    }
+    // bleeding: haemorrhage ticks and open stumps
+    if (this.state !== 'executed') {
+      const n = this.stumps;
+      if (this.bleedT > 0) { this.bleedT -= dt; this.hurt(this.maxHp * 0.035 * dt); }
+      if (n) this.hurt(n * 1.4 * dt);
+      if (this.dead) return;
+      this.drip -= dt * (n * 2 + (this.bleedT > 0 ? 3 : 0) + (this.hp < this.maxHp * 0.5 ? 0.6 : 0));
+      if (this.drip <= 0) {
+        this.drip = rand(0.25, 0.5);
+        const k = LIMBS.find(l => this.limbs[l].gone && Math.random() < 0.6), [jx, jy] = this.joint(k || 'armF');
+        G.blood(jx, jy + (k ? 0 : 14), k ? 4 : 2, 0, k ? 120 : 50);
+        if (Math.abs(this.vx) > 8 && n) G.decal(this.x + rand(-8, 8), rand(2, 5));
+      }
+    }
+    const boss = this.def.boss, m = this.mods;
+    if (boss && !this.phase2 && this.hp < this.maxHp * 0.5) { this.phase2 = true; this.frenzy = true; G.text(this.x, gy - 150, '"I HELD THE DOOR!"', '#e0222c', 18); G.sfx('bell'); g.shake = 12; }
+
+    switch (this.state) {
+      case 'idle':
+        if (!this.dormant && dist < this.def.aggro) this.set('chase');
+        break;
+      case 'chase': {
+        this.facing = dx >= 0 ? 1 : -1;
+        const stop = 40 * this.scale;
+        if (dist > stop) { this.vx = this.facing * this.speed; this.walk += dt * this.speed * 0.11; } else this.vx = 0;
+        if (this.cd <= 0 && !p.dead) {
+          const c = this.def.attacks.filter(a => dist >= (a.min || 0) && dist <= (a.trigger || a.reach * m.reach * this.scale * 0.92));
+          if (c.length) { this.atk = G.pick(c); this.set('windup'); this.vx = 0; }
+        }
+        break;
+      }
+      case 'windup':
+        if (this.t >= this.atk.wind * m.speed) { this.set('strike'); this.hitDone = false; this.vx = this.facing * this.atk.lunge * (this.crawling ? 0.4 : 1); G.sfx('swing'); }
+        break;
+      case 'strike': {
+        const rel = (p.x - this.x) * this.facing;
+        if (!this.hitDone && rel > -14 && rel < this.atk.reach * m.reach * this.scale) { if (p.damage(this.atk.dmg * m.dmg, this.x, g)) this.hitDone = true; else if (p.state === 'block') this.hitDone = true; }
+        if (this.t >= this.atk.active) this.set('recover');
+        break;
+      }
+      case 'recover':
+        if (this.t >= this.atk.rec * m.speed) { this.set('chase'); this.cd = rand(0.15, 0.6) * m.speed; }
+        break;
+      case 'stagger':
+        if (this.t >= this.stun) this.set('chase');
+        break;
+      case 'broken':
+        this.vx = 0;
+        if (!boss && this.t > 5) { this.frenzy = true; this.set('chase'); G.text(this.x, gy - 100 * this.scale, 'FRENZY', '#e0222c', 15); }
+        break;
+    }
+    this.x += this.vx * dt;
+    if (this.state !== 'chase') this.vx *= Math.pow(0.002, dt);
+    this.x = clamp(this.x, 30, g.level.length - 30);
+    if (boss && !this.dormant) this.x = clamp(this.x, g.level.boss.gate + 30, g.level.boss.end);
+  }
+
+  pose() {
+    const P = basePose(), s = this.state, t = this.t, d = this.def, a = this.atk, m = this.mods;
+    P.lean = d.hunch || 0.1; P.head = d.hunch ? 0.2 : 0; P.armA = 0.45; P.armE = 0.8; P.w = d.weapon === 'none' ? 1.2 : 2.3; P.bA = d.hunch ? 0.7 : -0.2; P.bE = 0.6;
+    if (s === 'dead') {
+      const u = G.ease(Math.min(1, t / 0.45)); P.lying = (this.crawling ? 1 : this.fall) * (this.crawling ? 1 : u); P.armA = 2.4; P.w = 2.8; P.bA = -0.8;
+      return P;
+    }
+    if (this.crawling) {
+      P.lying = 1; P.lean = 0; P.footF = 2; P.footB = -2;
+      P.armA = Math.PI - 0.5 + Math.sin(this.walk) * 0.5; P.armE = 0.3; P.bA = Math.PI + 0.3 - Math.sin(this.walk) * 0.5; P.bE = -0.3; P.w = Math.PI - 0.2; P.head = -0.5;
+      if (s === 'windup') P.armA = Math.PI + 0.6; if (s === 'strike') P.armA = Math.PI - 1.0;
+      if (s === 'broken' || s === 'executed') { P.armA = Math.PI - 1.3; P.bA = Math.PI + 1.2; P.head = 0.2; }
+      return P;
+    }
+    if (s === 'chase' && Math.abs(this.vx) > 5) walkPose(P, this.walk, 11);
+    else if (s === 'idle') P.crouch = Math.sin(G.game.time * 1.6 + this.id) * 0.8 + 0.8;
+    else if (s === 'windup') { P.footF = 11; P.footB = -10; G.swing(P, a.anim, 0, Math.min(1, t / (a.wind * m.speed))); }
+    else if (s === 'strike') { P.footF = 14; P.footB = -10; G.swing(P, a.anim, 1, Math.min(1, t / a.active)); }
+    else if (s === 'recover') { P.footF = 12; P.footB = -9; G.swing(P, a.anim, 2, Math.min(1, t / (a.rec * m.speed))); }
+    else if (s === 'stagger') { P.lean = -0.35; P.head = -0.4; P.armA = -0.4; P.bA = -0.9; P.footF = 2; P.footB = -13; }
+    else if (s === 'broken' || s === 'executed') {
+      const u = G.ease(Math.min(1, t / 0.3)), sway = s === 'broken' ? Math.sin(t * 2.2) * 0.06 : 0;
+      P.crouch = 15 * u; P.lean = 0.42 * u + sway; P.head = 0.6 * u; P.armA = 0.15; P.armE = 0.2; P.w = 0.5; P.bA = 0; P.bE = 0.1; P.footF = 12; P.footB = -14;
+    }
+    return P;
+  }
+
+  draw(ctx, g) {
+    const d = this.def, o = { x: this.x, y: G.GROUND, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
+    // attack telegraph
+    if (this.state === 'windup') { ctx.fillStyle = `rgba(255,60,40,${0.15 + 0.25 * Math.min(1, this.t / this.atk.wind)})`; ctx.beginPath(); ctx.arc(this.x, G.GROUND - 72 * this.scale, 20 * this.scale, 0, 7); ctx.fill(); }
+    G.drawHumanoid(ctx, o); this.out = o.out;
+    if (!this.dead && !d.boss && this.hp < this.maxHp && this.state !== 'executed') {
+      const w = 40 * this.scale, y = G.GROUND - (this.crawling ? 34 : 96 * this.scale);
+      ctx.fillStyle = '#000'; ctx.fillRect(this.x - w / 2 - 1, y - 1, w + 2, 5);
+      ctx.fillStyle = this.state === 'broken' ? '#d9c9b0' : '#8f0810'; ctx.fillRect(this.x - w / 2, y, w * this.hp / this.maxHp, 3);
+      if (this.bleed > 0) { ctx.fillStyle = '#e0222c'; ctx.fillRect(this.x - w / 2, y + 4, w * this.bleed / 100, 1.5); }
+    }
+  }
+};

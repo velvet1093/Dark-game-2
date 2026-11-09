@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ashen Vow</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="960" height="540"></canvas>
+  <div id="overlay"></div>
+  <div id="touch">
+    <div class="pad left">
+      <button data-act="left">◀</button>
+      <button data-act="right">▶</button>
+    </div>
+    <div class="pad right">
+      <button data-act="flask">Flask</button>
+      <button data-act="use">Use</button>
+      <button data-act="block">Block</button>
+      <button data-act="roll">Roll</button>
+      <button data-act="heavy">Heavy</button>
+      <button data-act="attack">Slash</button>
+    </div>
+  </div>
+</div>
+<script src="js/engine.js"></script>
+<script src="js/data.js"></script>
+<script src="js/render.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
