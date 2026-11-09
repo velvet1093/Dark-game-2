@@ -68,3 +68,9 @@ body.touch #touch { display: block; }
 }
 .pad.left button { width: 13cqw; height: 13cqw; font-size: 3.4cqw; }
 .pad button:active { background: rgba(179, 20, 28, .5); }
+
+.dialogue.wist { border-color: #7a5fb0; }
+.dialogue.wist .who { color: #b79be8; }
+.dialogue.wist .txt { color: #e3d6ff; font-style: italic; }
+.wistq { color: #c9b3f0; font-style: italic; margin-top: -0.6em; line-height: 1.6; }
+.wistq small { color: #7a6a96; }

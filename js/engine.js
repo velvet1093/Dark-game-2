@@ -20,7 +20,7 @@ G.rng = seed => () => {
 const KEYMAP = {
   KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
   KeyJ: 'attack', KeyK: 'heavy', Space: 'roll', KeyL: 'block', ShiftLeft: 'block',
-  KeyE: 'use', KeyQ: 'flask', Enter: 'confirm', Escape: 'pause',
+  KeyE: 'use', KeyQ: 'flask', KeyM: 'mute', Enter: 'confirm', Escape: 'pause',
   Digit1: 'opt1', Digit2: 'opt2', Digit3: 'opt3', Digit4: 'opt4',
 };
 G.input = {
@@ -54,58 +54,6 @@ addEventListener('DOMContentLoaded', () => {
     b.addEventListener('touchcancel', up, { passive: false });
   });
 });
-
-// ------------------------------- audio -------------------------------------
-// Everything is synthesised; there are no audio assets.
-let ac = null, master = null, noiseBuf = null;
-G.audioInit = () => {
-  if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
-  try {
-    ac = new (window.AudioContext || window.webkitAudioContext)();
-    master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination);
-    noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    // low ambient drone
-    [55, 82.5, 110.4].forEach((f, i) => {
-      const o = ac.createOscillator(), g = ac.createGain();
-      o.type = i ? 'sine' : 'sawtooth'; o.frequency.value = f; g.gain.value = i ? 0.035 : 0.012;
-      o.connect(g); g.connect(master); o.start();
-    });
-  } catch (e) { ac = null; }
-};
-function tone(f, dur, type, vol, slide, delay = 0) {
-  if (!ac) return;
-  const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
-  o.type = type; o.frequency.setValueAtTime(f, t);
-  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
-}
-function noise(dur, vol, freq, type = 'lowpass', delay = 0) {
-  if (!ac) return;
-  const t = ac.currentTime + delay, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
-  s.buffer = noiseBuf; f.type = type; f.frequency.value = freq;
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random() * 0.5, dur + 0.05);
-}
-const SFX = {
-  swing: () => noise(0.13, 0.16, 1600, 'highpass'),
-  hit: () => { noise(0.12, 0.4, 700); tone(110, 0.1, 'square', 0.12, 45); },
-  sever: () => { noise(0.3, 0.5, 500); noise(0.18, 0.3, 2500, 'highpass'); tone(70, 0.3, 'sawtooth', 0.2, 30); },
-  block: () => { tone(900, 0.12, 'square', 0.12, 500); noise(0.06, 0.25, 3000, 'highpass'); },
-  roll: () => noise(0.22, 0.12, 400),
-  hurt: () => { noise(0.18, 0.4, 400); tone(160, 0.2, 'sawtooth', 0.18, 60); },
-  heal: () => { tone(330, 0.4, 'sine', 0.15, 660); tone(495, 0.5, 'sine', 0.1, 990, 0.1); },
-  exec: () => { noise(0.5, 0.6, 350); tone(55, 0.6, 'sawtooth', 0.3, 28); noise(0.25, 0.3, 3000, 'highpass', 0.05); },
-  death: () => { tone(110, 1.6, 'sawtooth', 0.25, 30); noise(1.0, 0.3, 250); },
-  ui: () => tone(520, 0.06, 'triangle', 0.08),
-  page: () => noise(0.12, 0.1, 2200, 'highpass'),
-  bell: () => { tone(196, 2.6, 'sine', 0.28); tone(392.6, 2.0, 'sine', 0.12); tone(587, 1.4, 'sine', 0.06); },
-  ichor: () => { tone(220, 0.5, 'sine', 0.14, 440); },
-  bleed: () => { noise(0.35, 0.35, 900); tone(200, 0.25, 'square', 0.08, 80); },
-};
-G.sfx = n => { try { SFX[n] && SFX[n](); } catch (e) { /* audio is optional */ } };
 
 // ---------------------------- blood & gore ---------------------------------
 G.fx = { drops: [], decals: [], gibs: [], texts: [], sparks: [] };
@@ -153,7 +101,7 @@ G.fxUpdate = dt => {
     if (Math.random() < 0.5) G.blood(g.x, g.y, 1, 0, 40);
     if (g.y >= gy - 4) {
       g.y = gy - 4;
-      if (Math.abs(g.vy) < 120) { g.rest = true; G.decal(g.x, 6, 14); if (g.kind !== 'head') g.rot = Math.PI / 2 + G.rand(-0.3, 0.3); }
+      if (Math.abs(g.vy) < 120) { g.rest = true; G.sfx('thud'); G.decal(g.x, 6, 14); if (g.kind !== 'head') g.rot = Math.PI / 2 + G.rand(-0.3, 0.3); }
       else { g.vy *= -0.35; g.vx *= 0.5; g.vr *= 0.5; G.decal(g.x, 5); }
     }
   }

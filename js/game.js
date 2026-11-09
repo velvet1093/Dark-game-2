@@ -10,17 +10,20 @@
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
     enemies: [], bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
-    player: null, boss: null, bossFight: false, prompt: null,
+    player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
-    toTitle() { G.ui.clear(); this.mode = 'title'; G.ui.title(!!store.get()); },
+    toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), ichor: 0, flags: {}, read: {}, stain: null, cp: { lv: 0, x: 120 } });
-      G.ui.slides(G.STORY.intro, () => { this.loadLevel(0, 120); this.save(); });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, stain: null, cp: { lv: 0, x: 120 } });
+      G.ui.slides(G.STORY.intro, () => {
+        this.loadLevel(0, 120); this.save();
+        G.ui.dialogue(G.FAIRY.intro, () => { this.flags.met_wist = 1; this.save(); });
+      });
     },
     continueGame() {
       const s = store.get(); if (!s) return this.newGame();
-      this.player = new G.Player(); Object.assign(this.player.stats, s.stats);
+      this.player = new G.Player(); this.fairy = new G.Fairy(); Object.assign(this.player.stats, s.stats);
       Object.assign(this, { ichor: s.ichor || 0, flags: s.flags || {}, read: s.read || {}, stain: s.stain || null, cp: s.cp });
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
@@ -28,7 +31,8 @@
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
-      this.spawnEnemies();
+      this.spawnEnemies(); this.fairy.place(this.player);
+      G.music(L.theme); G.ambience({ road: 'rain', village: 'wind', cathedral: 'hall' }[L.theme]);
       this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
@@ -39,6 +43,10 @@
     respawn() {
       if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.player.x, n: this.ichor }; this.ichor = 0; }
       this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save();
+    },
+    onPlayerDeath() {
+      this.flags.deaths = (this.flags.deaths || 0) + 1; G.music(null);
+      this.fairy.cd = 0; this.fairy.bark('death', true);
     },
     levelCost() { const s = this.player.stats; return 90 + (s.vig + s.str + s.end) * 55; },
     addIchor(n, x) { this.ichor += n; G.text(x, G.GROUND - 130, '+' + n, '#b98a8a', 12); },
@@ -70,16 +78,16 @@
       G.ui.dialogue(this.flags[key] && n.repeat ? n.repeat : n.lines, () => {
         this.flags[key] = 1;
         if (n.id === 'ysolde') {
-          G.ui.choice('The Saint\'s Tear is warm in your hand.', [
+          G.ui.dialogue(G.FAIRY.choice, () => G.ui.choice('The Saint\'s Tear is warm in your hand.', [
             { label: 'Give her the Tear', fn: () => this.ending('kept') },
             { label: 'Cast the Tear away', fn: () => this.ending('broken') },
-          ]);
+          ]));
         }
       });
     },
     rest(x) {
       this.player.reset(); this.spawnEnemies(); this.cp = { lv: this.levelIdx, x }; this.save();
-      G.sfx('bell'); G.ui.shrine();
+      G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); G.ui.shrine();
     },
     travel() {
       const next = this.levelIdx + 1;
@@ -87,7 +95,7 @@
     },
     ending(id) {
       const e = G.STORY.endings[id];
-      G.sfx('bell'); this.mode = 'title';
+      G.sfx('bell'); this.mode = 'title'; G.music('title');
       G.ui.slides(e.text.concat(['ASHEN VOW\n\nThank you for playing.']), () => { store.set(null); this.toTitle(); }, e.title);
     },
     // Called at the moment the executioner's blow lands.
@@ -100,12 +108,13 @@
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.12);
       this.hitstop = 0.14; this.shake = 14; this.slow = 0.55; G.sfx('exec');
       G.text(e.x, G.GROUND - 130 * e.scale, 'EXECUTED', '#e0222c', 20);
-      if (e.def.boss) { this.flags.bossDead = 1; this.bossFight = false; this.boss = null; G.sfx('bell'); this.save(); }
+      if (e.def.boss) { this.flags.bossDead = 1; this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(null); this.save(); }
     },
 
     // ------------------------------ update ---------------------------------
     tick(dt) {
       this.time += dt;
+      if (G.input.hit('mute')) G.toggleMute();
       if (G.ui.blocking) { G.ui.handle(); return; }
       if (this.mode !== 'play') return;
       if (G.input.hit('pause')) { G.ui.pause(); return; }
@@ -125,17 +134,19 @@
         const a = this.enemies[i], b = this.enemies[j]; if (a.dead || b.dead) continue;
         const d = b.x - a.x; if (Math.abs(d) < 28) { const push = (d >= 0 ? 1 : -1) * 40 * dt; a.x -= push; b.x += push; }
       }
+      this.fairy.update(dt, this);
       G.fxUpdate(dt);
+      if (!p.dead && p.hp < p.maxHp * 0.35 && (this.heartT -= dt) <= 0) { this.heartT = 0.85; G.sfx('heart'); }
 
       // the Oathkeeper's door
       if (this.boss && this.boss.dormant && !p.dead && p.x > L.boss.gate + 70) {
         p.vx = 0; p.set('idle');
-        G.ui.dialogue(this.flags.metBoss ? L.boss.retry : L.boss.intro, () => { this.flags.metBoss = 1; this.bossFight = true; this.boss.dormant = false; G.sfx('bell'); });
+        G.ui.dialogue(this.flags.metBoss ? L.boss.retry : G.FAIRY.boss.concat(L.boss.intro), () => { this.flags.metBoss = 1; this.bossFight = true; this.boss.dormant = false; G.sfx('bell'); G.music('boss'); });
       }
       // reclaim ichor from where you last fell
       const s = this.stain;
       if (s && s.lv === this.levelIdx && Math.abs(p.x - s.x) < 30 && !p.dead) { this.ichor += s.n; G.text(p.x, G.GROUND - 110, 'Ichor reclaimed +' + s.n, '#d9c9b0', 15); G.sfx('ichor'); this.stain = null; }
-      if (p.dead && (this.deathT += dt) > 1.7) { this.deathT = -99; G.ui.death(this.ichor, () => this.respawn()); }
+      if (p.dead && (this.deathT += dt) > 1.7) { this.deathT = -99; this.fairy.say = null; G.ui.death(this.ichor, () => this.respawn(), this.fairy.last.death, this.flags.deaths); }
 
       let target = p.x - W * 0.42 + p.facing * 40;
       target = clamp(target, this.bossFight ? L.boss.gate - 110 : 0, L.length - W);
@@ -156,6 +167,7 @@
       for (const e of this.enemies) if (e.dead) e.draw(ctx, this);
       for (const e of this.enemies) if (!e.dead) e.draw(ctx, this);
       p.draw(ctx, this);
+      this.fairy.draw(ctx, this);
       G.drawFx(ctx, 'air');
       if (this.prompt) {
         const pr = this.prompt, s = (document.body.classList.contains('touch') ? 'USE · ' : '[E] ') + pr.label;
@@ -248,7 +260,7 @@
   addEventListener('DOMContentLoaded', () => {
     ctx = document.getElementById('c').getContext('2d');
     G.LEVELS.forEach(G.buildProps);
-    game.player = new G.Player();
+    game.player = new G.Player(); game.fairy = new G.Fairy();
     game.toTitle();
     let last = 0;
     const frame = ts => {

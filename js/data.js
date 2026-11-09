@@ -107,6 +107,7 @@ G.STORY = {
         'Ysolde closes her eyes. For the first time in seven years, they are dry.',
         'Across Morrowmere the dead sit down in the roads and the fields, like labourers at the end of a long day, and do not rise again.',
         'You carry her out past Garrick, past the doors he held. You dig the grave yourself.\n\nThe vow is kept. No one is left to tell you it was worth it.',
+        'Above the grave something small and lavender sighs, bored, and flutters off down the road to find another knight.',
       ],
     },
     broken: {
@@ -116,6 +117,7 @@ G.STORY = {
         'You kneel where Garrick knelt. Ysolde lays a hand on your helm, and where she touches, the steel runs red.',
         '"Then stay," she says. "Hold the door."',
         'The bells of Saint Avaric ring on. The dead walk on. And at the altar a knight keeps watch, weeping, beside the only thing he came home for.',
+        'On his pauldron sits a small lavender thing, chin in her hands, waiting.\n\nShe has all the time in the world.',
       ],
     },
   },

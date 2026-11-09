@@ -25,6 +25,7 @@ python3 -m http.server 8000
 | Drink flask | `Q` |
 | Interact / **Execute** | `E` |
 | Pause | `Esc` |
+| Mute | `M` |
 
 On-screen buttons appear on touch devices.
 
@@ -41,6 +42,14 @@ On-screen buttons appear on touch devices.
 - **Vigil candles** — rest to refill flasks, set your checkpoint and spend ichor on Vigor, Strength or Endurance. Resting also returns the dead to their feet.
 - **Death** — you drop your ichor where you fall. Reach the stain to reclaim it; die first and it is gone.
 
+## Wist
+
+A small lavender fairy with white hair follows you as your "guide". She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
+
+## Sound
+
+All audio is synthesised in the browser: a music theme per area (title, road, village, cathedral, boss), weather and room ambience, and effects for combat, footsteps, enemies, dialogue and the fairy.
+
 ## Story
 
 Three chapters — the Gallows Road, Hollowmere, and the Cathedral of Saint Avaric — told through characters you meet, notes you find, a boss who used to be your friend, and a final choice with two endings.
@@ -51,7 +60,9 @@ Progress saves at vigil candles (browser local storage).
 
 | File | Purpose |
 | --- | --- |
-| `js/engine.js` | input, synthesised audio, blood / gib particles |
+| `js/engine.js` | input, blood / gib particles |
+| `js/audio.js` | synthesised sound effects, ambience and music |
+| `js/fairy.js` | Wist: lines, behaviour and drawing |
 | `js/data.js` | weapons, enemy types, levels, all story text |
 | `js/render.js` | procedural character rig, weapons, backdrops |
 | `js/entities.js` | player and enemy logic (combat, limbs, bleeding, AI) |

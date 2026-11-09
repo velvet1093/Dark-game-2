@@ -6,7 +6,7 @@
   const el = () => document.getElementById('overlay');
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(/\n/g, '<br>');
   const KEYS = `<div class="keys"><b>A</b> <b>D</b> move &nbsp; <b>J</b> / click slash &nbsp; <b>K</b> / right-click heavy &nbsp; <b>Space</b> roll<br>
-    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>E</b> interact · execute &nbsp; <b>Esc</b> pause</div>`;
+    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>E</b> interact · execute &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
 
   const ui = G.ui = {
     blocking: false, advance: null, options: null,
@@ -55,9 +55,11 @@
         clearInterval(timer);
         if (i >= lines.length) { this.clear(); if (done) done(); return; }
         const [who, text] = lines[i++]; full = text; shown = 0;
-        this.show(`<div class="dialogue"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ E</div></div>`, next);
+        const wist = who === 'Wist'; let n = 0;
+        if (wist) G.sfx('chime');
+        this.show(`<div class="dialogue${wist ? ' wist' : ''}"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ E</div></div>`, next);
         const t = el().querySelector('.txt');
-        timer = setInterval(() => { shown = Math.min(full.length, shown + 2); if (t.isConnected) t.textContent = full.slice(0, shown); if (shown >= full.length || !t.isConnected) clearInterval(timer); }, 22);
+        timer = setInterval(() => { shown = Math.min(full.length, shown + 2); if (n++ % 2 === 0 && shown < full.length) G.sfx('blip', wist ? 1100 : who === 'Aldric' ? 150 : 200); if (t.isConnected) t.textContent = full.slice(0, shown); if (shown >= full.length || !t.isConnected) clearInterval(timer); }, 22);
       };
       next();
     },
@@ -80,8 +82,9 @@
     choice(prompt, opts) {
       this.menu('dim', `<h2>${esc(prompt)}</h2>`, opts.map(o => ({ label: o.label, fn: () => { this.clear(); o.fn(); } })));
     },
-    death(lost, done) {
-      this.show(`<div class="screen dim"><h1 style="font-size:3em">UNMADE</h1><div class="sub">${lost ? `${lost} ichor lies where you fell.` : 'The vow remains.'}</div><div class="hint">press E / Enter / tap</div></div>`, () => { this.clear(); done(); });
+    death(lost, done, quote, n) {
+      const wist = quote ? `<div class="wistq">“${esc(quote)}”<br><small>— Wist has watched you die ${n === 1 ? 'once' : n + ' times'}.</small></div>` : '';
+      this.show(`<div class="screen dim"><h1 style="font-size:3em">UNMADE</h1><div class="sub">${lost ? `${lost} ichor lies where you fell.` : 'The vow remains.'}</div>${wist}<div class="hint">press E / Enter / tap</div></div>`, () => { this.clear(); done(); });
     },
   };
 })();

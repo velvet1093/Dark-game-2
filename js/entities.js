@@ -30,6 +30,7 @@ G.Player = class {
   startAttack(atk, combo) {
     this.atk = atk; this.combo = combo; this.set('attack'); this.hitSet = new Set(); this.swung = false;
     this.st = Math.max(0, this.st - atk.st); this.stDelay = 0.7; this.buf = null;
+    if (atk.poiseBreak) G.sfx('whoosh');
   }
   startExecute(e) {
     this.target = e; e.state = 'executed'; e.t = 0; e.vx = 0;
@@ -45,11 +46,12 @@ G.Player = class {
       this.st -= dmg * 1.15; this.stDelay = 0.9; this.vx = dir * 110;
       G.sfx('block'); G.spark(this.x + this.facing * 16, G.GROUND - 50, 8);
       if (this.st > 0) return false;
-      this.st = 0; G.text(this.x, G.GROUND - 90, 'GUARD BROKEN', '#d9c9b0'); dmg *= 0.4;
+      this.st = 0; G.text(this.x, G.GROUND - 90, 'GUARD BROKEN', '#d9c9b0'); G.sfx('guardbreak'); dmg *= 0.4;
     }
     this.hp -= dmg; this.flash = 0.12; this.vx = dir * 220; this.set('hurt');
     G.blood(this.x, G.GROUND - 50, 14, dir, 240); G.sfx('hurt'); g.shake = 8;
-    if (this.hp <= 0) { this.hp = 0; this.dead = true; this.set('dead'); G.sfx('death'); G.blood(this.x, G.GROUND - 40, 50, dir, 320); G.decal(this.x, 10, 30); }
+    if (this.hp <= 0) { this.hp = 0; this.dead = true; this.set('dead'); G.sfx('death'); G.blood(this.x, G.GROUND - 40, 50, dir, 320); G.decal(this.x, 10, 30); g.onPlayerDeath(); }
+    else g.fairy.bark('hurt', false, 0.5);
     return true;
   }
 
@@ -66,14 +68,18 @@ G.Player = class {
     if (this.state === 'idle' || this.state === 'block') {
       const blocking = I.down('block');
       this.state = blocking ? 'block' : 'idle';
-      if (dir) { this.facing = dir; this.walk += dt * (blocking ? 7 : 11); }
+      if (dir) {
+        const before = Math.floor(this.walk / Math.PI);
+        this.facing = dir; this.walk += dt * (blocking ? 7 : 11);
+        if (Math.floor(this.walk / Math.PI) !== before) G.sfx('step');
+      }
       this.vx = dir * (blocking ? 62 : 158);
       if (want('roll') && this.st > 0) {
         this.buf = null; this.st = Math.max(0, this.st - 22); this.stDelay = 0.6;
         if (dir) this.facing = dir; this.set('roll'); G.sfx('roll');
       } else if (want('attack') && this.st > 0) this.startAttack(w.light[0], 0);
       else if (want('heavy') && this.st > 0) this.startAttack(w.heavy, -1);
-      else if (I.hit('flask') && this.flasks > 0 && this.hp < this.maxHp) { this.flasks--; this.healed = false; this.set('heal'); }
+      else if (I.hit('flask') && this.flasks > 0 && this.hp < this.maxHp) { this.flasks--; this.healed = false; this.set('heal'); G.sfx('gulp'); g.fairy.bark('heal', false, 0.6); }
     } else if (this.state === 'attack') {
       const a = this.atk, t1 = a.wind, t2 = t1 + a.active, t3 = t2 + a.rec;
       if (!this.swung && this.t >= t1) { this.swung = true; this.vx = this.facing * a.lunge; G.sfx('swing'); }
@@ -216,6 +222,7 @@ G.Enemy = class {
   setBroken() {
     this.wasBroken = true; this.set('broken'); this.vx *= 0.3; this.atk = null;
     G.text(this.x, G.GROUND - 100 * this.scale, 'BROKEN', '#d9c9b0', 14);
+    if (!this.def.boss) G.game.fairy.bark('broken', false, 0.5);
   }
 
   takeHit(dmg, atk, dir, g, weapon) {
@@ -252,7 +259,7 @@ G.Enemy = class {
 
   sever(k, dir, g) {
     const L = this.limbs[k], [jx, jy] = this.joint(k);
-    L.gone = true; g.shake = 10; g.hitstop = 0.1; G.sfx('sever');
+    L.gone = true; g.shake = 10; g.hitstop = 0.1; G.sfx('sever'); g.fairy.bark('gore', false, 0.35);
     G.blood(jx, jy, 45, dir, 380);
     G.gib(k === 'head' ? 'head' : k[0] === 'a' ? 'arm' : 'leg', jx, jy, dir, this.def.look, { scale: this.scale });
     if (k === 'armF' && this.def.weapon !== 'none') G.gib('weapon', jx, jy, dir, this.def.look, { wtype: this.def.weapon, wlen: this.def.wlen, scale: this.scale });
@@ -266,7 +273,7 @@ G.Enemy = class {
       if (!this.limbs.head.gone) { this.limbs.head.gone = true; const [jx, jy] = this.joint('head'); G.gib('head', jx, jy, o.dir || 1, this.def.look, { scale: this.scale, vy: -420 }); }
       this.fountain = 1.6;
     }
-    G.decal(this.x, 8, 26 * this.scale);
+    G.decal(this.x, 8, 26 * this.scale); G.sfx('thud'); G.game.fairy.bark('kill', false, 0.25);
     G.game.addIchor(Math.round(this.def.ichor * (o.exec ? 1.5 : 1)), this.x);
   }
 
@@ -287,16 +294,16 @@ G.Enemy = class {
       if (this.drip <= 0) {
         this.drip = rand(0.25, 0.5);
         const k = LIMBS.find(l => this.limbs[l].gone && Math.random() < 0.6), [jx, jy] = this.joint(k || 'armF');
-        G.blood(jx, jy + (k ? 0 : 14), k ? 4 : 2, 0, k ? 120 : 50);
+        G.blood(jx, jy + (k ? 0 : 14), k ? 4 : 2, 0, k ? 120 : 50); if (k && Math.random() < 0.4) G.sfx('splat');
         if (Math.abs(this.vx) > 8 && n) G.decal(this.x + rand(-8, 8), rand(2, 5));
       }
     }
     const boss = this.def.boss, m = this.mods;
-    if (boss && !this.phase2 && this.hp < this.maxHp * 0.5) { this.phase2 = true; this.frenzy = true; G.text(this.x, gy - 150, '"I HELD THE DOOR!"', '#e0222c', 18); G.sfx('bell'); g.shake = 12; }
+    if (boss && !this.phase2 && this.hp < this.maxHp * 0.5) { this.phase2 = true; this.frenzy = true; G.text(this.x, gy - 150, '"I HELD THE DOOR!"', '#e0222c', 18); G.sfx('bell'); G.sfx('roar'); g.shake = 12; }
 
     switch (this.state) {
       case 'idle':
-        if (!this.dormant && dist < this.def.aggro) this.set('chase');
+        if (!this.dormant && dist < this.def.aggro) { this.set('chase'); G.sfx('growl'); }
         break;
       case 'chase': {
         this.facing = dx >= 0 ? 1 : -1;
@@ -304,7 +311,7 @@ G.Enemy = class {
         if (dist > stop) { this.vx = this.facing * this.speed; this.walk += dt * this.speed * 0.11; } else this.vx = 0;
         if (this.cd <= 0 && !p.dead) {
           const c = this.def.attacks.filter(a => dist >= (a.min || 0) && dist <= (a.trigger || a.reach * m.reach * this.scale * 0.92));
-          if (c.length) { this.atk = G.pick(c); this.set('windup'); this.vx = 0; }
+          if (c.length) { this.atk = G.pick(c); this.set('windup'); this.vx = 0; if (this.def.poise) G.sfx('grunt'); }
         }
         break;
       }
