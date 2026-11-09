@@ -27,6 +27,7 @@ python3 -m http.server 8000
 | Interact / **Execute** | `E` |
 | Quest journal | `Tab` or `T` |
 | Pause | `Esc` |
+| Full screen | button at the top centre of the screen |
 | Mute | `M` |
 
 On-screen buttons appear on touch devices.

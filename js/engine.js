@@ -46,6 +46,22 @@ addEventListener('DOMContentLoaded', () => {
   addEventListener('mouseup', e => G.input.release(e.button === 2 ? 'heavy' : 'attack'));
   cv.addEventListener('contextmenu', e => e.preventDefault());
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) document.body.classList.add('touch');
+  // full-screen toggle: shown only where the browser allows it
+  const fs = document.getElementById('fs'), root = document.documentElement;
+  const req = root.requestFullscreen || root.webkitRequestFullscreen, exit = document.exitFullscreen || document.webkitExitFullscreen;
+  const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (fs && req && exit && document.fullscreenEnabled !== false) {
+    fs.hidden = false;
+    fs.addEventListener('click', () => {
+      G.audioInit(); fs.blur();
+      try {
+        const p = isFs() ? exit.call(document) : req.call(root);
+        if (p && p.then) p.then(() => { if (isFs() && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }).catch(() => {});
+      } catch (e) { /* refused: stay windowed */ }
+    });
+    const sync = () => { fs.classList.toggle('on', isFs()); fs.title = isFs() ? 'Leave full screen' : 'Full screen'; fs.setAttribute('aria-label', fs.title); };
+    document.addEventListener('fullscreenchange', sync); document.addEventListener('webkitfullscreenchange', sync);
+  }
   document.querySelectorAll('#touch button').forEach(b => {
     const a = b.dataset.act;
     b.addEventListener('touchstart', e => { e.preventDefault(); G.audioInit(); G.input.press(a); }, { passive: false });

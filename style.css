@@ -83,3 +83,13 @@ body.touch #touch { display: block; }
 .quest li.done { color: #6f8a4a; } .quest li.cur { color: #e8ddd0; } .quest li.todo { color: #6a6058; } .quest li.fail { color: #c9333b; }
 .quest.failed h3 { color: #c9333b; } .quest.done h3 { color: #8a9a70; }
 .screen.journal { background: rgba(0, 0, 0, .9); }
+
+#fs {
+  position: absolute; top: 1.2%; left: 50%; transform: translateX(-50%); z-index: 5;
+  width: 3.4cqw; height: 3.4cqw; min-width: 30px; min-height: 30px; padding: 0; cursor: pointer;
+  background: rgba(10, 5, 6, .55); border: 1px solid rgba(179, 20, 28, .45); opacity: .55;
+}
+#fs:hover, #fs:focus-visible { opacity: 1; border-color: #b3141c; outline: none; }
+#fs svg { width: 60%; height: 60%; fill: none; stroke: #cfc4b8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#fs .exit, #fs.on .enter { display: none; }
+#fs.on .exit { display: inline; }
