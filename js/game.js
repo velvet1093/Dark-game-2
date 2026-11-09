@@ -9,13 +9,14 @@
 
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
-    enemies: [], bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
+    enemies: [], npcs: [], bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
     player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
       Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, stain: null, cp: { lv: 0, x: 120 } });
+      G.questLog.reset();
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
         G.ui.dialogue(G.FAIRY.intro, () => { this.flags.met_wist = 1; this.save(); });
@@ -25,19 +26,20 @@
       const s = store.get(); if (!s) return this.newGame();
       this.player = new G.Player(); this.fairy = new G.Fairy(); Object.assign(this.player.stats, s.stats);
       Object.assign(this, { ichor: s.ichor || 0, flags: s.flags || {}, read: s.read || {}, stain: s.stain || null, cp: s.cp });
+      G.questLog.reset(s.quests);
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, stain: this.stain }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, stain: this.stain, quests: G.questLog.state }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
-      this.spawnEnemies(); this.fairy.place(this.player);
+      this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.fairy.place(this.player);
       G.music(L.theme); G.ambience({ road: 'rain', village: 'wind', cathedral: 'hall' }[L.theme]);
       this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
       const L = this.level;
-      this.enemies = L.enemies.map(([t, x]) => new G.Enemy(t, x)); this.boss = null; this.bossFight = false;
+      this.enemies = L.enemies.map(([t, x, tag]) => new G.Enemy(t, x, tag)); this.boss = null; this.bossFight = false;
       if (L.boss && !this.flags.bossDead) { this.boss = new G.Enemy(L.boss.type, L.boss.x); this.enemies.push(this.boss); }
     },
     respawn() {
@@ -62,8 +64,8 @@
         }
       }
       if (this.enemies.some(e => !e.dead && !e.dormant && e.state !== 'idle' && near(e.x, 260))) return null; // not mid-fight
-      for (const n of L.npcs) {
-        if (near(n.x, 70) && (!n.needs || this.flags[n.needs])) return { x: n.x, y: G.GROUND - (n.pose === 'hang' ? 190 : 100), label: 'Speak', fn: () => this.talk(n) };
+      for (const n of this.npcs) {
+        if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: 'Speak to ' + n.def.name, fn: () => this.talk(n) };
       }
       for (const [i, n] of L.lore.entries()) {
         if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.levelIdx + ':' + i] = 1; G.ui.note(n.title, n.text); } };
@@ -73,11 +75,25 @@
       return null;
     },
     talk(n) {
-      const key = 'met_' + n.id, p = this.player;
+      const d = n.def, key = 'met_' + d.id, met = this.flags[key], Q = G.questLog, p = this.player;
       p.vx = 0; p.facing = n.x >= p.x ? 1 : -1;
-      G.ui.dialogue(this.flags[key] && n.repeat ? n.repeat : n.lines, () => {
+      // quests whose current step is "speak to this person", and quests they can hand out
+      const stepQ = Q.ids('active').filter(id => { const s = Q.cur(id); return s.type === 'talk' && s.npc === d.id; });
+      const newQ = Object.keys(G.QUESTS).filter(id => !Q.state[id] && G.QUESTS[id].start && G.QUESTS[id].start.talk === d.id);
+      let lines = met ? [] : d.lines.slice();
+      const stepLines = stepQ.map(id => Q.cur(id).lines).find(Boolean);
+      if (stepLines) lines = lines.concat(stepLines);
+      for (const id of newQ) if (G.QUESTS[id].offer) lines = lines.concat(G.QUESTS[id].offer);
+      if (!lines.length) {
+        const w = Q.ids('active').map(id => G.QUESTS[id]).find(q => q.giver === d.id && q.waiting);
+        lines = w ? w.waiting : d.repeat || d.lines;
+      }
+      G.ui.dialogue(lines, () => {
         this.flags[key] = 1;
-        if (n.id === 'ysolde') {
+        stepQ.forEach(id => Q.advance(id));
+        newQ.forEach(id => { Q.start(id); const s = Q.cur(id); if (s && s.type === 'talk' && s.npc === d.id && !s.lines) Q.advance(id); });
+        this.save();
+        if (d.id === 'ysolde') {
           G.ui.dialogue(G.FAIRY.choice, () => G.ui.choice('The Saint\'s Tear is warm in your hand.', [
             { label: 'Give her the Tear', fn: () => this.ending('kept') },
             { label: 'Cast the Tear away', fn: () => this.ending('broken') },
@@ -85,8 +101,15 @@
         }
       });
     },
+    onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
+    onEnemyDeath(e) { G.questLog.onKill(e, this); },
+    onNpcDeath(n) {
+      G.text(n.x, G.GROUND - 120, n.def.name + ' is dead', '#d9c9b0', 15);
+      this.fairy.cd = 0; this.fairy.bark('npcdeath', true); this.save();
+    },
     rest(x) {
-      this.player.reset(); this.spawnEnemies(); this.cp = { lv: this.levelIdx, x }; this.save();
+      this.player.reset(); this.spawnEnemies(); for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
+      this.cp = { lv: this.levelIdx, x }; this.save();
       G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); G.ui.shrine();
     },
     travel() {
@@ -100,7 +123,7 @@
     },
     // Called at the moment the executioner's blow lands.
     executeStrike(e, p) {
-      const dir = p.facing, decap = p.execKind === 'decap' && !e.crawling;
+      const dir = p.facing, decap = p.execKind === 'decap' && !e.crawling && e.def.model !== 'crow';
       const [jx, jy] = decap ? e.joint('head') : e.joint('armF');
       G.blood(jx, jy, 70, dir, 460); G.blood(jx, jy, 30, -dir, 200);
       e.vx = dir * 60; e.die({ exec: true, decap, dir });
@@ -118,6 +141,7 @@
       if (G.ui.blocking) { G.ui.handle(); return; }
       if (this.mode !== 'play') return;
       if (G.input.hit('pause')) { G.ui.pause(); return; }
+      if (G.input.hit('journal')) { G.ui.journal(); return; }
       if (this.hitstop > 0) { this.hitstop -= dt; return; }
       if (this.slow > 0) { this.slow -= dt; dt *= 0.3; }
       const p = this.player, L = this.level;
@@ -129,6 +153,8 @@
 
       p.update(dt, this);
       for (const e of this.enemies) e.update(dt, this);
+      for (const n of this.npcs) n.update(dt, this);
+      G.questLog.tick(this, dt);
       // keep the living from stacking on one another
       for (let i = 0; i < this.enemies.length; i++) for (let j = i + 1; j < this.enemies.length; j++) {
         const a = this.enemies[i], b = this.enemies[j]; if (a.dead || b.dead) continue;
@@ -164,6 +190,7 @@
       ctx.translate(-cam + rand(-1, 1) * this.shake * 0.5, rand(-1, 1) * this.shake * 0.5);
       this.drawWorldProps(L, t);
       G.drawFx(ctx, 'ground');
+      for (const n of this.npcs) n.draw(ctx, this);
       for (const e of this.enemies) if (e.dead) e.draw(ctx, this);
       for (const e of this.enemies) if (!e.dead) e.draw(ctx, this);
       p.draw(ctx, this);
@@ -216,19 +243,6 @@
       // bloodstain
       const s = this.stain;
       if (s && s.lv === this.levelIdx) { glow(s.x, gy - 14, 44 + Math.sin(t * 4) * 6, 'rgba(220,20,30,0.5)'); ctx.fillStyle = '#7a0509'; ctx.beginPath(); ctx.ellipse(s.x, gy + 6, 22, 5, 0, 0, 7); ctx.fill(); }
-      // npcs
-      for (const n of L.npcs) {
-        const P = { lean: 0.06, head: 0.05, crouch: 0, armA: 0.2, armE: 0.3, w: 0, bA: -0.1, bE: 0.3, footF: 5, footB: -5 };
-        let y = gy, facing = this.player.x >= n.x ? 1 : -1;
-        if (n.pose === 'kneel') { P.crouch = 15; P.lean = 0.3; P.head = 0.35; P.footF = 11; P.footB = -13; P.armA = 0.7; P.armE = 1.2; P.bA = 0.6; P.bE = 1.3; }
-        if (n.pose === 'hang') {
-          const sw = Math.sin(t * 0.9) * 0.05; y = gy - 62; P.lean = sw; P.head = 0.5; P.footF = 2 + sw * 40; P.footB = -2 + sw * 40; facing = 1;
-          ctx.strokeStyle = ctx.fillStyle = '#060304'; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(n.x - 70, gy); ctx.lineTo(n.x - 70, gy - 210); ctx.lineTo(n.x + 20, gy - 210); ctx.moveTo(n.x - 70, gy - 170); ctx.lineTo(n.x - 34, gy - 210); ctx.stroke();
-          ctx.lineWidth = 2; ctx.strokeStyle = '#3a2e22'; ctx.beginPath(); ctx.moveTo(n.x, gy - 210); ctx.lineTo(n.x + sw * 30, y - 68); ctx.stroke();
-        }
-        if (n.id === 'ysolde') glow(n.x, gy - 50, 90, 'rgba(230,220,210,0.16)');
-        G.drawHumanoid(ctx, { x: n.x, y, facing, scale: 1, pose: P, look: G.LOOKS[n.look], weapon: 'none', time: t });
-      }
     },
 
     drawHud(p, L, t) {
@@ -253,6 +267,23 @@
       if (this.levelIdx === 0 && this.lvT < 30 && !document.body.classList.contains('touch')) {
         ctx.globalAlpha = clamp(30 - this.lvT, 0, 1) * 0.8; ctx.textAlign = 'center'; ctx.font = '13px Georgia, serif'; ctx.fillStyle = '#9a8f84';
         ctx.fillText('A/D move  ·  J slash  ·  K heavy  ·  SPACE roll  ·  L block  ·  Q flask  ·  E interact / execute', W / 2, H - 14); ctx.globalAlpha = 1;
+      }
+      // quest tracker: the main quest and up to two others, with the current step of each
+      const Q = G.questLog, act = Q.ids('active').sort((a, b) => (G.QUESTS[b].main ? 1 : 0) - (G.QUESTS[a].main ? 1 : 0)).slice(0, 3);
+      ctx.textAlign = 'right'; let qy = 62;
+      for (const id of act) {
+        ctx.font = '13px Georgia, serif'; ctx.fillStyle = '#e0b84a'; ctx.fillText(G.QUESTS[id].title, W - 26, qy);
+        ctx.font = '12px Georgia, serif'; ctx.fillStyle = '#b9ada0'; ctx.fillText('◇ ' + Q.text(id, Q.state[id].step), W - 26, qy + 15); qy += 38;
+      }
+      const b = Q.banners[0];
+      if (b) {
+        const col = b.kind === 'Quest failed' ? '#c9333b' : '#e0b84a';
+        ctx.globalAlpha = clamp(Math.min(b.t, 4.4 - b.t) * 2.5, 0, 1); ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 250, 84, 500, 62);
+        ctx.fillStyle = col; ctx.fillRect(W / 2 - 250, 84, 500, 1); ctx.fillRect(W / 2 - 250, 145, 500, 1);
+        ctx.font = '11px Georgia, serif'; ctx.fillText(b.kind.toUpperCase().split('').join(' '), W / 2, 101);
+        ctx.font = '19px Georgia, serif'; ctx.fillStyle = '#e8ddd0'; ctx.fillText(b.title, W / 2, 122);
+        ctx.font = 'italic 12px Georgia, serif'; ctx.fillStyle = '#b9ada0'; ctx.fillText(b.sub || '', W / 2, 139); ctx.globalAlpha = 1;
       }
     },
   };

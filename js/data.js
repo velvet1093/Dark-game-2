@@ -68,6 +68,41 @@ G.ENEMIES = {
       { wind: 0.6, active: 0.14, rec: 0.75, dmg: 30, reach: 104, trigger: 170, min: 90, lunge: 400, anim: ANIM.thrust },
     ],
   },
+  // --- beasts and stranger things -------------------------------------------
+  hound: {
+    name: 'Carrion Hound', model: 'hound', hp: 55, limbHp: 22, speed: 175, ichor: 35, aggro: 430, weapon: 'none', height: 52, limbs: ['head', 'legF', 'legB'],
+    look: { skin: '#6b5a58', body: '#2e2628', arm: '#2e2628', leg: '#2e2628', helm: 'none', eye: '#ff3b2f' },
+    attacks: [
+      { wind: 0.38, active: 0.2, rec: 0.65, dmg: 15, reach: 62, trigger: 145, min: 70, lunge: 520, anim: ANIM.claw },
+      { wind: 0.25, active: 0.1, rec: 0.45, dmg: 10, reach: 50, lunge: 120, anim: ANIM.claw },
+    ],
+  },
+  crow: {
+    name: 'Gallows Crow', model: 'crow', fly: true, hp: 28, limbHp: 12, speed: 150, ichor: 15, aggro: 380, stop: 120, weapon: 'none', height: 30, limbs: ['head', 'armF', 'armB'],
+    look: { skin: '#15131a', body: '#15131a', arm: '#1d1a24', leg: '#15131a', helm: 'none', eye: '#ff3b2f' },
+    attacks: [{ wind: 0.45, active: 0.3, rec: 0.95, dmg: 9, reach: 42, trigger: 172, min: 60, lunge: 620, anim: ANIM.claw }],
+  },
+  bloat: {
+    name: 'Weeping Bloat', hp: 150, limbHp: 60, speed: 36, ichor: 80, aggro: 320, weapon: 'none', scale: 1.2, hunch: 0.2, burst: 22,
+    look: { skin: '#8a9478', body: '#5d6650', arm: '#8a9478', leg: '#3a3a30', helm: 'none', eye: '#ff3b2f', belly: 1 },
+    attacks: [{ wind: 0.7, active: 0.14, rec: 0.8, dmg: 20, reach: 60, lunge: 110, anim: ANIM.slam }],
+  },
+  pikeman: {
+    name: 'Rot-Pike', hp: 85, limbHp: 36, speed: 66, ichor: 55, aggro: 420, weapon: 'spear', wlen: 60,
+    look: { skin: '#8c8576', body: '#3d4438', arm: '#333a30', leg: '#252a22', helm: 'helm', helmCol: '#4d5348', eye: '#ff3b2f' },
+    attacks: [
+      { wind: 0.55, active: 0.14, rec: 0.7, dmg: 22, reach: 118, trigger: 135, min: 50, lunge: 260, anim: ANIM.thrust },
+      { wind: 0.4, active: 0.1, rec: 0.5, dmg: 12, reach: 56, lunge: 80, anim: ANIM.rise },
+    ],
+  },
+  reaper: {
+    name: 'Pale Reaper', hp: 115, limbHp: 42, speed: 64, ichor: 95, aggro: 420, weapon: 'scythe', wlen: 56, scale: 1.18,
+    look: { skin: '#c9c2b6', body: '#16131a', arm: '#16131a', leg: '#0f0d12', helm: 'hood', helmCol: '#0f0d12', eye: '#9ad0ff' },
+    attacks: [
+      { wind: 0.7, active: 0.14, rec: 0.8, dmg: 30, reach: 112, trigger: 125, lunge: 150, anim: ANIM.chop },
+      { wind: 0.5, active: 0.12, rec: 0.6, dmg: 22, reach: 100, lunge: 120, anim: ANIM.rise },
+    ],
+  },
   garrick: {
     name: 'Ser Garrick, the Oathkeeper', boss: true, hp: 640, limbHp: 150, speed: 84, ichor: 1500, aggro: 9999,
     weapon: 'greatsword', wlen: 62, scale: 1.3, poise: true, noSever: ['armF', 'legF', 'legB'],
@@ -87,6 +122,12 @@ G.LOOKS = {
   digger: { skin: '#9a8d7c', body: '#3b352c', arm: '#3b352c', leg: '#26221d', helm: 'hood', helmCol: '#2a261f' },
   nun: { skin: '#b5a99a', body: '#17151a', arm: '#17151a', leg: '#17151a', helm: 'hood', helmCol: '#d6cfc2' },
   doctor: { skin: '#222', body: '#1a1719', arm: '#1a1719', leg: '#121012', helm: 'beak', helmCol: '#1a1719', eye: '#c9a13b' },
+  widow: { skin: '#b5a99a', body: '#2b2630', arm: '#2b2630', leg: '#2b2630', helm: 'hood', helmCol: '#55505c' },
+  oswin: { skin: '#999', body: '#6a6c70', trim: '#8a6a2a', arm: '#5a5c60', leg: '#3d3f44', helm: 'helm', helmCol: '#74767c' },
+  edda: { skin: '#b09a86', body: '#4a3a2a', trim: '#2e241a', arm: '#4a3a2a', leg: '#2a221a', helm: 'hood', helmCol: '#6a3a22' },
+  beggar: { skin: '#9a8d7c', body: '#3a352c', arm: '#9a8d7c', leg: '#2a2620', helm: 'none' },
+  monk: { skin: '#b5a99a', body: '#3a2a1e', arm: '#3a2a1e', leg: '#3a2a1e', helm: 'hood', helmCol: '#2e2118' },
+  rowan: { skin: '#888', body: '#6e6a66', trim: '#2a2a2a', arm: '#5d5955', leg: '#3c3a38', helm: 'helm', helmCol: '#77726c' },
   ysolde: { skin: '#d9d0c6', body: '#c9c2b6', arm: '#c9c2b6', leg: '#c9c2b6', helm: 'veil', helmCol: '#e6dfd2', eye: '#c20d16' },
 };
 
@@ -128,8 +169,8 @@ G.LEVELS = [
     name: 'The Gallows Road', chapter: 'Chapter I', theme: 'road', length: 4300, seed: 11,
     shrines: [1380],
     enemies: [
-      ['wretch', 760], ['wretch', 1060], ['wretch', 1130], ['deserter', 1750], ['wretch', 2050], ['wretch', 2120],
-      ['deserter', 2520], ['wretch', 2590], ['wretch', 2900], ['deserter', 3050], ['brute', 3550], ['deserter', 3900],
+      ['wretch', 760], ['crow', 900], ['wretch', 1060], ['wretch', 1130], ['deserter', 1750], ['wretch', 2050, 'marta'], ['wretch', 2120, 'marta'],
+      ['deserter', 2560], ['hound', 2700], ['hound', 2760], ['wretch', 2950], ['pikeman', 3050], ['crow', 3300], ['brute', 3600], ['deserter', 3900],
     ],
     npcs: [
       {
@@ -144,13 +185,30 @@ G.LEVELS = [
         repeat: [['The Hanged Man', 'Follow the bells. Everyone does, in the end.']],
       },
       {
-        id: 'digger', x: 1470, name: 'Wynn the Gravedigger', look: 'digger', pose: 'stand',
+        id: 'digger', x: 1470, name: 'Wynn the Gravedigger', look: 'digger', pose: 'stand', fighter: true, hp: 150, dmg: 13, weapon: 'club', wlen: 30,
         lines: [
           ['Wynn', "Rest at the candle, ser. Vigil flames still burn clean. Whatever you've bled out of them, the flame will make it part of you."],
           ['Wynn', 'A word for the road. Cut them and they bleed, same as us. Cut deep enough, and pieces come off. A wretch with no sword-arm is half a wretch. One with no leg can only crawl.'],
           ['Wynn', "And when one's had enough, it kneels. Don't leave it kneeling — it'll only get back up, angrier. Step close and put it down. Mercy is the only sacrament left."],
         ],
         repeat: [['Wynn', "I dig them deep. They climb out anyway. Still — a man needs his work."]],
+      },
+      {
+        id: 'marta', x: 2300, name: 'Marta', look: 'widow', pose: 'stand', hp: 90,
+        lines: [
+          ['Marta', 'Is that — no. No, you are too tall. Forgive me. I am waiting for my husband. He wrote that he would come by the gallows road.'],
+          ['Marta', 'I left the lamp lit. Every night. But they come up out of the ditch now, and I cannot run any more.'],
+          ['Marta', 'Please, ser. Only until he comes.'],
+        ],
+        repeat: [['Marta', 'I will keep the lamp lit. Someone should.']],
+      },
+      {
+        id: 'oswin', x: 3230, name: 'Ser Oswin', look: 'oswin', pose: 'stand', fighter: true, hp: 170, dmg: 16, weapon: 'sword', wlen: 40,
+        lines: [
+          ['Ser Oswin', "Another of Osric's suns! I thought I was the last fool still wearing one."],
+          ['Ser Oswin', 'The Headsman is just up the road. I have been working up the nerve for two days. If you are going, I am going. Better than dying alone in a ditch.'],
+        ],
+        repeat: [['Ser Oswin', 'After you, ser. I insist.']],
       },
     ],
     lore: [
@@ -165,13 +223,13 @@ G.LEVELS = [
     name: 'Hollowmere', chapter: 'Chapter II', theme: 'village', length: 4900, seed: 23,
     shrines: [220, 2680],
     enemies: [
-      ['wretch', 700], ['wretch', 780], ['flagellant', 1100], ['wretch', 1700], ['deserter', 1780], ['flagellant', 2050],
-      ['brute', 2350], ['flagellant', 3150], ['flagellant', 3230], ['wretch', 3500], ['wretch', 3560], ['wretch', 3620],
-      ['deserter', 3900], ['brute', 4250], ['flagellant', 4400],
+      ['wretch', 700], ['wretch', 780], ['flagellant', 1100], ['bloat', 1750], ['deserter', 1830], ['hound', 2000], ['flagellant', 2100],
+      ['brute', 2380], ['crow', 2950], ['flagellant', 3180], ['flagellant', 3260], ['wretch', 3560], ['wretch', 3620], ['bloat', 3720],
+      ['pikeman', 3950], ['crow', 4050], ['brute', 4250], ['flagellant', 4400], ['hound', 4550],
     ],
     npcs: [
       {
-        id: 'doctor', x: 1420, name: 'The Plague Doctor', look: 'doctor', pose: 'stand',
+        id: 'doctor', x: 1420, name: 'The Plague Doctor', look: 'doctor', pose: 'stand', hp: 90,
         lines: [
           ['Plague Doctor', 'Do not trouble to hold your breath, ser knight. It is not in the air. I have opened four hundred of them looking for where it is.'],
           ['Plague Doctor', 'It is in the grief. The ones who weep longest turn first. I have stopped feeling anything at all, as a precaution.'],
@@ -181,7 +239,7 @@ G.LEVELS = [
         repeat: [['Plague Doctor', 'Four hundred and one, soon. Mind the Headsman by the square.']],
       },
       {
-        id: 'maud', x: 2780, name: 'Sister Maud', look: 'nun', pose: 'kneel',
+        id: 'maud', x: 2780, name: 'Sister Maud', look: 'nun', pose: 'kneel', essential: true,
         lines: [
           ['Sister Maud', 'Aldric? Little Aldric Vane, in all that iron... She said you would come. Every day she said it.'],
           ['Sister Maud', 'Ysolde stayed when the rest of us hid. She washed them. Sang to them. And one morning her own eyes ran red — and she did not fall. She did not turn.'],
@@ -191,6 +249,22 @@ G.LEVELS = [
           ['Sister Maud', 'Whatever is in that reliquary you carry — take it to her. Not to the Bishop. To her.'],
         ],
         repeat: [['Sister Maud', 'Go on, child. The cathedral doors are past the square. I will keep the candle.']],
+      },
+      {
+        id: 'edda', x: 3010, name: 'Edda the Fletcher', look: 'edda', pose: 'stand', fighter: true, hp: 170, dmg: 15, weapon: 'sword', wlen: 36,
+        lines: [
+          ['Edda', 'Stay back — oh. You bleed the right colour. Good.'],
+          ['Edda', 'I was the fletcher here. Now I am the wall. Everything past me is the square.'],
+        ],
+        repeat: [['Edda', 'Still standing. Both of us. Strange days.']],
+      },
+      {
+        id: 'tobias', x: 3400, name: 'Old Tobias', look: 'beggar', pose: 'kneel', hp: 70,
+        lines: [
+          ['Old Tobias', 'Alms, ser? No... no, you have nothing I can eat.'],
+          ['Old Tobias', 'They walk past me, mostly. I think they forget I am not one of them yet. Do not remind them.'],
+        ],
+        repeat: [['Old Tobias', 'Still here. Still not one of them. I check every morning.']],
       },
     ],
     lore: [
@@ -205,12 +279,28 @@ G.LEVELS = [
     name: 'Cathedral of Saint Avaric', chapter: 'Chapter III', theme: 'cathedral', length: 5300, seed: 37,
     shrines: [220, 3980],
     enemies: [
-      ['flagellant', 700], ['flagellant', 790], ['templar', 1200], ['wretch', 1600], ['wretch', 1660], ['templar', 1750],
-      ['brute', 2250], ['flagellant', 2700], ['templar', 2800], ['templar', 3300], ['flagellant', 3400], ['templar', 3700],
+      ['flagellant', 720], ['flagellant', 800], ['reaper', 1050], ['templar', 1300], ['crow', 1500], ['wretch', 1600], ['wretch', 1660], ['templar', 1800],
+      ['reaper', 2050], ['brute', 2300], ['bloat', 2650], ['flagellant', 2750], ['templar', 2850], ['templar', 3300], ['reaper', 3420], ['pikeman', 3650], ['templar', 3760],
     ],
     npcs: [
       {
-        id: 'ysolde', x: 5120, name: 'Ysolde, the Weeping Saint', look: 'ysolde', pose: 'kneel', needs: 'bossDead',
+        id: 'anselm', x: 440, name: 'Brother Anselm', look: 'monk', pose: 'kneel', hp: 80,
+        lines: [
+          ['Brother Anselm', 'Hush! Hush. They hear prayer. I learned that late.'],
+          ['Brother Anselm', 'I served Bishop Malvern twenty years. I must know whether he died a believer.'],
+        ],
+        repeat: [['Brother Anselm', 'I do not pray any more. I only kneel. It is a habit.']],
+      },
+      {
+        id: 'rowan', x: 3090, name: 'Ser Rowan', look: 'rowan', pose: 'stand', fighter: true, hp: 190, dmg: 18, weapon: 'sword', wlen: 44,
+        lines: [
+          ['Ser Rowan', 'I wore the Veil. I stood in the row when they carried her in, and I said nothing.'],
+          ['Ser Rowan', 'I have been killing my own brothers in this aisle ever since. Come — there are more, and I owe.'],
+        ],
+        repeat: [['Ser Rowan', 'Lead on. I will keep your back.']],
+      },
+      {
+        id: 'ysolde', x: 5120, name: 'Ysolde', look: 'ysolde', pose: 'kneel', needs: 'bossDead', essential: true,
         lines: [
           ['Ysolde', 'Aldric. You are late. I had supper waiting for... oh. For a long time.'],
           ['Ysolde', "Don't look at Garrick like that. He was kind. He held the door so they would not cut me open again. The Bishop tried, you know. He is in the crypt now, with the others. They are quiet for me."],

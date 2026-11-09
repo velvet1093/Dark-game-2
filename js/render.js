@@ -19,6 +19,12 @@ G.drawWeapon = (ctx, x, y, w, type, len, bloody = 0, C = c => c) => {
     const bx = x + sx * len * 0.5, by = y + cy * len * 0.5;
     ctx.moveTo(bx, by); ctx.lineTo(tx, ty); ctx.lineTo(tx + cy * 16, ty - sx * 16); ctx.lineTo(bx + cy * 13, by - sx * 13); ctx.fill();
     line(tx + cy * 16, ty - sx * 16, bx + cy * 13, by - sx * 13, 2, '#7a0a10');
+  } else if (type === 'spear' || type === 'scythe') {
+    line(x - sx * len * 0.35, y - cy * len * 0.35, tx, ty, 3, '#3a2a1e');
+    ctx.fillStyle = C('#a9acb4'); ctx.beginPath();
+    if (type === 'spear') { ctx.moveTo(tx + cy * 3.5, ty - sx * 3.5); ctx.lineTo(tx + sx * 15, ty + cy * 15); ctx.lineTo(tx - cy * 3.5, ty + sx * 3.5); }
+    else { ctx.moveTo(tx, ty); ctx.quadraticCurveTo(tx + cy * 16 + sx * 10, ty - sx * 16 + cy * 10, tx + cy * 34 - sx * 8, ty - sx * 34 - cy * 8); ctx.quadraticCurveTo(tx + cy * 14 + sx * 2, ty - sx * 14 + cy * 2, tx - sx * 5, ty - cy * 5); }
+    ctx.fill();
   } else if (type === 'club') {
     line(x, y, tx, ty, 4, '#3a2a1e');
     for (let i = 0; i < 3; i++) line(tx, ty, tx + sx * 6 + cy * (i - 1) * 9, ty + cy * 6 - sx * (i - 1) * 9 + 8, 1.5, '#1a1212');
@@ -80,6 +86,7 @@ G.drawHumanoid = (ctx, o) => {
   // torso
   seg(hx, hy, sx, sy + 3, 14, L.body);
   if (L.trim) seg(hx + 1, hy + 4, sx + 1, sy + 6, 6, L.trim);
+  if (L.belly) { ctx.fillStyle = C(L.body); ctx.beginPath(); ctx.arc((hx + sx) / 2 + 6, (hy + sy) / 2 + 5, 14, 0, 7); ctx.fill(); ctx.strokeStyle = C('#7a2a2a'); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc((hx + sx) / 2 + 8, (hy + sy) / 2 + 5, 9, -0.6, 1.2); ctx.stroke(); }
   seg(hx - 4, hy, hx + 4, hy, 4, '#1a1414');
   // head
   if (gone('head')) stump(sx + Math.sin(ha) * 4, sy - Math.cos(ha) * 4);

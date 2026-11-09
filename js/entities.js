@@ -15,10 +15,11 @@ G.Player = class {
     this.stats = { vig: 0, str: 0, end: 0 };
     this.weapon = G.WEAPONS.longsword;
     this.look = G.LOOKS.player;
-    this.flaskMax = 3; this.x = 120; this.facing = 1;
+    this.x = 120; this.facing = 1;
     this.reset();
   }
   get maxHp() { return 100 + this.stats.vig * 16; }
+  get flaskMax() { return 3 + (this.stats.flask || 0); }
   get maxSt() { return 100 + this.stats.end * 12; }
   get dmgMul() { return 1 + this.stats.str * 0.09; }
   reset() {
@@ -85,7 +86,7 @@ G.Player = class {
       if (!this.swung && this.t >= t1) { this.swung = true; this.vx = this.facing * a.lunge; G.sfx('swing'); }
       if (this.t >= t1 && this.t < t2) {
         for (const e of g.enemies) {
-          if (e.dead || e.state === 'executed' || this.hitSet.has(e.id)) continue;
+          if (e.dead || e.state === 'executed' || this.hitSet.has(e.id) || e.alt > 95) continue;
           const rel = (e.x - this.x) * this.facing;
           if (rel > -12 && rel < a.reach + 14 * e.scale) { this.hitSet.add(e.id); e.takeHit(a.dmg * this.dmgMul, a, this.facing, g, w); this.bloody = Math.min(1, this.bloody + 0.25); }
         }
@@ -120,7 +121,7 @@ G.Player = class {
     if (this.state !== 'idle' && this.state !== 'block') this.vx *= Math.pow(friction, dt);
     if (this.state !== 'roll' && this.state !== 'execute') {
       for (const e of g.enemies) {
-        if (e.dead || e.crawling || e.state === 'broken') continue;
+        if (e.dead || e.crawling || e.state === 'broken' || e.def.fly) continue;
         const d = this.x - e.x, min = 22 * e.scale;
         if (Math.abs(d) < min) this.x = e.x + (d >= 0 ? min : -min);
       }
@@ -178,17 +179,27 @@ const LIMBS = ['head', 'armF', 'armB', 'legF', 'legB'];
 const LIMB_WEIGHT = { torso: 3, head: 1, armF: 2, armB: 2, legF: 1.5, legB: 1.5 };
 
 G.Enemy = class {
-  constructor(type, x) {
+  constructor(type, x, tag) {
     const d = G.ENEMIES[type];
     Object.assign(this, {
       id: G.uid++, type, def: d, x, vx: 0, facing: -1, hp: d.hp, maxHp: d.hp, scale: d.scale || 1,
       state: 'idle', t: 0, cd: rand(0, 0.5), flash: 0, walk: rand(0, 6), dead: false, dormant: !!d.boss,
-      bleed: 0, bleedT: 0, drip: 0, frenzy: false, wasBroken: false, atk: null, hitDone: false, fountain: 0, phase2: false, out: null,
+      bleed: 0, bleedT: 0, drip: 0, frenzy: false, wasBroken: false, atk: null, hitDone: false, fountain: 0, phase2: false, out: null, tag, alt: 0, focus: 0, tgt: null,
     });
     this.limbs = {};
-    for (const k of LIMBS) this.limbs[k] = { hp: d.limbHp, gone: false };
+    for (const k of LIMBS) this.limbs[k] = { hp: d.limbHp, gone: false, absent: !!d.limbs && !d.limbs.includes(k) };
   }
-  get crawling() { return this.limbs.legF.gone || this.limbs.legB.gone; }
+  // grounded: a walker missing a leg, or a flyer missing a wing
+  get crawling() { const L = this.limbs; return L.legF.gone || L.legB.gone || (!!this.def.fly && (L.armF.gone || L.armB.gone)); }
+  // Enemies hunt whoever is nearest, the knight or a villager in view, and lean
+  // towards the villager. An enemy tagged with an NPC's id hunts that NPC.
+  pickTarget(g) {
+    const pl = g.player;
+    if (this.def.boss || this.focus > 0 || !g.onScreen(this.x)) return pl;
+    let best = pl, bd = pl.dead ? 1e9 : Math.abs(pl.x - this.x);
+    for (const n of g.npcs) { if (!n.targetable || !g.onScreen(n.x)) continue; const hunted = this.tag === n.id, d = Math.abs(n.x - this.x) * (hunted ? 0.3 : 0.6); if (d < bd && d < (hunted ? 130 : 150)) { best = n; bd = d; } }
+    return best;
+  }
   get stumps() { return LIMBS.reduce((n, k) => n + (this.limbs[k].gone ? 1 : 0), 0); }
   get speed() {
     let s = this.def.speed * (this.frenzy ? 1.35 : 1);
@@ -230,12 +241,13 @@ G.Enemy = class {
     if (this.def.boss && this.state === 'broken') return;
     if (this.dormant) this.dormant = false;
     // which part did the blade find?
-    const opts = Object.keys(LIMB_WEIGHT).filter(k => k === 'torso' || !this.limbs[k].gone);
+    const opts = Object.keys(LIMB_WEIGHT).filter(k => k === 'torso' || (!this.limbs[k].gone && !this.limbs[k].absent));
     let roll = Math.random() * opts.reduce((s, k) => s + LIMB_WEIGHT[k], 0), part = 'torso';
     for (const k of opts) { roll -= LIMB_WEIGHT[k]; if (roll <= 0) { part = k; break; } }
     if (part === 'head') dmg *= 1.3;
     const [jx, jy] = this.joint(part === 'torso' ? 'armF' : part);
-    this.flash = 0.1; g.hitstop = atk.poiseBreak ? 0.09 : 0.05; g.shake = Math.max(g.shake, atk.poiseBreak ? 7 : 4);
+    this.flash = 0.1;
+    if (!atk.quiet) { this.focus = 4; g.hitstop = atk.poiseBreak ? 0.09 : 0.05; g.shake = Math.max(g.shake, atk.poiseBreak ? 7 : 4); }
     G.blood(jx, jy + (part === 'torso' ? 12 : 0), 10 + dmg * 0.4, dir, 300); G.sfx('hit');
     let severed = false;
     if (part !== 'torso') {
@@ -259,7 +271,7 @@ G.Enemy = class {
 
   sever(k, dir, g) {
     const L = this.limbs[k], [jx, jy] = this.joint(k);
-    L.gone = true; g.shake = 10; g.hitstop = 0.1; G.sfx('sever'); g.fairy.bark('gore', false, 0.35);
+    L.gone = true; g.shake = 10; if (g.onScreen(this.x)) g.hitstop = 0.1; G.sfx('sever'); g.fairy.bark('gore', false, 0.35);
     G.blood(jx, jy, 45, dir, 380);
     G.gib(k === 'head' ? 'head' : k[0] === 'a' ? 'arm' : 'leg', jx, jy, dir, this.def.look, { scale: this.scale });
     if (k === 'armF' && this.def.weapon !== 'none') G.gib('weapon', jx, jy, dir, this.def.look, { wtype: this.def.weapon, wlen: this.def.wlen, scale: this.scale });
@@ -274,13 +286,23 @@ G.Enemy = class {
       this.fountain = 1.6;
     }
     G.decal(this.x, 8, 26 * this.scale); G.sfx('thud'); G.game.fairy.bark('kill', false, 0.25);
-    G.game.addIchor(Math.round(this.def.ichor * (o.exec ? 1.5 : 1)), this.x);
+    const g = G.game;
+    g.addIchor(Math.round(this.def.ichor * (o.exec ? 1.5 : 1)), this.x); g.onEnemyDeath(this);
+    // a bloat that is not cleanly executed bursts over everyone nearby
+    if (this.def.burst && !o.exec) {
+      G.blood(this.x, G.GROUND - 50, 140, 0, 520); G.decal(this.x, 14, 60); G.sfx('sever'); g.shake = 12;
+      G.text(this.x, G.GROUND - 120, 'BURST', '#e0222c', 18);
+      for (const t of [g.player, ...g.npcs]) if (Math.abs(t.x - this.x) < 100) t.damage(this.def.burst, this.x, g);
+    }
   }
 
   update(dt, g) {
     this.t += dt; this.flash -= dt; this.cd -= dt;
-    const p = g.player, dx = p.x - this.x, dist = Math.abs(dx), gy = G.GROUND;
+    if (this.focus > 0) this.focus -= dt;
+    if (!this.tgt || this.tgt.dead || this.state === 'idle' || this.state === 'chase') this.tgt = this.pickTarget(g);
+    const p = this.tgt, dx = p.x - this.x, dist = Math.abs(dx), gy = G.GROUND;
     if (this.dead) {
+      if (this.alt > 0) this.alt = Math.max(0, this.alt - 420 * dt);
       if (this.fountain > 0) { this.fountain -= dt; const [jx, jy] = this.joint('head'); G.blood(jx, Math.min(jy, gy - 10), 3, 0, 300 * this.fountain); }
       this.vx *= Math.pow(0.001, dt); this.x += this.vx * dt; return;
     }
@@ -307,8 +329,11 @@ G.Enemy = class {
         break;
       case 'chase': {
         this.facing = dx >= 0 ? 1 : -1;
-        const stop = 40 * this.scale;
-        if (dist > stop) { this.vx = this.facing * this.speed; this.walk += dt * this.speed * 0.11; } else this.vx = 0;
+        const stop = this.def.stop || 40 * this.scale;
+        if (dist > stop + (this.def.fly ? 12 : 0)) { this.vx = this.facing * this.speed; this.walk += dt * this.speed * 0.11; }
+        else if (this.def.fly && !this.crawling && dist < stop - 35) this.vx = -this.facing * this.speed * 0.7;
+        else this.vx = 0;
+        if (dist > this.def.aggro * 1.7 && !boss) { this.set('idle'); this.vx = 0; break; }
         if (this.cd <= 0 && !p.dead) {
           const c = this.def.attacks.filter(a => dist >= (a.min || 0) && dist <= (a.trigger || a.reach * m.reach * this.scale * 0.92));
           if (c.length) { this.atk = G.pick(c); this.set('windup'); this.vx = 0; if (this.def.poise) G.sfx('grunt'); }
@@ -334,6 +359,11 @@ G.Enemy = class {
         this.vx = 0;
         if (!boss && this.t > 5) { this.frenzy = true; this.set('chase'); G.text(this.x, gy - 100 * this.scale, 'FRENZY', '#e0222c', 15); }
         break;
+    }
+    if (this.def.fly) {
+      const s = this.state, low = this.crawling || s === 'broken' || s === 'executed' || s === 'idle';
+      const want = low ? 0 : s === 'strike' ? 46 : s === 'windup' ? 138 : s === 'stagger' ? 70 : 122;
+      this.alt += (want - this.alt) * Math.min(1, dt * (s === 'strike' ? 14 : low ? 6 : 3));
     }
     this.x += this.vx * dt;
     if (this.state !== 'chase') this.vx *= Math.pow(0.002, dt);
@@ -371,10 +401,10 @@ G.Enemy = class {
   draw(ctx, g) {
     const d = this.def, o = { x: this.x, y: G.GROUND, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
     // attack telegraph
-    if (this.state === 'windup') { ctx.fillStyle = `rgba(255,60,40,${0.15 + 0.25 * Math.min(1, this.t / this.atk.wind)})`; ctx.beginPath(); ctx.arc(this.x, G.GROUND - 72 * this.scale, 20 * this.scale, 0, 7); ctx.fill(); }
-    G.drawHumanoid(ctx, o); this.out = o.out;
+    if (this.state === 'windup') { ctx.fillStyle = `rgba(255,60,40,${0.15 + 0.25 * Math.min(1, this.t / this.atk.wind)})`; ctx.beginPath(); ctx.arc(this.x, G.GROUND - this.alt - (d.height ? d.height * 0.6 : 72 * this.scale), d.height ? 16 : 20 * this.scale, 0, 7); ctx.fill(); }
+    if (d.model) G.drawBeast(ctx, this, g.time); else { G.drawHumanoid(ctx, o); this.out = o.out; }
     if (!this.dead && !d.boss && this.hp < this.maxHp && this.state !== 'executed') {
-      const w = 40 * this.scale, y = G.GROUND - (this.crawling ? 34 : 96 * this.scale);
+      const w = 40 * this.scale, y = G.GROUND - this.alt - (d.height || (this.crawling ? 34 : 96 * this.scale));
       ctx.fillStyle = '#000'; ctx.fillRect(this.x - w / 2 - 1, y - 1, w + 2, 5);
       ctx.fillStyle = this.state === 'broken' ? '#d9c9b0' : '#8f0810'; ctx.fillRect(this.x - w / 2, y, w * this.hp / this.maxHp, 3);
       if (this.bleed > 0) { ctx.fillStyle = '#e0222c'; ctx.fillRect(this.x - w / 2, y + 4, w * this.bleed / 100, 1.5); }

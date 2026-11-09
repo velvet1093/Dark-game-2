@@ -6,7 +6,7 @@
   const el = () => document.getElementById('overlay');
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(/\n/g, '<br>');
   const KEYS = `<div class="keys"><b>A</b> <b>D</b> move &nbsp; <b>J</b> / click slash &nbsp; <b>K</b> / right-click heavy &nbsp; <b>Space</b> roll<br>
-    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>E</b> interact · execute &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
+    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>E</b> interact · execute &nbsp; <b>Tab</b> quests &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
 
   const ui = G.ui = {
     blocking: false, advance: null, options: null,
@@ -15,7 +15,7 @@
     handle() {
       const I = G.input;
       if (this.options) { for (let i = 0; i < this.options.length; i++) if (I.hit('opt' + (i + 1))) { this.options[i](); return; } }
-      if (this.advance && (I.hit('confirm') || I.hit('use') || I.hit('roll') || (this.escAdvance && I.hit('pause')))) this.advance();
+      if (this.advance && (I.hit('confirm') || I.hit('use') || I.hit('roll') || (this.escAdvance && (I.hit('pause') || I.hit('journal'))))) this.advance();
     },
     show(html, advance, options) {
       el().innerHTML = html; this.blocking = true; this.advance = advance || null; this.options = options || null; this.escAdvance = false;
@@ -78,6 +78,21 @@
         { label: 'Rise', fn: () => this.clear() },
       ], '<div class="keys">Resting restores your flasks — and returns the dead to their feet.</div>');
       this.advance = () => this.clear(); this.escAdvance = true;
+    },
+    journal() {
+      const Q = G.questLog, order = { active: 0, done: 1, failed: 2 }, label = { active: 'in progress', done: 'complete', failed: 'failed' };
+      const ids = Q.ids().sort((a, b) => (G.QUESTS[b].main ? 1 : 0) - (G.QUESTS[a].main ? 1 : 0) || order[Q.state[a].status] - order[Q.state[b].status]);
+      const html = ids.map(id => {
+        const d = G.QUESTS[id], q = Q.state[id];
+        const steps = d.steps.map((s, i) => {
+          const cls = q.status === 'done' || i < q.step ? 'done' : i === q.step ? (q.status === 'failed' ? 'fail' : 'cur') : 'todo';
+          const hidden = d.main && cls === 'todo';
+          return `<li class="${cls}">${cls === 'done' ? '✔' : cls === 'cur' ? '◆' : cls === 'fail' ? '✖' : '◇'} ${hidden ? '...' : esc(cls === 'cur' ? Q.text(id, i) : s.text)}</li>`;
+        }).join('');
+        return `<div class="quest ${q.status}"><h3>${esc(d.title)} <small>${label[q.status]}</small></h3><ul>${steps}</ul></div>`;
+      }).join('') || '<div class="sub">Nothing is asked of you yet.</div>';
+      this.show(`<div class="screen dim journal"><h2>Quests</h2><div class="quests">${html}</div><div class="hint">Tab / Esc to close</div></div>`, () => this.clear());
+      this.escAdvance = true; G.sfx('page');
     },
     choice(prompt, opts) {
       this.menu('dim', `<h2>${esc(prompt)}</h2>`, opts.map(o => ({ label: o.label, fn: () => { this.clear(); o.fn(); } })));

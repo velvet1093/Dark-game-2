@@ -78,6 +78,10 @@
     candle: () => { noise(0.5, 0.1, 1200, 'bandpass'); tone(660, 0.9, 'sine', 0.06); },
     ichor: () => tone(220, 0.5, 'sine', 0.14, 440),
     bleed: () => { noise(0.35, 0.35, 900); tone(200, 0.25, 'square', 0.08, 80); },
+    scream: () => { tone(620, 0.5, 'sawtooth', 0.12, 240); noise(0.4, 0.2, 1400, 'bandpass'); },
+    quest: () => { tone(392, 0.5, 'sine', 0.12); tone(587, 0.7, 'sine', 0.1, 0, 0.14); },
+    questdone: () => { tone(392, 0.4, 'sine', 0.12); tone(494, 0.4, 'sine', 0.12, 0, 0.13); tone(587, 0.5, 'sine', 0.12, 0, 0.26); tone(784, 1.2, 'sine', 0.12, 0, 0.39); },
+    questfail: () => { tone(311, 0.6, 'triangle', 0.14, 233); tone(155, 1.2, 'sine', 0.16, 110, 0.3); },
     chime: () => { tone(1320, 0.5, 'sine', 0.06); tone(1760, 0.6, 'sine', 0.045, 0, 0.09); tone(2640, 0.5, 'sine', 0.025, 0, 0.18); },
     giggle: () => { for (let i = 0; i < 5; i++) tone(1500 + (i % 2 ? 320 : 0) - i * 60, 0.09, 'triangle', 0.07, 1950 - i * 90, i * 0.085); },
   };

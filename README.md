@@ -24,6 +24,7 @@ python3 -m http.server 8000
 | Block | `L` or `Shift` |
 | Drink flask | `Q` |
 | Interact / **Execute** | `E` |
+| Quest journal | `Tab` or `T` |
 | Pause | `Esc` |
 | Mute | `M` |
 
@@ -41,6 +42,39 @@ On-screen buttons appear on touch devices.
 - **Stamina** — attacks, rolls and blocked hits cost stamina. An empty bar means a broken guard.
 - **Vigil candles** — rest to refill flasks, set your checkpoint and spend ichor on Vigor, Strength or Endurance. Resting also returns the dead to their feet.
 - **Death** — you drop your ichor where you fall. Reach the stain to reclaim it; die first and it is gone.
+
+## Quests
+
+Quests are lists of clear steps. The current step of each active quest is tracked in the top-right corner, and the journal (`Tab`) shows every step with what is done, what is next and what failed. A gold `!` marks someone with a quest to give; a gold `?` marks someone a step sends you to.
+
+- **The Ashen Vow** — the main story, start to finish.
+- **Cut Him Down**, **Spadework**, **The Lamp Left Lit** — the Gallows Road.
+- **Four Hundred and One**, **Hold the Square** — Hollowmere.
+- **Last Rites** — the cathedral.
+
+Rewards are ichor or a permanent extra flask. A quest fails if the person it is for dies.
+
+## The people of Morrowmere
+
+Enemies hunt villagers as well as you, and lean towards the easier prey.
+
+- **Fighters** (Wynn, Ser Oswin, Edda, Ser Rowan) draw a weapon, fight beside you and can still be overwhelmed.
+- **The helpless** (Marta, the Plague Doctor, Old Tobias, Brother Anselm) back away and beg. If you do not reach them in time they die.
+- A death is permanent for that save, and resting does not bring anyone back. Survivors are healed when you rest.
+- A few people the story needs cannot be harmed.
+
+## Bestiary
+
+| Enemy | Notes |
+| --- | --- |
+| Weeping Wretch, Deserter, Flagellant, Knight of the Veil | foot soldiers of the plague |
+| Headsman | huge, slow, cannot be staggered by light hits |
+| Carrion Hound | four-legged, fast, pounces; cut a leg off and it drags itself |
+| Gallows Crow | flies out of reach and dives; strike as it pulls up, or take a wing |
+| Weeping Bloat | bursts over everyone nearby when killed — unless you execute it |
+| Rot-Pike | long spear thrust |
+| Pale Reaper | tall, wide scythe sweeps |
+| Ser Garrick | the boss |
 
 ## Wist
 
@@ -63,6 +97,9 @@ Progress saves at vigil candles (browser local storage).
 | `js/engine.js` | input, blood / gib particles |
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/fairy.js` | Wist: lines, behaviour and drawing |
+| `js/beasts.js` | hound and crow models |
+| `js/npc.js` | villagers: fighting, fleeing, dying |
+| `js/quests.js` | quest definitions and the quest log |
 | `js/data.js` | weapons, enemy types, levels, all story text |
 | `js/render.js` | procedural character rig, weapons, backdrops |
 | `js/entities.js` | player and enemy logic (combat, limbs, bleeding, AI) |
