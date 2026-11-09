@@ -1,6 +1,6 @@
 # Ashen Vow
 
-A dark, bloody, story-driven 2D action game set in a plague-ridden dark age.
+A dark, bloody, story-driven 2D action game set in a dark age consumed by an infection.
 You are **Ser Aldric Vane**, a knight who comes home after seven years abroad carrying a relic that was meant to save a kingdom that no longer exists.
 
 No build step, no dependencies, no asset files — all art and sound are generated in code.
@@ -23,6 +23,7 @@ python3 -m http.server 8000
 | Roll (invulnerable) | `Space` |
 | Block | `L` or `Shift` |
 | Drink flask | `Q` |
+| Drink lily tincture (fights infection) | `R` or `F` |
 | Interact / **Execute** | `E` |
 | Quest journal | `Tab` or `T` |
 | Pause | `Esc` |
@@ -40,8 +41,29 @@ On-screen buttons appear on touch devices.
   - open stumps bleed until the enemy dies
 - **Executions** — an enemy at low health is *Broken* and kneels. Step close and press `E` to execute it: an instant kill that restores health and pays 50% more ichor. Leave it kneeling too long and it rises in a frenzy.
 - **Stamina** — attacks, rolls and blocked hits cost stamina. An empty bar means a broken guard.
-- **Vigil candles** — rest to refill flasks, set your checkpoint and spend ichor on Vigor, Strength or Endurance. Resting also returns the dead to their feet.
+- **Vigil candles** — rest to refill flasks, set your checkpoint and spend ichor on Vigor, Strength or Endurance. The infected never rest, so more will have wandered in while you did.
 - **Death** — you drop your ichor where you fall. Reach the stain to reclaim it; die first and it is gone.
+
+## The infection
+
+The Weeping is a sickness, not a curse. The things on the road are **living people**: infected, sleepless, unable to stop, and left with one want — to kill whoever is still clean. It enters through wounds.
+
+- **Infection meter** — the purple bar under your stamina. Every wound you take raises it. Above half it slows your stamina recovery and the edges of your sight close in.
+- **Turning** — when the bar fills you have **45 seconds**. You hit harder while it lasts. If the clock runs out you turn, which counts as a death.
+- **Sisters of the Lily** — nuns in black veils and white frills who keep the chapels. A Sister washes the infection out completely and refills your tincture vial. Three keep the great chapel in Brannoc's Hold; one keeps a wayside chapel in every other area.
+- **Lily tincture** (`R`) — a vial you carry that knocks the infection back by about half and stops the clock. One to start; a quest earns a second.
+- Resting at a candle does **not** cure you. Dying leaves you at half infection at most.
+- Wayside Sisters carry swords and fight, but they can be killed — and then that chapel is gone for the rest of that save.
+
+## The world
+
+| Chapter | Area | |
+| --- | --- | --- |
+| I | The Gallows Road | the long road in, with a wayside chapel near its end |
+| II | Brannoc's Hold | a walled town with no enemies: guards, tradesfolk, refugees and the Chapel of the Lily |
+| III | The Weeping Fen | black water, hounds and bloats; white lilies grow here |
+| IV | Hollowmere | your home village |
+| V | Cathedral of Saint Avaric | the source |
 
 ## Quests
 
@@ -49,25 +71,27 @@ Quests are lists of clear steps. The current step of each active quest is tracke
 
 - **The Ashen Vow** — the main story, start to finish.
 - **Cut Him Down**, **Spadework**, **The Lamp Left Lit** — the Gallows Road.
-- **Four Hundred and One**, **Hold the Square** — Hollowmere.
+- **The Gate Must Hold**, **A Better Edge**, **Lilies for the Sisters** — given in Brannoc's Hold, carried out beyond it.
+- **Three Knocks** — the Weeping Fen.
+- **Four Hundred and One**, **Hold the Square**, **The One Who Circles** — Hollowmere.
 - **Last Rites** — the cathedral.
 
-Rewards are ichor or a permanent extra flask. A quest fails if the person it is for dies.
+Rewards are ichor, a point of Strength, or a permanent extra flask or tincture vial. A quest fails if the person it is for dies.
 
 ## The people of Morrowmere
 
 Enemies hunt villagers as well as you, and lean towards the easier prey.
 
-- **Fighters** (Wynn, Ser Oswin, Edda, Ser Rowan) draw a weapon, fight beside you and can still be overwhelmed.
-- **The helpless** (Marta, the Plague Doctor, Old Tobias, Brother Anselm) back away and beg. If you do not reach them in time they die.
+- **Fighters** (Wynn, Ser Oswin, Edda, Ser Rowan, Garrow, the wayside Sisters) draw a weapon, fight beside you and can still be overwhelmed.
+- **The helpless** (Marta, Jory, Wenna, the Plague Doctor, Old Tobias, Greta, Brother Anselm) back away and beg. If you do not reach them in time they die.
 - A death is permanent for that save, and resting does not bring anyone back. Survivors are healed when you rest.
-- A few people the story needs cannot be harmed.
+- A few people the story needs, and everyone inside the walls of Brannoc's Hold, cannot be harmed.
 
 ## Bestiary
 
 | Enemy | Notes |
 | --- | --- |
-| Weeping Wretch, Deserter, Flagellant, Knight of the Veil | foot soldiers of the plague |
+| Weeping Wretch, Deserter, Flagellant, Knight of the Veil | the infected, in whatever they were wearing when it took them |
 | Headsman | huge, slow, cannot be staggered by light hits |
 | Carrion Hound | four-legged, fast, pounces; cut a leg off and it drags itself |
 | Gallows Crow | flies out of reach and dives; strike as it pulls up, or take a wing |
@@ -86,7 +110,7 @@ All audio is synthesised in the browser: a music theme per area (title, road, vi
 
 ## Story
 
-Three chapters — the Gallows Road, Hollowmere, and the Cathedral of Saint Avaric — told through characters you meet, notes you find, a boss who used to be your friend, and a final choice with two endings.
+Five chapters told through characters you meet, notes you find, a boss who used to be your friend, and a final choice with two endings.
 
 Progress saves at vigil candles (browser local storage).
 

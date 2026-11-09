@@ -9,6 +9,7 @@
 //   reach {level}               arrive in a chapter
 //   read  {lore: 'level:index'} read a note
 //   flag  {flag}                any game flag becomes set
+//   collect {item, n}           gather n of an item lying in the world
 // start: {auto} | {talk: npcId} | {read: loreKey}. failIfDead: npcId.
 // ---------------------------------------------------------------------------
 G.QUESTS = {
@@ -16,9 +17,11 @@ G.QUESTS = {
     title: 'The Ashen Vow', main: true, start: { auto: true },
     steps: [
       { type: 'talk', npc: 'hanged', meet: true, text: 'Speak to the Hanged Man on the Gallows Road' },
-      { type: 'reach', level: 1, text: 'Follow the road east to Hollowmere' },
-      { type: 'talk', npc: 'maud', meet: true, text: 'Find Sister Maud by the far candle in Hollowmere' },
-      { type: 'reach', level: 2, text: 'Climb to the Cathedral of Saint Avaric' },
+      { type: 'reach', level: 1, text: "Follow the road east to the walled town of Brannoc's Hold" },
+      { type: 'talk', npc: 'odile', meet: true, text: 'Speak to Mother Odile at the Chapel of the Lily' },
+      { type: 'reach', level: 3, text: 'Leave by the Fen Gate and cross the Weeping Fen to Hollowmere' },
+      { type: 'talk', npc: 'maud', meet: true, text: 'Find Sister Maud by the second candle in Hollowmere' },
+      { type: 'reach', level: 4, text: 'Climb to the Cathedral of Saint Avaric' },
       { type: 'flag', flag: 'bossDead', text: 'Defeat Ser Garrick, the Oathkeeper' },
       { type: 'talk', npc: 'ysolde', meet: true, text: "Bring the Saint's Tear to Ysolde" },
     ],
@@ -41,7 +44,7 @@ G.QUESTS = {
   spade: {
     title: 'Spadework', start: { talk: 'digger' }, giver: 'digger', failIfDead: 'digger', reward: { flask: 1 },
     offer: [
-      ['Wynn', "If you want to be useful: the wretches keep unburying themselves faster than I can plant them. Put four down for good and I'll share what the old priest left me."],
+      ['Wynn', "If you want to be useful: the wretches never sleep and never stop, and they keep wandering in off the moor. Put four down for good and I'll share what the old priest left me."],
     ],
     waiting: [['Wynn', 'Four wretches, ser. I am counting. It is all I do.']],
     steps: [
@@ -70,7 +73,7 @@ G.QUESTS = {
     ],
     waiting: [['Plague Doctor', 'Three Flagellants. The hooded ones. Do try to keep the samples off your boots.']],
     steps: [
-      { type: 'kill', enemy: 'flagellant', level: 1, n: 3, text: 'Slay Flagellants in Hollowmere' },
+      { type: 'kill', enemy: 'flagellant', level: 3, n: 3, text: 'Slay Flagellants in Hollowmere' },
       { type: 'talk', npc: 'doctor', text: 'Return to the Plague Doctor', lines: [
         ['Plague Doctor', 'Hold the blade to the light... Ordinary. Entirely ordinary. So it truly is only grief.'],
         ['Plague Doctor', 'How disappointing. Your tincture, as agreed.'],
@@ -85,10 +88,72 @@ G.QUESTS = {
     ],
     waiting: [['Edda', 'Two Headsmen. Count them out for me.']],
     steps: [
-      { type: 'kill', enemy: 'brute', level: 1, n: 2, text: 'Slay both Headsmen in Hollowmere' },
+      { type: 'kill', enemy: 'brute', level: 3, n: 2, text: 'Slay both Headsmen in Hollowmere' },
       { type: 'talk', npc: 'edda', text: 'Return to Edda at the barricade', lines: [
         ['Edda', 'Both? ...Huh. I had your eulogy half written.'],
-        ['Edda', 'Take this. The dead paid it to me; I am paying it on.'],
+        ['Edda', 'Take this. The ones I put down were carrying it; I am paying it on.'],
+      ] },
+    ],
+  },
+  lilies: {
+    title: 'Lilies for the Sisters', start: { talk: 'verena' }, giver: 'verena', failIfDead: 'liese', reward: { tinct: 1 },
+    offer: [
+      ['Sister Verena', 'Our lily-water is nearly gone, and the lilies grow only in the fen now. White ones, low on the water. Gather three.'],
+      ['Sister Verena', 'You will not be let back in this gate, so carry them on to Sister Liese, at the far end of Hollowmere. She is worse off than we are. She will see you right.'],
+    ],
+    waiting: [['Sister Verena', 'Three white lilies. From the fen. To Sister Liese, in Hollowmere.']],
+    steps: [
+      { type: 'collect', item: 'lily', n: 3, text: 'Gather white lilies in the Weeping Fen' },
+      { type: 'talk', npc: 'liese', text: 'Bring the lilies to Sister Liese at the far end of Hollowmere', lines: [
+        ['Sister Liese', 'Lilies. Fresh ones. Oh — Verena, you stubborn woman.'],
+        ['Sister Liese', 'Give me your vial. No, the other one too. You will carry a second from now on; you have earned the weight.'],
+      ] },
+    ],
+  },
+  gate: {
+    title: 'The Gate Must Hold', start: { talk: 'hale' }, giver: 'hale', failIfDead: 'garrow', reward: { ichor: 600 },
+    offer: [
+      ['Captain Hale', 'Since you are going out the Fen Gate regardless: thin them. Ten, between here and the far bank. Fewer at my wall tonight.'],
+      ['Captain Hale', 'My warden Garrow watches the far side. He keeps the purse. He will know if you did it — he counts everything.'],
+    ],
+    waiting: [['Captain Hale', 'Ten in the fen. Garrow has your pay, on the far bank.']],
+    steps: [
+      { type: 'kill', any: true, level: 2, n: 10, text: 'Put down the infected in the Weeping Fen' },
+      { type: 'talk', npc: 'garrow', text: 'Collect the bounty from Garrow on the far bank of the fen', lines: [
+        ['Garrow', 'Ten. I counted eleven, but one was mine. Hale said to pay a knight with a red plume if he lived.'],
+        ['Garrow', 'Here. First purse I have handed over in a year.'],
+      ] },
+    ],
+  },
+  edge: {
+    title: 'A Better Edge', start: { talk: 'dunstan' }, giver: 'dunstan', reward: { str: 1 },
+    offer: [
+      ['Dunstan', 'Give it here. I will grind it now, no charge. If that edge takes three of those pike-carrying bastards, it was good work and you owe me nothing.'],
+      ['Dunstan', 'If it does not, you will be dead, and I will owe you nothing. Fair?'],
+    ],
+    waiting: [['Dunstan', 'Three Rot-Pikes. Then you will know what the edge is worth.']],
+    steps: [
+      { type: 'kill', enemy: 'pikeman', n: 3, text: 'Prove the edge: slay Rot-Pikes' },
+    ],
+  },
+  wenna: {
+    title: 'Three Knocks', start: { talk: 'wenna' }, giver: 'wenna', failIfDead: 'wenna', reward: { ichor: 260 },
+    steps: [
+      { type: 'kill', tag: 'wenna', n: 2, text: 'Slay the infected stalking Wenna' },
+      { type: 'talk', npc: 'wenna', text: 'Speak to Wenna', lines: [
+        ['Wenna', 'You did not have to. Nobody has to do anything any more; I had noticed that.'],
+        ['Wenna', 'Take it. It was for the gate-guard, to look the other way. He did not.'],
+      ] },
+    ],
+  },
+  greta: {
+    title: 'The One Who Circles', start: { talk: 'greta' }, giver: 'greta', failIfDead: 'greta', reward: { ichor: 400 },
+    offer: [['Greta', 'Would you — no. Yes. Would you stop him, ser? Gently, if there is a gentle way. He was a gentle man.']],
+    waiting: [['Greta', 'He is still out there. I can hear him on the path.']],
+    steps: [
+      { type: 'kill', tag: 'greta', n: 1, text: 'Put Aldous to rest — the wretch circling Greta\'s house' },
+      { type: 'talk', npc: 'greta', text: 'Return to Greta', lines: [
+        ['Greta', 'Is it done? ...Thank you. He had his ring on still? Keep the rest. I only wanted the quiet.'],
       ] },
     ],
   },
@@ -100,7 +165,7 @@ G.QUESTS = {
     ],
     waiting: [['Brother Anselm', 'The confession. Up the nave. Quietly, ser — quietly.']],
     steps: [
-      { type: 'read', lore: '2:1', text: "Find Bishop Malvern's confession in the nave" },
+      { type: 'read', lore: '4:1', text: "Find Bishop Malvern's confession in the nave" },
       { type: 'talk', npc: 'anselm', text: 'Return to Brother Anselm', lines: [
         ['Aldric', 'He never believed. He meant to cut her open and call it mercy.'],
         ['Brother Anselm', '...Then for twenty years I knelt to a butcher. Good. Good. That is lighter to carry than a saint.'],
@@ -118,7 +183,9 @@ G.questLog = {
   banner(kind, id, sub, sfx) { this.banners.push({ kind, title: G.QUESTS[id].title, sub, t: 4.4 }); G.sfx(sfx); },
   text(id, i) {
     const s = G.QUESTS[id].steps[i], q = this.state[id];
-    return s.text + (s.type === 'kill' && q && q.status === 'active' && q.step === i ? ` (${Math.min(q.count, s.n)}/${s.n})` : '');
+    if (!q || q.status !== 'active' || q.step !== i) return s.text;
+    const n = s.type === 'kill' ? q.count : s.type === 'collect' ? (G.game.items[s.item] || 0) : null;
+    return s.text + (n == null ? '' : ` (${Math.min(n, s.n)}/${s.n})`);
   },
   // Set up the step that has just become current.
   enter(id) {
@@ -136,6 +203,8 @@ G.questLog = {
     if (++q.step >= d.steps.length) {
       q.status = 'done'; const r = d.reward || {}, got = [];
       if (r.ichor) { g.ichor += r.ichor; got.push('+' + r.ichor + ' ichor'); }
+      if (r.tinct) { g.player.stats.tinct = (g.player.stats.tinct || 0) + r.tinct; g.player.tinct = g.player.tinctMax; got.push('+1 lily tincture, for good'); }
+      if (r.str) { g.player.stats.str += r.str; got.push('+1 Strength'); }
       if (r.flask) { g.player.stats.flask = (g.player.stats.flask || 0) + r.flask; g.player.flasks += r.flask; got.push('+1 flask, for good'); }
       if (d.doneFlag) g.flags[d.doneFlag] = 1;
       this.banner('Quest complete', id, got.join('  ·  '), 'questdone');
@@ -146,7 +215,7 @@ G.questLog = {
   onKill(e, g) {
     for (const id of this.ids('active')) {
       const s = this.cur(id);
-      if (s.type === 'kill' && (s.level == null || s.level === g.levelIdx) && (s.enemy ? s.enemy === e.type : s.tag === e.tag)) this.state[id].count++;
+      if (s.type === 'kill' && (s.level == null || s.level === g.levelIdx) && (s.any || (s.enemy ? s.enemy === e.type : s.tag === e.tag))) this.state[id].count++;
     }
   },
   tick(g, dt) {
@@ -156,10 +225,13 @@ G.questLog = {
       if (!this.state[id] && !lost && (st.auto || (st.read && g.read[st.read]))) this.start(id);
     }
     for (const id of this.ids('active')) {
-      const d = G.QUESTS[id], s = this.cur(id), q = this.state[id];
-      if (d.failIfDead && g.flags['dead_' + d.failIfDead]) { const n = g.level.npcs.find(x => x.id === d.failIfDead); this.fail(id, (n ? n.name : 'They') + ' did not survive.'); continue; }
+      const d = G.QUESTS[id], q = this.state[id];
+      // the story moves on even if an early step was walked past
+      if (d.main) for (let j = d.steps.length - 1; j > q.step; j--) { const f = d.steps[j]; if ((f.type === 'reach' && g.levelIdx >= f.level) || (f.type === 'flag' && g.flags[f.flag])) { q.step = j; break; } }
+      const s = this.cur(id);
+      if (d.failIfDead && g.flags['dead_' + d.failIfDead]) { const n = G.LEVELS.flatMap(l => l.npcs).find(x => x.id === d.failIfDead); this.fail(id, (n ? n.name : 'They') + ' did not survive.'); continue; }
       const done = s.type === 'reach' ? g.levelIdx >= s.level : s.type === 'read' ? !!g.read[s.lore] : s.type === 'flag' ? !!g.flags[s.flag]
-        : s.type === 'kill' ? q.count >= s.n : s.type === 'talk' ? !!(s.meet && g.flags['met_' + s.npc]) : false;
+        : s.type === 'kill' ? q.count >= s.n : s.type === 'collect' ? (g.items[s.item] || 0) >= s.n : s.type === 'talk' ? !!(s.meet && g.flags['met_' + s.npc]) : false;
       if (done) this.advance(id);
     }
     if (this.banners.length && (this.banners[0].t -= dt) <= 0) this.banners.shift();

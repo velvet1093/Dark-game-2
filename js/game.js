@@ -3,19 +3,19 @@
 // Ashen Vow — game state, level flow, interactions, HUD and the main loop
 // ---------------------------------------------------------------------------
 (() => {
-  const SAVE = 'ashenvow_save_v1', W = G.W, H = G.H, { clamp, rand } = G;
+  const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
-    enemies: [], npcs: [], bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
+    enemies: [], npcs: [], items: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
     player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, stain: null, cp: { lv: 0, x: 120 } });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 } });
       G.questLog.reset();
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -25,16 +25,17 @@
     continueGame() {
       const s = store.get(); if (!s) return this.newGame();
       this.player = new G.Player(); this.fairy = new G.Fairy(); Object.assign(this.player.stats, s.stats);
-      Object.assign(this, { ichor: s.ichor || 0, flags: s.flags || {}, read: s.read || {}, stain: s.stain || null, cp: s.cp });
+      Object.assign(this, { ichor: s.ichor || 0, flags: s.flags || {}, read: s.read || {}, items: s.items || {}, stain: s.stain || null, cp: s.cp });
+      this.player.inf = s.inf || 0; this.player.tinct = s.tinct == null ? 1 : s.tinct;
       G.questLog.reset(s.quests);
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, stain: this.stain, quests: G.questLog.state }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
       this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.fairy.place(this.player);
-      G.music(L.theme); G.ambience({ road: 'rain', village: 'wind', cathedral: 'hall' }[L.theme]);
+      G.music({ fen: 'road' }[L.theme] || L.theme); G.ambience({ road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall' }[L.theme]);
       this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
@@ -44,6 +45,7 @@
     },
     respawn() {
       if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.player.x, n: this.ichor }; this.ichor = 0; }
+      const p = this.player; p.turnT = null; p.inf = Math.min(p.inf, 50);   // you wake with the fever broken, not gone
       this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save();
     },
     onPlayerDeath() {
@@ -65,10 +67,14 @@
       }
       if (this.enemies.some(e => !e.dead && !e.dormant && e.state !== 'idle' && near(e.x, 260))) return null; // not mid-fight
       for (const n of this.npcs) {
-        if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: 'Speak to ' + n.def.name, fn: () => this.talk(n) };
+        if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: (n.def.cleanse && this.flags['met_' + n.id] && (p.inf > 0 || p.tinct < p.tinctMax) ? 'Be cleansed by ' : 'Speak to ') + n.def.name, hot: n.def.cleanse && p.turnT != null, fn: () => this.talk(n) };
       }
       for (const [i, n] of L.lore.entries()) {
         if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.levelIdx + ':' + i] = 1; G.ui.note(n.title, n.text); } };
+      }
+      for (const [i, it] of (L.items || []).entries()) {
+        const k = 'item_' + this.levelIdx + '_' + i;
+        if (!this.flags[k] && near(it.x, 40)) return { x: it.x, y: G.GROUND - 40, label: 'Gather the white lily', fn: () => { this.flags[k] = 1; this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, G.GROUND - 50, 'White lily', '#efeaf2', 13); } };
       }
       for (const sx of L.shrines) if (near(sx, 55)) return { x: sx, y: G.GROUND - 100, label: 'Rest at the vigil candle', fn: () => this.rest(sx) };
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
@@ -93,6 +99,7 @@
         stepQ.forEach(id => Q.advance(id));
         newQ.forEach(id => { Q.start(id); const s = Q.cur(id); if (s && s.type === 'talk' && s.npc === d.id && !s.lines) Q.advance(id); });
         this.save();
+        if (d.cleanse) this.cleanse(n);
         if (d.id === 'ysolde') {
           G.ui.dialogue(G.FAIRY.choice, () => G.ui.choice('The Saint\'s Tear is warm in your hand.', [
             { label: 'Give her the Tear', fn: () => this.ending('kept') },
@@ -100,6 +107,14 @@
           ]));
         }
       });
+    },
+    // A Sister washes the infection out of the blood and refills the tincture vial.
+    cleanse(n) {
+      const p = this.player, had = p.inf > 0 || p.turnT != null;
+      p.cleanse(100); p.tinct = p.tinctMax; G.sfx('cleanse');
+      G.text(p.x, G.GROUND - 110, had ? 'Cleansed' : 'Vial filled', '#d8c6ff', 16);
+      if (had) { this.fairy.cd = 0; this.fairy.bark('cleansed', true); }
+      this.save();
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); },
@@ -172,7 +187,7 @@
       // reclaim ichor from where you last fell
       const s = this.stain;
       if (s && s.lv === this.levelIdx && Math.abs(p.x - s.x) < 30 && !p.dead) { this.ichor += s.n; G.text(p.x, G.GROUND - 110, 'Ichor reclaimed +' + s.n, '#d9c9b0', 15); G.sfx('ichor'); this.stain = null; }
-      if (p.dead && (this.deathT += dt) > 1.7) { this.deathT = -99; this.fairy.say = null; G.ui.death(this.ichor, () => this.respawn(), this.fairy.last.death, this.flags.deaths); }
+      if (p.dead && (this.deathT += dt) > 1.7) { this.deathT = -99; this.fairy.say = null; G.ui.death(this.ichor, () => this.respawn(), this.fairy.last.death, this.flags.deaths, p.turned); }
 
       let target = p.x - W * 0.42 + p.facing * 40;
       target = clamp(target, this.bossFight ? L.boss.gate - 110 : 0, L.length - W);
@@ -206,6 +221,12 @@
       }
       ctx.restore();
       G.drawAtmosphere(ctx, L, cam, t, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0);
+      if (p.inf > 40 || p.turnT != null) {
+        // the fever closing in at the edges of sight
+        const a = p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : (p.inf - 40) / 60 * 0.3;
+        const ig = ctx.createRadialGradient(W / 2, H / 2, H * 0.28, W / 2, H / 2, H * 0.8);
+        ig.addColorStop(0, 'rgba(120,20,130,0)'); ig.addColorStop(1, `rgba(120,20,130,${a})`); ctx.fillStyle = ig; ctx.fillRect(0, 0, W, H);
+      }
       this.drawHud(p, L, t);
     },
 
@@ -226,6 +247,27 @@
           for (let i = 0; i < 6; i++) { ctx.fillStyle = `rgba(200,190,200,${0.06 + 0.03 * Math.sin(t * 2 + i)})`; ctx.fillRect(x - 18 + Math.sin(t * 1.3 + i * 2) * 8, gy - 260, 36, 262); }
         }
       }
+      // chapels of the Lily
+      for (const c of L.chapels || []) {
+        const k = c.big ? 1.45 : 1, w = 150 * k, h = 130 * k, x = c.x;
+        glow(x, gy - h * 0.5, 190 * k, 'rgba(200,180,255,0.16)');
+        ctx.fillStyle = '#0c090c'; ctx.fillRect(x - w / 2, gy - h, w, h);
+        ctx.beginPath(); ctx.moveTo(x - w / 2 - 12, gy - h); ctx.lineTo(x, gy - h - 80 * k); ctx.lineTo(x + w / 2 + 12, gy - h); ctx.fill();
+        ctx.fillRect(x - 3, gy - h - 118 * k, 6, 44 * k); ctx.fillRect(x - 14 * k, gy - h - 104 * k, 28 * k, 6);
+        ctx.fillStyle = `rgba(214,196,255,${0.75 + Math.sin(t * 2 + x) * 0.08})`; ctx.beginPath(); ctx.arc(x, gy - h - 22 * k, 15 * k, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#0c090c'; ctx.lineWidth = 2.5; ctx.beginPath();
+        for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3; ctx.moveTo(x - Math.cos(a) * 15 * k, gy - h - 22 * k - Math.sin(a) * 15 * k); ctx.lineTo(x + Math.cos(a) * 15 * k, gy - h - 22 * k + Math.sin(a) * 15 * k); }
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,190,110,0.5)'; ctx.beginPath(); ctx.moveTo(x - 20 * k, gy); ctx.lineTo(x - 20 * k, gy - 52 * k); ctx.quadraticCurveTo(x, gy - 84 * k, x + 20 * k, gy - 52 * k); ctx.lineTo(x + 20 * k, gy); ctx.fill();
+      }
+      // white lilies
+      (L.items || []).forEach((it, i) => {
+        if (this.flags['item_' + this.levelIdx + '_' + i]) return;
+        glow(it.x, gy - 12, 30 + Math.sin(t * 3 + i) * 4, 'rgba(235,225,255,0.4)');
+        ctx.strokeStyle = '#3a5a3a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(it.x, gy); ctx.lineTo(it.x + 1, gy - 14); ctx.stroke();
+        ctx.fillStyle = '#f4f0fa'; for (let k = 0; k < 5; k++) { const a = k * 1.257 + 0.3; ctx.beginPath(); ctx.ellipse(it.x + 1 + Math.cos(a) * 4, gy - 16 + Math.sin(a) * 3, 3.2, 1.8, a, 0, 7); ctx.fill(); }
+        ctx.fillStyle = '#e0b84a'; ctx.beginPath(); ctx.arc(it.x + 1, gy - 16, 1.4, 0, 7); ctx.fill();
+      });
       // vigil candles
       for (const sx of L.shrines) {
         const lit = this.cp.lv === this.levelIdx && this.cp.x === sx, f = Math.sin(t * 11 + sx) * 1.5;
@@ -250,7 +292,7 @@
       bar(24, 22, Math.min(440, p.maxHp * 1.7), 11, p.hp / p.maxHp, '#9c0c14', '#3a2a2a');
       bar(24, 39, Math.min(400, p.maxSt * 1.3), 7, p.st / p.maxSt, '#6f8a4a', '#3a2a2a');
       for (let i = 0; i < p.flaskMax; i++) {
-        const x = 30 + i * 20, y = 62; ctx.fillStyle = i < p.flasks ? '#c9c2b0' : '#2a2424';
+        const x = 30 + i * 20, y = 78; ctx.fillStyle = i < p.flasks ? '#c9c2b0' : '#2a2424';
         ctx.beginPath(); ctx.arc(x, y + 8, 6, 0, 7); ctx.fill(); ctx.fillRect(x - 2, y - 3, 4, 6);
       }
       ctx.font = '16px Georgia, serif'; ctx.textAlign = 'right'; ctx.fillStyle = '#c9333b'; ctx.fillText('Ichor  ' + this.ichor, W - 26, 34);
@@ -267,6 +309,21 @@
       if (this.levelIdx === 0 && this.lvT < 30 && !document.body.classList.contains('touch')) {
         ctx.globalAlpha = clamp(30 - this.lvT, 0, 1) * 0.8; ctx.textAlign = 'center'; ctx.font = '13px Georgia, serif'; ctx.fillStyle = '#9a8f84';
         ctx.fillText('A/D move  ·  J slash  ·  K heavy  ·  SPACE roll  ·  L block  ·  Q flask  ·  E interact / execute', W / 2, H - 14); ctx.globalAlpha = 1;
+      }
+      // infection meter, tincture vials and the turning clock
+      const sick = p.inf >= 75 || p.turnT != null;
+      bar(24, 54, 170, 6, p.inf / 100, sick && Math.sin(t * 9) > 0 ? '#e060f0' : '#8a2a9a', '#3a2a3a');
+      ctx.font = '10px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = sick ? '#e060f0' : '#8a7a90'; ctx.fillText('INFECTION', 200, 61);
+      for (let i = 0; i < p.tinctMax; i++) {
+        const x = 34 + p.flaskMax * 20 + i * 18, y = 85; ctx.fillStyle = i < p.tinct ? '#c9b3f0' : '#2a2430';
+        ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 9); ctx.lineTo(x - 5, y); ctx.fill();
+      }
+      if (p.turnT != null && !p.dead) {
+        const s = Math.ceil(p.turnT); ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 230, 150, 460, 58);
+        ctx.font = '22px Georgia, serif'; ctx.fillStyle = Math.sin(t * 9) > 0 ? '#ff7aff' : '#c04ad0'; ctx.fillText('YOU ARE TURNING  —  0:' + String(s).padStart(2, '0'), W / 2, 176);
+        ctx.font = 'italic 13px Georgia, serif'; ctx.fillStyle = '#d8c6ff';
+        ctx.fillText(p.tinct > 0 ? 'Drink a lily tincture (R) or reach a Sister of the Lily' : 'Reach a Sister of the Lily before your eyes run red', W / 2, 198);
       }
       // quest tracker: the main quest and up to two others, with the current step of each
       const Q = G.questLog, act = Q.ids('active').sort((a, b) => (G.QUESTS[b].main ? 1 : 0) - (G.QUESTS[a].main ? 1 : 0)).slice(0, 3);

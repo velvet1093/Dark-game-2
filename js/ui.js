@@ -6,7 +6,7 @@
   const el = () => document.getElementById('overlay');
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(/\n/g, '<br>');
   const KEYS = `<div class="keys"><b>A</b> <b>D</b> move &nbsp; <b>J</b> / click slash &nbsp; <b>K</b> / right-click heavy &nbsp; <b>Space</b> roll<br>
-    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>E</b> interact · execute &nbsp; <b>Tab</b> quests &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
+    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>R</b> lily tincture &nbsp; <b>E</b> interact · execute &nbsp; <b>Tab</b> quests &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
 
   const ui = G.ui = {
     blocking: false, advance: null, options: null,
@@ -76,7 +76,7 @@
         { label: `Strength ${s.str} <small>— deeper cuts</small>`, fn: up('str'), off: poor },
         { label: `Endurance ${s.end} <small>— more stamina</small>`, fn: up('end'), off: poor },
         { label: 'Rise', fn: () => this.clear() },
-      ], '<div class="keys">Resting restores your flasks — and returns the dead to their feet.</div>');
+      ], '<div class="keys">Resting restores your flasks — but not your blood. The infected never rest; more will have wandered in.</div>');
       this.advance = () => this.clear(); this.escAdvance = true;
     },
     journal() {
@@ -97,9 +97,9 @@
     choice(prompt, opts) {
       this.menu('dim', `<h2>${esc(prompt)}</h2>`, opts.map(o => ({ label: o.label, fn: () => { this.clear(); o.fn(); } })));
     },
-    death(lost, done, quote, n) {
+    death(lost, done, quote, n, turned) {
       const wist = quote ? `<div class="wistq">“${esc(quote)}”<br><small>— Wist has watched you die ${n === 1 ? 'once' : n + ' times'}.</small></div>` : '';
-      this.show(`<div class="screen dim"><h1 style="font-size:3em">UNMADE</h1><div class="sub">${lost ? `${lost} ichor lies where you fell.` : 'The vow remains.'}</div>${wist}<div class="hint">press E / Enter / tap</div></div>`, () => { this.clear(); done(); });
+      this.show(`<div class="screen dim"><h1 style="font-size:3em${turned ? ';color:#c04ad0' : ''}">${turned ? 'TURNED' : 'UNMADE'}</h1><div class="sub">${turned ? 'The infection took you. ' : ''}${lost ? `${lost} ichor lies where you fell.` : 'The vow remains.'}</div>${wist}<div class="hint">press E / Enter / tap</div></div>`, () => { this.clear(); done(); });
     },
   };
 })();

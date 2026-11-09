@@ -17,7 +17,8 @@ G.FAIRY = {
     'Rolling is undignified. A real knight stands and takes it.',
     'Save your flasks. You will want them later. Much later.',
     'You look tired. Lie down in the road a while.',
-    'That one is only sleeping. Go and pat it.',
+    'That one is only resting. Go and pat it. ...No, they never rest. Pat it anyway.',
+    'You are bleeding. Good. That is how it gets in, you know.',
     'I knew a knight like you. He lasted until Tuesday.',
     'Do not mind me. I am only here for the ending.',
     'Lower your shield, it spoils the view.',
@@ -32,7 +33,9 @@ G.FAIRY = {
   broken: ['Oh, leave it be. Let it get back up — it is funnier.', 'Do not finish it! Give the poor thing a chance.', 'Walk away. Go on. Turn your back.'],
   gore: ['Ew. Splendid.', 'Now imagine that was your arm.', 'Pieces! I love pieces.'],
   npcdeath: ['Oh! And I did not even have to wait for that one.', 'Too slow, ser knight. Hee.', 'One fewer. Do keep up.', 'They were never yours to save. None of them are.'],
-  rest: ['Resting again? They all stand back up when you do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
+  turning: ['Oh! Your eyes! They are going such a pretty red.', 'There it is. Now do not go looking for a Sister. They are all so far away.', 'Tick, tick, tick, ser knight.'],
+  cleansed: ['Ugh. Lilies.', 'They cannot cure you, you know. Only make me wait longer.', 'Spoilsport nuns.', 'It will be back. It always comes back.'],
+  rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
     'Hee hee hee! Oh, that was a good one.',
     'There it is. I do love this part.',
@@ -53,7 +56,7 @@ G.Fairy = class {
     const lines = G.FAIRY[kind]; let s;
     do s = G.pick(lines); while (lines.length > 1 && s === this.last[kind]);
     this.last[kind] = s; this.say = s; this.sayT = 2.6 + s.length * 0.045; this.cd = this.sayT + 3;
-    const cruel = kind === 'hurt' || kind === 'death' || kind === 'low' || kind === 'gore' || kind === 'npcdeath';
+    const cruel = kind === 'hurt' || kind === 'death' || kind === 'low' || kind === 'gore' || kind === 'npcdeath' || kind === 'turning';
     if (cruel) this.glee = 2.5;
     G.sfx(cruel ? 'giggle' : 'chime');
   }

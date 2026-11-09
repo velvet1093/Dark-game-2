@@ -16,16 +16,31 @@ G.Player = class {
     this.weapon = G.WEAPONS.longsword;
     this.look = G.LOOKS.player;
     this.x = 120; this.facing = 1;
+    // Infection: 0-100. It climbs with every wound. At 100 the knight begins to turn
+    // and has turnT seconds to reach a Sister or drink a lily tincture.
+    this.inf = 0; this.turnT = null; this.tinct = 1;
     this.reset();
   }
   get maxHp() { return 100 + this.stats.vig * 16; }
   get flaskMax() { return 3 + (this.stats.flask || 0); }
   get maxSt() { return 100 + this.stats.end * 12; }
-  get dmgMul() { return 1 + this.stats.str * 0.09; }
+  get dmgMul() { return (1 + this.stats.str * 0.09) * (this.turnT != null ? 1.25 : 1); }
+  get tinctMax() { return 1 + (this.stats.tinct || 0); }
+  infect(n, g) {
+    if (this.dead || this.turnT != null) return;
+    this.inf = Math.min(100, this.inf + n);
+    if (this.inf >= 100) {
+      this.turnT = 45; G.sfx('infect'); g.shake = 10;
+      G.text(this.x, G.GROUND - 120, 'THE INFECTION TAKES HOLD', '#c04ad0', 18);
+      g.fairy.cd = 0; g.fairy.bark('turning', true);
+    }
+  }
+  // Lily-water: from a Sister (full) or a tincture (partial).
+  cleanse(amount) { this.inf = Math.max(0, this.inf - amount); if (this.inf < 100) this.turnT = null; }
   reset() {
     this.hp = this.maxHp; this.st = this.maxSt; this.flasks = this.flaskMax;
     this.state = 'idle'; this.t = 0; this.vx = 0; this.dead = false; this.walk = 0;
-    this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = [];
+    this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = []; this.turned = false; this.curing = false;
   }
   set(state) { this.state = state; this.t = 0; }
   startAttack(atk, combo) {
@@ -49,7 +64,7 @@ G.Player = class {
       if (this.st > 0) return false;
       this.st = 0; G.text(this.x, G.GROUND - 90, 'GUARD BROKEN', '#d9c9b0'); G.sfx('guardbreak'); dmg *= 0.4;
     }
-    this.hp -= dmg; this.flash = 0.12; this.vx = dir * 220; this.set('hurt');
+    this.hp -= dmg; this.flash = 0.12; this.vx = dir * 220; this.set('hurt'); this.infect(dmg * 0.55, g);
     G.blood(this.x, G.GROUND - 50, 14, dir, 240); G.sfx('hurt'); g.shake = 8;
     if (this.hp <= 0) { this.hp = 0; this.dead = true; this.set('dead'); G.sfx('death'); G.blood(this.x, G.GROUND - 40, 50, dir, 320); G.decal(this.x, 10, 30); g.onPlayerDeath(); }
     else g.fairy.bark('hurt', false, 0.5);
@@ -60,6 +75,10 @@ G.Player = class {
     const I = G.input, w = this.weapon;
     this.t += dt; this.flash -= dt; this.bloody = Math.max(0, this.bloody - dt * 0.03);
     if (this.dead) { this.vx *= Math.pow(0.002, dt); this.x += this.vx * dt; return; }
+    if (this.turnT != null && this.state !== 'execute' && (this.turnT -= dt) <= 0) {
+      // out of time: the knight turns
+      this.turnT = null; this.turned = true; this.hp = 0; this.dead = true; this.set('dead'); G.sfx('death'); G.sfx('roar'); g.onPlayerDeath(); return;
+    }
     for (const a of ['attack', 'heavy', 'roll']) if (I.hit(a)) this.buf = { a, t: 0.25 };
     if (this.buf && (this.buf.t -= dt) <= 0) this.buf = null;
     const dir = (I.down('right') ? 1 : 0) - (I.down('left') ? 1 : 0);
@@ -80,7 +99,8 @@ G.Player = class {
         if (dir) this.facing = dir; this.set('roll'); G.sfx('roll');
       } else if (want('attack') && this.st > 0) this.startAttack(w.light[0], 0);
       else if (want('heavy') && this.st > 0) this.startAttack(w.heavy, -1);
-      else if (I.hit('flask') && this.flasks > 0 && this.hp < this.maxHp) { this.flasks--; this.healed = false; this.set('heal'); G.sfx('gulp'); g.fairy.bark('heal', false, 0.6); }
+      else if (I.hit('flask') && this.flasks > 0 && this.hp < this.maxHp) { this.flasks--; this.healed = false; this.curing = false; this.set('heal'); G.sfx('gulp'); g.fairy.bark('heal', false, 0.6); }
+      else if (I.hit('cure') && this.tinct > 0 && this.inf > 0) { this.tinct--; this.healed = false; this.curing = true; this.set('heal'); G.sfx('gulp'); }
     } else if (this.state === 'attack') {
       const a = this.atk, t1 = a.wind, t2 = t1 + a.active, t3 = t2 + a.rec;
       if (!this.swung && this.t >= t1) { this.swung = true; this.vx = this.facing * a.lunge; G.sfx('swing'); }
@@ -104,6 +124,7 @@ G.Player = class {
       if (this.t >= 0.36) this.set('idle');
     } else if (this.state === 'heal') {
       this.vx = 0;
+      if (!this.healed && this.t >= 0.55 && this.curing) { this.healed = true; this.cleanse(55); G.sfx('cleanse'); G.text(this.x, G.GROUND - 90, 'Lily tincture', '#d8c6ff', 13); g.fairy.bark('cleansed', false, 0.7); }
       if (!this.healed && this.t >= 0.55) { this.healed = true; this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.45); G.sfx('heal'); G.text(this.x, G.GROUND - 90, 'Blessed water', '#d9c9b0', 13); }
       if (this.t >= 0.9) this.set('idle');
     } else if (this.state === 'execute') {
@@ -114,7 +135,7 @@ G.Player = class {
 
     // stamina
     this.stDelay -= dt;
-    if (this.stDelay <= 0 && this.state !== 'attack' && this.state !== 'roll') this.st = Math.min(this.maxSt, this.st + (this.state === 'block' ? 14 : 48) * dt);
+    if (this.stDelay <= 0 && this.state !== 'attack' && this.state !== 'roll') this.st = Math.min(this.maxSt, this.st + (this.state === 'block' ? 14 : 48) * (this.inf >= 75 ? 0.6 : this.inf >= 50 ? 0.8 : 1) * dt);
 
     // movement: enemies are solid unless we are rolling through them
     this.x += this.vx * dt;

@@ -61,6 +61,7 @@ G.drawHumanoid = (ctx, o) => {
     const ex = sx + Math.sin(a) * 13, ey = sy + Math.cos(a) * 13;
     const ax = ex + Math.sin(a + e) * 13, ay = ey + Math.cos(a + e) * 13;
     seg(sx, sy, ex, ey, 6.5, L.arm); seg(ex, ey, ax, ay, 5.5, L.arm);
+    if (L.cuff) { ctx.fillStyle = C('#ece6de'); ctx.beginPath(); ctx.arc(ex + (ax - ex) * 0.78, ey + (ay - ey) * 0.78, 3.8, 0, 7); ctx.fill(); }
     ctx.fillStyle = C(L.skin); ctx.beginPath(); ctx.arc(ax, ay, 3, 0, 7); ctx.fill();
     return [ax, ay];
   };
@@ -83,11 +84,19 @@ G.drawHumanoid = (ctx, o) => {
     ctx.lineTo(sx - 9 + sway, hy + 16); ctx.lineTo(sx - 6 + sway, hy + 22); ctx.lineTo(hx - 2, hy + 2); ctx.closePath(); ctx.fill();
   }
   leg(p.footF, p.liftF || 0, gone('legF'));
+  if (L.hair) {   // long hair down the back
+    ctx.fillStyle = C(L.hair); ctx.beginPath(); ctx.moveTo(hdx - 2, hdy - 6); ctx.quadraticCurveTo(sx - 13, sy + 6, hx - 9, hy - 2); ctx.lineTo(hx - 3, hy - 6); ctx.lineTo(sx - 2, sy); ctx.closePath(); ctx.fill();
+  }
   // torso
   seg(hx, hy, sx, sy + 3, 14, L.body);
   if (L.trim) seg(hx + 1, hy + 4, sx + 1, sy + 6, 6, L.trim);
   if (L.belly) { ctx.fillStyle = C(L.body); ctx.beginPath(); ctx.arc((hx + sx) / 2 + 6, (hy + sy) / 2 + 5, 14, 0, 7); ctx.fill(); ctx.strokeStyle = C('#7a2a2a'); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc((hx + sx) / 2 + 8, (hy + sy) / 2 + 5, 9, -0.6, 1.2); ctx.stroke(); }
   seg(hx - 4, hy, hx + 4, hy, 4, '#1a1414');
+  if (L.skirt) {   // black dress with a white frilled hem and collar
+    ctx.fillStyle = C(L.body); ctx.beginPath(); ctx.moveTo(hx - 7, hy - 4); ctx.lineTo(hx + 7, hy - 4); ctx.lineTo(hx + 12, hy + 15); ctx.lineTo(hx - 11, hy + 15); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = C('#ece6de'); for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(hx - 9.5 + i * 4.1, hy + 15, 2.3, 0, 7); ctx.fill(); }
+    seg(sx - 5, sy + 4, sx + 5, sy + 4, 3.5, '#ece6de');
+  }
   // head
   if (gone('head')) stump(sx + Math.sin(ha) * 4, sy - Math.cos(ha) * 4);
   else {
@@ -101,6 +110,14 @@ G.drawHumanoid = (ctx, o) => {
     } else if (L.helm === 'hood' || L.helm === 'veil') {
       ctx.fillStyle = hc; ctx.beginPath(); ctx.moveTo(hdx + 7, hdy - 6); ctx.quadraticCurveTo(hdx, hdy - 15, hdx - 9, hdy - 6);
       ctx.lineTo(hdx - (L.helm === 'veil' ? 13 : 9), hdy + (L.helm === 'veil' ? 24 : 10)); ctx.lineTo(hdx - 2, hdy + 6); ctx.lineTo(hdx + 1, hdy - 5); ctx.closePath(); ctx.fill();
+    } else if (L.helm === 'sister') {
+      // fringe, black veil, white frilled band with a lily at the temple
+      ctx.fillStyle = C(L.hair || '#333'); ctx.beginPath(); ctx.arc(hdx, hdy - 1, 8.4, Math.PI * 0.95, Math.PI * 1.95); ctx.lineTo(hdx + 5, hdy - 3); ctx.lineTo(hdx - 2, hdy - 3); ctx.fill();
+      ctx.fillStyle = hc; ctx.beginPath(); ctx.moveTo(hdx + 5, hdy - 8); ctx.quadraticCurveTo(hdx - 2, hdy - 16, hdx - 10, hdy - 6);
+      ctx.lineTo(hdx - 14, hdy + 15); ctx.lineTo(hdx - 6, hdy + 10); ctx.lineTo(hdx - 5, hdy - 5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = C('#ece6de'); for (let i = 0; i < 5; i++) { const a = Math.PI * (1.12 + i * 0.17); ctx.beginPath(); ctx.arc(hdx + Math.cos(a) * 9, hdy - 1 + Math.sin(a) * 9, 2.3, 0, 7); ctx.fill(); }
+      for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4; ctx.beginPath(); ctx.ellipse(hdx - 6 + Math.cos(a) * 2.6, hdy - 8 + Math.sin(a) * 2.6, 2.4, 1.3, a, 0, 7); ctx.fill(); }
+      ctx.fillStyle = C('#8a5fd0'); ctx.beginPath(); ctx.arc(hdx + 4.5, hdy - 0.5, 1.2, 0, 7); ctx.fill();
     } else if (L.helm === 'sack') {
       ctx.fillStyle = hc; ctx.beginPath(); ctx.arc(hdx, hdy, 9.5, 0, 7); ctx.fill(); ctx.fillRect(hdx - 8, hdy + 3, 16, 9);
     } else if (L.helm === 'beak') {
@@ -179,6 +196,8 @@ G.drawFx = (ctx, layer) => {
 const THEMES = {
   road: { sky: ['#07050a', '#1a0a10', '#3a0f14'], moon: true, mid: ['tree', 'tree', 'gallows', 'tree', 'tree'], near: ['cross', 'stake', 'fence', 'grave', 'cross'], ground: '#0e090a', edge: '#241517', weather: 'rain' },
   village: { sky: ['#08060a', '#1c0b0c', '#47160f'], moon: true, mid: ['house', 'house', 'tree', 'house', 'chapel'], near: ['fence', 'stake', 'cart', 'grave', 'fence'], ground: '#0f0a09', edge: '#2a1a14', weather: 'ash' },
+  town: { sky: ['#08070c', '#17101a', '#3a1c1a'], moon: true, mid: ['house', 'house', 'wall', 'house', 'chapel', 'wall'], near: ['lamp', 'stall', 'fence', 'lamp', 'cart', 'lamp'], ground: '#12100f', edge: '#2e2420', weather: 'ash' },
+  fen: { sky: ['#040706', '#0b1512', '#1b2c24'], moon: true, mid: ['tree', 'tree', 'tree', 'gallows', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#080d0b', edge: '#1d2c22', weather: 'rain', water: true },
   cathedral: { sky: ['#060406', '#0b0709', '#12090b'], mid: ['window', 'pillar'], near: ['pew', 'candles', 'pew', 'candles'], ground: '#0c090b', edge: '#2a2226', weather: 'ash', indoor: true },
 };
 
@@ -222,6 +241,15 @@ const PROPS = {
     c.save(); c.fillStyle = g; c.beginPath(); c.moveTo(x - 32, y - 110); c.lineTo(x - 32, y - 290); c.quadraticCurveTo(x, y - 360, x + 32, y - 290); c.lineTo(x + 32, y - 110); c.fill();
     c.strokeStyle = '#0a0607'; c.lineWidth = 4; c.beginPath(); c.moveTo(x, y - 340); c.lineTo(x, y - 110); c.moveTo(x - 32, y - 230); c.lineTo(x + 32, y - 230); c.moveTo(x - 32, y - 170); c.lineTo(x + 32, y - 170); c.stroke(); c.restore();
   },
+  wall(c, x, y, s) { const w = 260 * s, h = 150; c.fillRect(x, y - h, w, h); for (let i = 0; i < w; i += 34) c.fillRect(x + i, y - h - 16, 20, 16); c.fillRect(x + w * 0.4, y - h - 60, 54, 60); },
+  lamp(c, x, y, s, seed, t) {
+    c.fillRect(x - 2, y - 96 * s, 4, 96 * s); c.fillRect(x - 2, y - 96 * s, 18, 3);
+    c.save(); const f = 0.75 + Math.sin(t * 8 + seed) * 0.1, g = c.createRadialGradient(x + 15, y - 84 * s, 1, x + 15, y - 84 * s, 60);
+    g.addColorStop(0, `rgba(255,180,90,${0.5 * f})`); g.addColorStop(1, 'rgba(255,180,90,0)'); c.fillStyle = g; c.fillRect(x - 45, y - 144 * s, 120, 120);
+    c.fillStyle = `rgba(255,200,120,${f})`; c.fillRect(x + 11, y - 92 * s, 8, 11); c.restore();
+  },
+  stall(c, x, y, s) { c.fillRect(x, y - 34 * s, 96 * s, 6); c.fillRect(x + 4, y - 34 * s, 5, 34 * s); c.fillRect(x + 88 * s, y - 34 * s, 5, 34 * s); c.fillRect(x + 2, y - 86 * s, 4, 54 * s); c.fillRect(x + 90 * s, y - 86 * s, 4, 54 * s); c.beginPath(); c.moveTo(x - 10, y - 80 * s); c.lineTo(x + 106 * s, y - 80 * s); c.lineTo(x + 96 * s, y - 98 * s); c.lineTo(x, y - 98 * s); c.fill(); },
+  reeds(c, x, y, s, seed, t) { const r = G.rng(seed); c.lineWidth = 2; for (let i = 0; i < 9; i++) { const h = (26 + r() * 40) * s, bx = x + i * 7, sw = Math.sin(t * 1.4 + i + seed) * 3; c.beginPath(); c.moveTo(bx, y); c.quadraticCurveTo(bx + sw * 0.4, y - h * 0.5, bx + sw, y - h); c.stroke(); if (i % 3 === 0) c.fillRect(bx + sw - 2, y - h - 8, 4, 10); } },
   pillar(c, x, y) { c.fillRect(x - 22, 0, 44, y); c.fillRect(x - 32, y - 26, 64, 26); c.fillRect(x - 30, 60, 60, 16); },
   cross(c, x, y, s) { c.save(); c.translate(x, y); c.rotate((s - 1) * 0.5); c.fillRect(-4, -70 * s, 8, 70 * s); c.fillRect(-22 * s, -54 * s, 44 * s, 7); c.restore(); },
   grave(c, x, y, s) { c.beginPath(); c.moveTo(x - 16 * s, y); c.lineTo(x - 16 * s, y - 30 * s); c.quadraticCurveTo(x, y - 52 * s, x + 16 * s, y - 30 * s); c.lineTo(x + 16 * s, y); c.fill(); },
@@ -263,6 +291,7 @@ G.drawBackdrop = (ctx, level, cam, t) => {
   // ground
   ctx.fillStyle = T.ground; ctx.fillRect(0, gy - 3, W, H - gy + 3);
   ctx.fillStyle = T.edge; ctx.fillRect(0, gy - 3, W, 2);
+  if (T.water) { ctx.fillStyle = 'rgba(40,70,60,0.22)'; for (let x = -(cam % 190); x < W; x += 190) { ctx.beginPath(); ctx.ellipse(x + 60, gy + 34 + ((x + cam) % 3) * 9, 70, 5, 0, 0, 7); ctx.fill(); } }
   if (T.indoor) { ctx.strokeStyle = '#191316'; ctx.lineWidth = 1; for (let x = -(cam % 80); x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x - 30, H); ctx.stroke(); } }
   else { ctx.strokeStyle = T.edge; ctx.lineWidth = 1.5; for (let x = -(cam % 37); x < W; x += 37) { const h = 4 + ((x + cam) * 7 % 9); ctx.beginPath(); ctx.moveTo(x, gy - 2); ctx.lineTo(x + 3, gy - 2 - h); ctx.moveTo(x + 5, gy - 2); ctx.lineTo(x + 9, gy - h); ctx.stroke(); } }
   ctx.fillStyle = ctx.strokeStyle = '#060304';
