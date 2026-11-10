@@ -79,6 +79,36 @@
       ], '<div class="keys">Resting restores your flasks — but not your blood. The infected never rest; more will have wandered in.</div>');
       this.advance = () => this.clear(); this.escAdvance = true;
     },
+    // Dunstan's forge and Fenwick's cart. Each purchase redraws the menu with the new prices.
+    shop(kind) {
+      const g = G.game, p = g.player, back = { label: 'Leave', fn: () => this.clear() };
+      let head, items;
+      if (kind === 'forge') {
+        const COST = [300, 700, 1300];
+        items = g.weapons.map(id => {
+          const lv = g.weaponLv[id] || 0, w = G.WEAPONS[id], cost = COST[lv];
+          if (lv >= 3) return { label: `${w.name} +3 <small>— nothing left to fold in</small>`, off: true, fn: () => {} };
+          return { label: `Reforge ${w.name}${lv ? ' +' + lv : ''} to +${lv + 1} <small>— ${cost} ichor</small>`, off: g.ichor < cost,
+            fn: () => { if (g.spend(cost)) { g.weaponLv[id] = lv + 1; G.sfx('block'); G.sfx('sever'); g.save(); this.shop(kind); } } };
+        });
+        head = `<h2>Dunstan's Forge</h2><div class="ichor">Ichor ${g.ichor} &nbsp;·&nbsp; each fold: 15% deeper cuts</div>`;
+      } else {
+        const fl = g.bought.flask || 0, vi = g.bought.vial || 0, FLASK = [900, 1600];
+        items = [
+          { label: `Lily tincture <small>— refills one vial · 140 ichor</small>`, off: g.ichor < 140 || p.tinct >= p.tinctMax,
+            fn: () => { if (g.spend(140)) { p.tinct++; G.sfx('gulp'); this.shop(kind); } } },
+          fl < 2 ? { label: `A spare flask <small>— one more flask, for good · ${FLASK[fl]} ichor</small>`, off: g.ichor < FLASK[fl],
+            fn: () => { if (g.spend(FLASK[fl])) { g.bought.flask = fl + 1; p.stats.flask = (p.stats.flask || 0) + 1; p.flasks++; G.sfx('heal'); g.save(); this.shop(kind); } } }
+            : { label: 'A spare flask <small>— sold out</small>', off: true, fn: () => {} },
+          vi < 1 ? { label: `A spare vial <small>— one more tincture vial, for good · 1400 ichor</small>`, off: g.ichor < 1400,
+            fn: () => { if (g.spend(1400)) { g.bought.vial = 1; p.stats.tinct = (p.stats.tinct || 0) + 1; p.tinct++; G.sfx('heal'); g.save(); this.shop(kind); } } }
+            : { label: 'A spare vial <small>— sold out</small>', off: true, fn: () => {} },
+        ];
+        head = `<h2>Fenwick's Cart</h2><div class="ichor">Ichor ${g.ichor} &nbsp;·&nbsp; tinctures ${p.tinct} / ${p.tinctMax} &nbsp;·&nbsp; flasks ${p.flaskMax}</div>`;
+      }
+      this.menu('dim', head, items.concat([back]));
+      this.advance = () => this.clear(); this.escAdvance = true;
+    },
     journal() {
       const Q = G.questLog, order = { active: 0, done: 1, failed: 2 }, label = { active: 'in progress', done: 'complete', failed: 'failed' };
       const ids = Q.ids().sort((a, b) => (G.QUESTS[b].main ? 1 : 0) - (G.QUESTS[a].main ? 1 : 0) || order[Q.state[a].status] - order[Q.state[b].status]);

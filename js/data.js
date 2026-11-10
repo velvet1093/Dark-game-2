@@ -357,9 +357,10 @@ G.LEVELS = [
         repeat: [['Maren', 'Get some rest while you can still want it.']],
       },
       {
-        id: 'dunstan', x: 1680, name: 'Dunstan the Smith', look: 'smith', pose: 'stand', essential: true,
+        id: 'dunstan', x: 1680, name: 'Dunstan the Smith', look: 'smith', pose: 'stand', essential: true, shop: 'forge',
         lines: [
           ['Dunstan', 'That is a crusader blade. Good steel, bad edge. Seven years of salt air.'],
+          ['Dunstan', 'Bring me ichor and I will fold it into the steel. Every weapon you carry, three times over. It holds an edge like nothing else.'],
         ],
         repeat: [['Dunstan', 'Keep it oiled. Blood is worse than salt.']],
       },
@@ -398,9 +399,10 @@ G.LEVELS = [
         repeat: [['Sister Lys', 'Breathe. Slower. There. It hates patience.']],
       },
       {
-        id: 'fenwick', x: 2940, name: 'Fenwick the Peddler', look: 'peddler', pose: 'stand', essential: true,
+        id: 'fenwick', x: 2940, name: 'Fenwick the Peddler', look: 'peddler', pose: 'stand', essential: true, shop: 'peddler',
         lines: [
           ['Fenwick', 'Charms! Saint-knuckles! Genuine lily petals, pressed! ...None of it works, ser. But people sleep better holding something.'],
+          ['Fenwick', 'Except these. Lily tincture, the real thing, liberated from the chapel stores. And flasks, and vials to keep them in. For ichor, naturally. What else is worth anything now?'],
           ['Fenwick', 'A free word, since you look the leaving sort: the big swollen ones in the fen — do not burst them near you. What is inside is the sickness itself. Finish them clean, with the blade, kneeling.'],
         ],
         repeat: [['Fenwick', 'Finish the swollen ones clean. On their knees. Trust a coward: I have watched from very far away.']],

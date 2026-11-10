@@ -24,7 +24,7 @@ G.Player = class {
   get maxHp() { return 100 + this.stats.vig * 16; }
   get flaskMax() { return 3 + (this.stats.flask || 0); }
   get maxSt() { return 100 + this.stats.end * 12; }
-  get dmgMul() { return (1 + this.stats.str * 0.09) * (this.turnT != null ? 1.25 : 1); }
+  get dmgMul() { const g = G.game, lv = (g.weaponLv && g.weaponLv[g.weaponId]) || 0; return (1 + this.stats.str * 0.09) * (1 + 0.15 * lv) * (this.turnT != null ? 1.25 : 1); }
   get tinctMax() { return 1 + (this.stats.tinct || 0); }
   infect(n, g) {
     if (this.dead || this.turnT != null) return;

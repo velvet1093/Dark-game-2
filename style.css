@@ -120,7 +120,7 @@ h1 { font-size: 5.2em; letter-spacing: .12em; margin-left: .12em; text-shadow: .
 h2 { font-size: 2.5em; letter-spacing: .08em; }
 .sub, .note, .dialogue.wist .txt, .wistq, .quest h3 small { font-style: normal; }
 .screen { background: rgba(10, 4, 6, .94); }
-.screen.dim { background: rgba(4, 2, 3, .8); }
+.screen.dim { background: rgba(4, 2, 3, .88); }
 .screen.journal { background: rgba(4, 2, 3, .93); }
 .btn, .dialogue, .note { border-width: 2px; box-shadow: none; }
 .dialogue { box-shadow: 0 0 0 2px #000; }

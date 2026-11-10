@@ -93,6 +93,15 @@ Each tool is also needed once on the main path, so none of them can be skipped:
 
 **Wist notices them.** If an icon is still hidden in the area, she lets something slip every minute or two: only a direction from far away, and what is in the way when you are close. The motes around her turn gold when one is near. She says so once when an area is cleared out.
 
+## Trade in Brannoc's Hold
+
+Ichor also buys things in town, which is a reason to travel back to it.
+
+| Who | Sells |
+| --- | --- |
+| Dunstan the Smith | reforges any weapon you own, up to +3; each level adds 15% damage (300, 700, 1300 ichor) |
+| Fenwick the Peddler | lily tincture to refill a vial (140), two spare flasks for good (900, 1600), one spare tincture vial for good (1400) |
+
 ## Quests
 
 Quests are lists of clear steps. The current step of each active quest is tracked in the top-right corner, and the journal (`Tab`) shows every step with what is done, what is next and what failed. A gold `!` marks someone with a quest to give; a gold `?` marks someone a step sends you to.

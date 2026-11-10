@@ -10,13 +10,13 @@
 
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
-    enemies: [], npcs: [], items: {}, npcInf: {}, abilities: {}, surf: [], toldGate: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
+    enemies: [], npcs: [], items: {}, npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, surf: [], toldGate: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
     player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {} });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {} });
       G.questLog.reset();
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -31,12 +31,12 @@
       this.weapons = (s.weapons || ['longsword']).filter(id => G.WEAPONS[id]); this.equip(this.weapons.includes(s.weapon) ? s.weapon : 'longsword');
       G.questLog.reset(s.quests);
       if (this.flags.bossDead) this.flags.boss_garrick_dead = 1; if (this.flags.metBoss) this.flags.boss_garrick_met = 1;   // saves from before there were three bosses
-      this.npcInf = s.npcInf || {};
+      this.npcInf = s.npcInf || {}; this.weaponLv = s.weaponLv || {}; this.bought = s.bought || {};
       this.abilities = s.abilities || {}; if (this.flags.boss_matron_dead) this.abilities.dj = 1;   // saves that beat her before she carried the greaves
       G.LEVELS.forEach((L, lv) => (L.gates || []).forEach((k, i) => { if (s.cp.lv > lv || (s.cp.lv === lv && s.cp.x > k.x)) this.flags[this.gateKey(i, lv)] = 1; }));   // saves already past a gate added later
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
@@ -83,7 +83,7 @@
       }
       if (this.enemies.some(e => !e.dead && !e.dormant && e.state !== 'idle' && near(e.x, 260))) return null; // not mid-fight
       for (const n of this.npcs) {
-        if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: (n.def.cleanse && this.flags['met_' + n.id] && (p.inf > 0 || p.tinct < p.tinctMax) ? 'Be cleansed by ' : 'Speak to ') + n.def.name, hot: n.def.cleanse && p.turnT != null, fn: () => this.talk(n) };
+        if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: (n.def.shop && this.flags['met_' + n.id] ? 'Trade with ' : n.def.cleanse && this.flags['met_' + n.id] && (p.inf > 0 || p.tinct < p.tinctMax) ? 'Be cleansed by ' : 'Speak to ') + n.def.name, hot: n.def.cleanse && p.turnT != null, fn: () => this.talk(n) };
       }
       for (const [i, n] of L.lore.entries()) {
         if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.levelIdx + ':' + i] = 1; G.ui.note(n.title, n.text); } };
@@ -106,6 +106,8 @@
       // quests whose current step is "speak to this person", and quests they can hand out
       const stepQ = Q.ids('active').filter(id => { const s = Q.cur(id); return s.type === 'talk' && s.npc === d.id; });
       const newQ = Object.keys(G.QUESTS).filter(id => !Q.state[id] && G.QUESTS[id].start && G.QUESTS[id].start.talk === d.id);
+      // a trader you already know goes straight to business, unless a quest has something to say
+      if (d.shop && met && !stepQ.some(id => Q.cur(id).lines) && !newQ.some(id => G.QUESTS[id].offer)) { stepQ.forEach(id => Q.advance(id)); G.ui.shop(d.shop); return; }
       let lines = met ? [] : d.lines.slice();
       const stepLines = stepQ.map(id => Q.cur(id).lines).find(Boolean);
       if (stepLines) lines = lines.concat(stepLines);
@@ -120,6 +122,7 @@
         newQ.forEach(id => { Q.start(id); const s = Q.cur(id); if (s && s.type === 'talk' && s.npc === d.id && !s.lines) Q.advance(id); });
         this.save();
         if (d.cleanse) this.cleanse(n);
+        if (d.shop) G.ui.shop(d.shop);
         if (d.id === 'ysolde') {
           G.ui.dialogue(G.FAIRY.choice, () => G.ui.choice('The Saint\'s Tear is warm in your hand.', [
             { label: 'Give her the Tear', fn: () => this.ending('kept') },
@@ -194,6 +197,8 @@
       this.save();
     },
     gateRefused(k) { G.sfx('block'); this.shake = 3; this.fairy.cd = 0; this.fairy.sayLine(k.wist); },
+    // ---- trade: everything is bought with ichor
+    spend(n) { if (this.ichor < n) return false; this.ichor -= n; G.sfx('ichor'); this.save(); return true; },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); },
     onNpcTurn(n) {
@@ -514,7 +519,8 @@
         ctx.fillRect(x - 1, y - 9, 2, 18); ctx.fillRect(x - 3, y - 5, 6, 10); ctx.fillRect(x - 5, y - 1, 10, 2);
       }
       ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#b9ada0';
-      ctx.fillText(p.weapon.name + (this.weapons.length > 1 ? '  [C]' : ''), 26, 114);
+      const wl = this.weaponLv[this.weaponId] || 0;
+      ctx.fillText(p.weapon.name + (wl ? ' +' + wl : '') + (this.weapons.length > 1 ? '  [C]' : ''), 26, 114);
       if (this.items.icon) { ctx.fillStyle = '#c9a13b'; ctx.fillText('Icons  ' + this.items.icon + ' / ' + this.iconTotal(), 26, 132); }
       if (p.turnT != null && !p.dead) {
         const s = Math.ceil(p.turnT); ctx.textAlign = 'center';
