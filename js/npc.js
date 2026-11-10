@@ -86,6 +86,7 @@
         if (this.cry <= 0) { this.cry = G.rand(2.5, 4.5); G.text(this.x, G.GROUND - 100, G.pick(['Help!', 'Ser knight — please!', 'No, no, no—', 'Get it away!']), '#d9c9b0', 13); }
       } else { if (this.state === 'cower' && this.t > 0.6) this.set('idle'); this.vx = 0; if (this.state === 'idle') this.facing = g.player.x >= this.x ? 1 : -1; }
       const px0 = this.x; this.x = g.gateClamp(px0, G.clamp(this.x + this.vx * dt, 40, L.length - 40), 0);
+      if (g.pitAt(this.x)) this.x = px0;   // villagers know where the holes are
       if (this.state === 'hurt' || this.state === 'strike' || this.state === 'recover') this.vx *= Math.pow(0.002, dt);
     }
 

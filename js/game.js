@@ -67,14 +67,14 @@
     findInteract() {
       const p = this.player, L = this.level, near = (x, r) => Math.abs(p.x - x) < r;
       const items = () => { for (const [i, it] of (L.items || []).entries()) { const pr = this.itemPrompt(it, i, p); if (pr) return pr; } return null; };
-      if (p.alt >= 30) return items();   // up on a ledge: only what is up here with you can be reached
       for (const e of this.enemies) {
-        if (e.state === 'broken' && near(e.x, 90 * e.scale)) {
+        if (e.state === 'broken' && near(e.x, 90 * e.scale) && Math.abs((e.alt || 0) - p.alt) < 30) {
           return { x: e.x, y: G.GROUND - (e.crawling ? 50 : 105 * e.scale), label: 'Execute', hot: true, fn: () => {
             if (e.def.boss) { p.vx = 0; G.ui.dialogue(L.boss.lastWords, () => p.startExecute(e)); } else p.startExecute(e);
           } };
         }
       }
+      if (p.alt >= 30) return items();   // up on a ledge: only what is up here with you can be reached
       for (const n of this.npcs) {   // a wounded villager can be saved with your own tincture, even mid-fight
         if (n.dead || n.gone || n.inf < 35 || !near(n.x, 70)) continue;
         if (p.tinct > 0) return { x: n.x, y: G.GROUND - 132, label: 'Give your tincture to ' + n.def.name, hot: n.turnT != null, fn: () => {
@@ -199,6 +199,16 @@
     gateRefused(k) { G.sfx('block'); this.shake = 3; this.fairy.cd = 0; this.fairy.sayLine(k.wist); },
     // ---- trade: everything is bought with ichor
     spend(n) { if (this.ichor < n) return false; this.ichor -= n; G.sfx('ichor'); this.save(); return true; },
+    // ---- pits
+    pitAt(x) { const ps = this.level.pits; if (ps) for (const q of ps) if (x > q.x + 6 && x < q.x + q.w - 6) return q; return null; },
+    impale(p, pk) {
+      p.state = 'idle'; p.t = 0; p.pitInv = 0;
+      p.damage(24, p.x, this); G.blood(p.x, G.GROUND + 30, 34, 0, 280); G.sfx('sever'); this.shake = 10;
+      G.text(p.x, G.GROUND - 70, 'IMPALED', '#e0222c', 16);
+      if (pk) p.x = (p.safeX != null ? p.safeX : pk.x - 30) < pk.x + pk.w / 2 ? pk.x - 24 : pk.x + pk.w + 24;   // climb out the side you fell from
+      p.alt = 0; p.vy = 0; p.vx = 0; p.air = false; p.pitRef = null; p.pitInv = 0.7;
+      this.fairy.bark('hurt', true);
+    },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); },
     onNpcTurn(n) {
@@ -355,6 +365,25 @@
         ctx.fillStyle = mid; ctx.fillRect(x, y, w, 10); ctx.fillStyle = lite; ctx.fillRect(x, y, w, 2);
         ctx.fillStyle = dark; for (let a = x + (stone ? 22 : 26); a < x + w - 6; a += stone ? 22 : 26) ctx.fillRect(a, y + 2, 2, 8);
         if (stone) { ctx.fillStyle = mid; for (let a = x + 4; a < x + w - 4; a += 12) ctx.fillRect(a, y - 14, 4, 14); ctx.fillStyle = lite; ctx.fillRect(x, y - 16, w, 4); }
+      }
+      // pits: stakes on the road and in the village, black water in the fen, a broken floor over the crypt
+      for (const [pi, pk] of (L.pits || []).entries()) {
+        const x = pk.x, w = pk.w, th = L.theme, wall = th === 'cathedral' ? '#1c181c' : th === 'fen' ? '#0e1612' : '#1a1012';
+        ctx.fillStyle = '#020102'; ctx.fillRect(x, gy - 3, w, G.H - gy + 3);
+        ctx.fillStyle = wall; ctx.fillRect(x, gy - 3, 4, 70); ctx.fillRect(x + w - 4, gy - 3, 4, 70);
+        ctx.fillStyle = th === 'cathedral' ? '#34303a' : '#2a1a1e'; for (const [ox, ww] of [[-6, 8], [w - 4, 10], [6, 4], [w - 14, 6]]) ctx.fillRect(x + ox, gy - 4, ww, 3);   // a crumbling lip
+        if (th === 'fen') {
+          ctx.fillStyle = '#0c201a'; ctx.fillRect(x + 4, gy + 2, w - 8, 110);                                      // black water, brim-full
+          ctx.fillStyle = 'rgba(150,200,175,0.45)'; for (let k = 0; k < 5; k++) { const rx = x + 8 + ((k * 23 + t * 9 + pi * 7) % (w - 20)); ctx.fillRect(Math.round(rx / 2) * 2, gy + 2 + (k & 1) * 6, 8 + (k % 2) * 4, 2); }
+          ctx.fillStyle = '#2a4034'; for (let k = x + 6; k < x + w - 4; k += 14) { const hh = 18 + ((k * 3) % 13); ctx.fillRect(k, gy - hh, 2, hh + 4); ctx.fillRect(k - 1, gy - hh - 6, 4, 6); }   // reeds at the brink
+        } else {
+          for (let k = x + 9; k < x + w - 6; k += 12) {
+            const top = gy - 6 - ((k * 7) % 11);   // tips just above the ground, so the hole can be seen coming
+            ctx.fillStyle = '#3a2618'; ctx.fillRect(k, top, 4, 70); ctx.fillRect(k + 1, top - 6, 2, 6);
+            ctx.fillStyle = '#7a0509'; ctx.fillRect(k + 1, top - 6, 2, 5); ctx.fillRect(k, top + 4, 1, 8);
+          }
+          if (th === 'cathedral') { ctx.fillStyle = '#b8ac98'; ctx.fillRect(x + 14, gy + 52, 10, 4); ctx.fillRect(x + w - 26, gy + 56, 8, 8); ctx.fillStyle = '#0a0607'; ctx.fillRect(x + w - 24, gy + 58, 2, 2); }
+        }
       }
       // gates: chained portcullis, rubble wall, red veil
       for (const [i, k] of (L.gates || []).entries()) {

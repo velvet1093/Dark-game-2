@@ -54,8 +54,9 @@
       if (e.dead) R(15, -22 + hy, 2, 1, '#000000'); else { R(14, -24 + hy, 4, 3, '#2a0a0e'); R(15, -23 + hy, 2, 2, L.eye); R(15, -23 + hy, 1, 1, '#ffffff'); }
     }
     leg(-8, 0, false, rd, B.b, lm.legB.gone); leg(6, 0, true, fd, B.b, lm.legF.gone);     // near pair
-    G.spr.close(ctx, e.x, G.GROUND, { facing: e.facing, flash: e.flash > 0 });
-    const W = (x, y) => [e.x + e.facing * x * 2, G.GROUND + y * 2];
+    const gy0 = G.GROUND - Math.round(e.alt / 2) * 2;   // hounds can be up on a ledge, or down in a pit
+    G.spr.close(ctx, e.x, gy0, { facing: e.facing, flash: e.flash > 0 });
+    const W = (x, y) => [e.x + e.facing * x * 2, gy0 + y * 2];
     e.out = { head: W(15, -22 + hy), sh: W(7, -12 + by), hip: W(-9, -12 + by) };
   }
 

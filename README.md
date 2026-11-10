@@ -51,7 +51,8 @@ On touch devices: two move keys on the left; Slash, Heavy, Block and Roll on the
   - open stumps bleed until the enemy dies
 - **Executions** — an enemy at low health is *Broken* and kneels. Step close and press `E` to execute it: an instant kill that restores health and pays 50% more ichor. Leave it kneeling too long and it rises in a frenzy.
 - **Jumping** — a short hop that clears pouncing hounds and crawling enemies, and lets a swing reach crows in the air. It does not avoid a standing enemy's weapon.
-- **Ledges** — every area has scaffolds or galleries to climb, one jump per tier. They are solid from above only, so you jump up through them. Most hold a **reliquary** worth a lot of ichor. Ordinary enemies cannot reach the top tier; pikes, scythes, axes and crows can.
+- **Ledges** — every area has scaffolds or galleries to climb, one jump per tier. They are solid from above only, so you jump up through them. Most hold a **reliquary** worth a lot of ichor. Lighter enemies (wretches, deserters, flagellants, knights, pikes, reapers, hounds) jump up after you, one tier at a time, and drop back down when you do; the Headsmen, bloats and bosses stay on the ground.
+- **Pits** — stakes on the road and in Hollowmere, black water in the fen, a broken floor over the crypt in the cathedral. Jump them. Falling in costs health and infection and puts you back at the edge you came from. The infected will not walk into a pit, but a hard enough blow can knock them in, and that kills them.
 - **Stamina** — attacks, rolls and blocked hits cost stamina. An empty bar means a broken guard.
 - **Vigil candles** — rest to refill flasks, set your checkpoint and spend ichor on Vigor, Strength or Endurance. The infected never rest, so more will have wandered in while you did.
 - **Death** — you drop your ichor where you fall. Reach the stain to reclaim it; die first and it is gone.

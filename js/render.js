@@ -615,3 +615,83 @@ G.drawFar = (ctx, level, cam, t) => {
   });
   ctx.restore();
 };
+
+// ---------------------------------------------------------------------------
+// Detail for the last plain props: moonlit bark, wood grain, rope, nails, rags.
+// Each keeps the silhouette it had and adds a few tones on top.
+// ---------------------------------------------------------------------------
+const MOON = 'rgba(160,96,108,0.34)', GRAIN = 'rgba(78,44,52,0.6)', ROPE = '#4a3a2a', IRON = '#4a4248', RAG = '#5a1014';
+Object.assign(PROPS, {
+  tree(c, x, y, s, seed) {
+    const r = G.rng(seed), limbs = [];
+    const br = (x1, y1, a, len, w, d) => {
+      const x2 = x1 + Math.sin(a) * len, y2 = y1 - Math.cos(a) * len; limbs.push([x1, y1, x2, y2, w]);
+      if (d > 0) { br(x2, y2, a - 0.3 - r() * 0.5, len * 0.68, w * 0.6, d - 1); br(x2, y2, a + 0.3 + r() * 0.5, len * 0.68, w * 0.6, d - 1); }
+    };
+    br(x, y, (r() - 0.5) * 0.3, 90 * s, 12 * s, 4);
+    for (const [x1, y1, x2, y2, w] of limbs) { c.lineWidth = w; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+    c.lineWidth = 4 * s; for (const d of [-1, 1]) { c.beginPath(); c.moveTo(x, y - 8 * s); c.lineTo(x + d * 18 * s, y); c.stroke(); }   // roots
+    c.save();
+    c.strokeStyle = MOON; for (const [x1, y1, x2, y2, w] of limbs) if (w > 3) { c.lineWidth = Math.max(1.5, w * 0.24); c.beginPath(); c.moveTo(x1 + w * 0.32, y1); c.lineTo(x2 + w * 0.32, y2); c.stroke(); }
+    c.fillStyle = GRAIN; for (let k = 0; k < 6; k++) c.fillRect(x - 3 * s + (k % 2) * 4 * s, y - 16 * s - k * 11 * s, 2, 7 * s);
+    c.fillStyle = '#030102'; c.beginPath(); c.ellipse(x - 1, y - 42 * s, 3 * s, 5 * s, 0, 0, 7); c.fill();                                // a hollow
+    const limb = limbs.find(l => l[4] > 3 && l[4] < 7 && l[2] > l[0] + 8);
+    if (limb && seed % 3 === 0) {   // an old noose, cut loose
+      const nx = (limb[0] + limb[2]) / 2, ny = (limb[1] + limb[3]) / 2;
+      c.strokeStyle = ROPE; c.lineWidth = 2; c.beginPath(); c.moveTo(nx, ny); c.lineTo(nx + 1, ny + 30 * s); c.stroke();
+      c.beginPath(); c.ellipse(nx + 1, ny + 36 * s, 4 * s, 6 * s, 0, 0, 7); c.stroke();
+    }
+    c.restore();
+  },
+  gallows(c, x, y, s, seed, t) {
+    c.lineWidth = 8; c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - 190 * s); c.lineTo(x + 90 * s, y - 190 * s); c.moveTo(x, y - 150 * s); c.lineTo(x + 34 * s, y - 190 * s); c.stroke();
+    const sw = Math.sin(t * 0.8 + seed) * 5, bx = x + 80 * s + sw, by = y - 190 * s + 50 * s;
+    c.lineWidth = 2; c.beginPath(); c.moveTo(x + 80 * s, y - 190 * s); c.lineTo(bx, by); c.stroke();
+    c.beginPath(); c.arc(bx, by + 6, 7 * s, 0, 7); c.fill(); c.fillRect(bx - 6 * s, by + 10, 12 * s, 40 * s); c.fillRect(bx - 5 * s, by + 48 * s, 4 * s, 30 * s); c.fillRect(bx + 1 * s, by + 48 * s, 4 * s, 28 * s);
+    c.save();
+    c.fillStyle = MOON; c.fillRect(x + 2, y - 190 * s, 2, 190 * s); c.fillRect(x, y - 194 * s, 90 * s, 2);                                    // moonlit edges
+    c.fillStyle = GRAIN; for (let k = 0; k < 8; k++) c.fillRect(x - 2, y - 20 * s - k * 21 * s, 2, 9 * s); for (let k = 0; k < 4; k++) c.fillRect(x + 14 * s + k * 18 * s, y - 191 * s, 9 * s, 2);
+    c.fillStyle = IRON; for (const [ox, oy] of [[0, -190], [34, -190], [0, -150], [80, -190]]) c.fillRect(x + ox * s - 2, y + oy * s - 2, 4, 4);   // bolts
+    c.strokeStyle = ROPE; c.lineWidth = 2; c.beginPath(); c.moveTo(x + 80 * s, y - 190 * s); c.lineTo(bx, by); c.stroke();
+    c.fillStyle = '#1a1214'; c.fillRect(bx - 6 * s, by + 10, 12 * s, 3); for (let k = 0; k < 4; k++) c.fillRect(bx - 6 * s + k * 3 * s, by + 48 * s, 2 * s, 3 + (k & 1) * 4);   // collar and a torn hem
+    if (seed % 2 === 0) { c.fillStyle = '#120a0c'; c.fillRect(x - 22 * s, y - 70 * s, 3, 70 * s); c.fillRect(x - 10 * s, y - 70 * s, 3, 70 * s); for (let k = 1; k < 6; k++) c.fillRect(x - 22 * s, y - k * 12 * s, 15 * s, 2); }   // a ladder
+    if (seed % 3 === 0) { const cx = x + 60 * s; c.fillStyle = '#080506'; c.fillRect(cx, y - 200 * s, 10, 7); c.fillRect(cx + 8, y - 204 * s, 5, 5); c.fillRect(cx - 4, y - 199 * s, 4, 3); c.fillStyle = '#ff3b2f'; c.fillRect(cx + 10, y - 203 * s, 1, 1); }   // a crow
+    c.restore();
+  },
+  fence(c, x, y, s, seed = 0) {
+    const tall = i => 40 * s + (i * 7 % 11) - (i === 3 ? 18 * s : 0);
+    for (let i = 0; i < 5; i++) c.fillRect(x + i * 22, y - tall(i), 6, tall(i) + 6 * s); c.fillRect(x - 6, y - 26 * s, 110, 5);
+    c.save();
+    for (let i = 0; i < 5; i++) { c.fillStyle = MOON; c.fillRect(x + i * 22 + 4, y - tall(i), 2, tall(i)); c.fillRect(x + i * 22, y - tall(i), 6, 2); c.fillStyle = IRON; c.fillRect(x + i * 22 + 2, y - 25 * s, 2, 2); }
+    c.fillStyle = MOON; c.fillRect(x - 6, y - 26 * s, 110, 1);
+    c.fillStyle = RAG; c.fillRect(x + 89, y - tall(4) + 4, 6, 10); c.fillRect(x + 94, y - tall(4) + 6, 4 + (seed % 3), 6);                    // a rag tied to the last post
+    c.restore();
+  },
+  cross(c, x, y, s, seed = 0, t = 0) {
+    c.save(); c.translate(x, y); c.rotate((s - 1) * 0.5);
+    c.fillRect(-4, -70 * s, 8, 70 * s); c.fillRect(-22 * s, -54 * s, 44 * s, 7);
+    c.fillStyle = MOON; c.fillRect(2, -70 * s, 2, 70 * s); c.fillRect(-22 * s, -55 * s, 44 * s, 2);
+    c.fillStyle = IRON; c.fillRect(-1, -52 * s, 3, 3);
+    c.fillStyle = RAG; const f = Math.sin(t * 3 + seed) * 2; c.fillRect(-18 * s, -48 * s, 4, 10 + f); c.fillRect(-16 * s + f, -40 * s, 4, 6);   // a strip of cloth in the wind
+    c.restore();
+  },
+  stake(c, x, y, s) {
+    c.fillRect(x - 3, y - 120 * s, 6, 120 * s); c.beginPath(); c.moveTo(x - 3, y - 120 * s); c.lineTo(x, y - 140 * s); c.lineTo(x + 3, y - 120 * s); c.fill();
+    c.save(); c.translate(x, y - 84 * s); c.rotate(0.5); c.fillRect(-7, -24, 14, 44); c.beginPath(); c.arc(0, -32, 8, 0, 7); c.fill(); c.fillRect(-20, -18, 12, 5); c.fillRect(8, 16, 5, 28);
+    c.fillStyle = MOON; c.fillRect(5, -22, 2, 40); c.fillRect(4, -38, 3, 8); c.restore();
+    c.save(); c.fillStyle = MOON; c.fillRect(x + 1, y - 120 * s, 2, 120 * s);
+    c.fillStyle = '#5a0408'; c.fillRect(x - 2, y - 74 * s, 2, 40 * s); c.fillRect(x, y - 60 * s, 2, 22 * s); c.fillRect(x - 6, y - 2, 12, 3);    // what ran down the stake
+    c.restore();
+  },
+  reeds(c, x, y, s, seed, t) {
+    const r = G.rng(seed); c.lineWidth = 2;
+    const tops = [];
+    for (let i = 0; i < 9; i++) { const h = (26 + r() * 40) * s, bx = x + i * 7, sw = Math.sin(t * 1.4 + i + seed) * 3; c.beginPath(); c.moveTo(bx, y); c.quadraticCurveTo(bx + sw * 0.4, y - h * 0.5, bx + sw, y - h); c.stroke(); tops.push([bx + sw, y - h, i]); }
+    c.save();
+    for (const [tx, ty, i] of tops) {
+      c.fillStyle = MOON; c.fillRect(tx, ty + 6, 1, 14);
+      if (i % 3 === 0) { c.fillStyle = '#2a1810'; c.fillRect(tx - 2, ty - 8, 4, 10); c.fillStyle = '#5a3a24'; c.fillRect(tx, ty - 8, 2, 4); }   // cattails
+    }
+    c.restore();
+  },
+});

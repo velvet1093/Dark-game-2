@@ -40,7 +40,7 @@ G.Player = class {
   reset() {
     this.hp = this.maxHp; this.st = this.maxSt; this.flasks = this.flaskMax;
     this.state = 'idle'; this.t = 0; this.vx = 0; this.dead = false; this.walk = 0;
-    this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = []; this.turned = false; this.curing = false; this.alt = 0; this.vy = 0; this.air = false; this.dropT = 0;
+    this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = []; this.turned = false; this.curing = false; this.alt = 0; this.vy = 0; this.air = false; this.dropT = 0; this.pitInv = 0; this.pitRef = null; this.safeX = null;
   }
   set(state) { this.state = state; this.t = 0; }
   startAttack(atk, combo) {
@@ -53,7 +53,7 @@ G.Player = class {
     this.facing = e.x >= this.x ? 1 : -1; this.x = e.x - this.facing * 46 * e.scale; e.facing = -this.facing;
     this.execKind = Math.random() < 0.5 ? 'decap' : 'impale'; this.struck = false; this.set('execute'); this.vx = 0;
   }
-  get invulnerable() { return this.dead || this.state === 'execute' || (this.state === 'roll' && this.t < 0.32); }
+  get invulnerable() { return this.dead || this.pitInv > 0 || this.state === 'execute' || (this.state === 'roll' && this.t < 0.32); }
 
   damage(dmg, fromX, g) {
     if (this.invulnerable) return false;
@@ -156,6 +156,15 @@ G.Player = class {
     }
     this.x = clamp(this.x, g.bounds[0], g.bounds[1]);
     this.x = g.gateClamp(px0, this.x, this.alt);
+    // pits: the ground gives way under a body that walks or rolls onto one
+    this.pitInv -= dt;
+    const pit = g.pitAt(this.x);
+    if (!this.air && this.alt === 0) { if (pit && this.state !== 'execute') { this.air = true; this.vy = 0; } else if (!pit) this.safeX = this.x; }
+    if (this.alt < 0) {
+      const pk = this.pitRef || (this.pitRef = g.pitAt(this.x) || (g.level.pits || []).find(q => this.x > q.x - 20 && this.x < q.x + q.w + 20));
+      if (pk) this.x = clamp(this.x, pk.x + 8, pk.x + pk.w - 8);
+      if (this.alt < -64) { g.impale(this, pk); return; }
+    } else this.pitRef = null;
     // gravity, ledges and the ground. Ledges are solid from above only; hold down to drop through one.
     const plats = g.surf;
     this.dropT -= dt;
@@ -168,7 +177,7 @@ G.Player = class {
       if (this.vy <= 0) {
         let land = -1;
         if (this.dropT <= 0) for (const pl of plats) if (this.x >= pl.x && this.x <= pl.x + pl.w && pl.h <= prev + 0.5 && pl.h >= this.alt && pl.h > land) land = pl.h;
-        if (land < 0 && this.alt <= 0) land = 0;
+        if (land < 0 && this.alt <= 0 && !g.pitAt(this.x)) land = 0;
         if (land >= 0) { this.alt = land; this.vy = 0; this.air = false; this.jumped2 = false; G.sfx('step'); G.sfx('thud'); }
       }
     }
@@ -204,7 +213,7 @@ G.Player = class {
   draw(ctx, g) {
     const pose = this.pose();
     if (this.air && (this.state === 'idle' || this.state === 'block')) { pose.footF = 9; pose.footB = -3; pose.liftF = 7; pose.liftB = 3; pose.crouch = 2; pose.lean = 0.15; }
-    if (this.air) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
+    if (this.air && this.alt > 0) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
     const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: this.look, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
     if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
     G.drawHumanoid(ctx, o);
@@ -229,12 +238,14 @@ G.Enemy = class {
     Object.assign(this, {
       id: G.uid++, type, def: d, x, vx: 0, facing: -1, hp: d.hp, maxHp: d.hp, scale: d.scale || 1,
       state: 'idle', t: 0, cd: rand(0, 0.5), flash: 0, walk: rand(0, 6), dead: false, dormant: !!d.boss,
-      bleed: 0, bleedT: 0, drip: 0, frenzy: false, wasBroken: false, atk: null, hitDone: false, fountain: 0, phase2: false, out: null, tag, alt: 0, focus: 0, tgt: null,
+      bleed: 0, bleedT: 0, drip: 0, frenzy: false, wasBroken: false, atk: null, hitDone: false, fountain: 0, phase2: false, out: null, tag, alt: 0, focus: 0, tgt: null, air: false, vy: 0, jumpCd: 0, dropT: 0,
     });
     this.limbs = {};
     for (const k of LIMBS) this.limbs[k] = { hp: d.limbHp, gone: false, absent: !!d.limbs && !d.limbs.includes(k) };
   }
   // grounded: a walker missing a leg, or a flyer missing a wing
+  // the lighter infected climb after you; the heavy, the swollen and the bosses do not
+  get canClimb() { const d = this.def; return !d.boss && !d.fly && !d.poise && !d.burst && !this.crawling; }
   get crawling() { const L = this.limbs; return L.legF.gone || L.legB.gone || (!!this.def.fly && (L.armF.gone || L.armB.gone)); }
   // Enemies hunt whoever is nearest, the knight or a villager in view, and lean
   // towards the villager. An enemy tagged with an NPC's id hunts that NPC.
@@ -347,7 +358,10 @@ G.Enemy = class {
     if (!this.tgt || this.tgt.dead || this.state === 'idle' || this.state === 'chase') this.tgt = this.pickTarget(g);
     const p = this.tgt, dx = p.x - this.x, dist = Math.abs(dx), gy = G.GROUND;
     if (this.dead) {
-      if (this.alt > 0) this.alt = Math.max(0, this.alt - 420 * dt);
+      if (this.alt > 0) {   // a body falls to whatever is under it: crows to the ground, the rest to a ledge or the ground
+        const under = this.def.fly ? 0 : g.surf.filter(pl => this.x >= pl.x - 4 && this.x <= pl.x + pl.w + 4 && pl.h <= this.alt + 0.5).reduce((mx, pl) => Math.max(mx, pl.h), 0);
+        this.alt = Math.max(under, this.alt - 420 * dt);
+      }
       if (this.fountain > 0) { this.fountain -= dt; const [jx, jy] = this.joint('head'); G.blood(jx, Math.min(jy, gy - 10), 3, 0, 300 * this.fountain); }
       this.vx *= Math.pow(0.001, dt); this.x += this.vx * dt; return;
     }
@@ -369,9 +383,27 @@ G.Enemy = class {
     if (boss && !this.phase2 && this.hp < this.maxHp * 0.5) { this.phase2 = true; this.frenzy = true; G.text(this.x, gy - 150 * this.scale / 1.3, this.def.shout || '"I HELD THE DOOR!"', '#e0222c', 18); G.sfx('bell'); G.sfx('roar'); g.shake = 12; }
 
     const sm = this.def.summon;   // some bosses call for help as their health falls
-    if (sm && this.state !== 'broken' && (this.summoned || 0) < sm.at.length && this.hp < this.maxHp * sm.at[this.summoned || 0]) {
+    if (sm && this.hp > 0 && this.state !== 'broken' && this.state !== 'executed' && (this.summoned || 0) < sm.at.length && this.hp < this.maxHp * sm.at[this.summoned || 0]) {
       this.summoned = (this.summoned || 0) + 1; G.sfx('roar'); G.text(this.x, gy - 170, 'SHE CALLS HER HOUNDS', '#e0222c', 16); g.shake = 8;
       for (let k = 0; k < sm.n; k++) { const e = new G.Enemy(sm.type, clamp(this.x + (k ? -1 : 1) * rand(150, 210), g.level.boss.gate + 40, g.level.boss.end)); e.set('chase'); g.enemies.push(e); }
+    }
+    // ledges: walking off an edge, and flight through the air. Nothing fights in mid-air.
+    if (!this.def.fly) {
+      this.jumpCd -= dt; this.dropT -= dt;
+      const S = g.surf;
+      if (!this.air && this.alt > 0 && !S.some(pl => Math.abs(pl.h - this.alt) < 1 && this.x >= pl.x - 4 && this.x <= pl.x + pl.w + 4)) { this.air = true; this.vy = 0; }
+      if (this.air) {
+        const prev = this.alt, px1 = this.x; this.vy -= 1500 * dt; this.alt += this.vy * dt; this.x += this.vx * dt;
+        if (this.vy <= 0) {
+          let land = -1;
+          if (this.dropT <= 0) for (const pl of S) if (this.x >= pl.x && this.x <= pl.x + pl.w && pl.h <= prev + 0.5 && pl.h >= this.alt && pl.h > land) land = pl.h;
+          if (land < 0 && this.alt <= 0) land = 0;
+          if (land >= 0) { this.alt = land; this.air = false; this.vy = 0; this.vx = 0; this.jumpCd = 0.3; G.sfx('step'); if (this.state !== 'chase') this.set('chase'); }
+        }
+        this.x = g.gateClamp(px1, clamp(this.x, 30, g.level.length - 30), this.alt);
+        if (!this.air && this.alt === 0 && g.pitAt(this.x)) this.fallInPit(g);
+        return;
+      }
     }
     switch (this.state) {
       case 'idle':
@@ -384,6 +416,22 @@ G.Enemy = class {
         else if (this.def.fly && !this.crawling && dist < stop - 35) this.vx = -this.facing * this.speed * 0.7;
         else this.vx = 0;
         if (dist > this.def.aggro * 1.7 && !boss) { this.set('idle'); this.vx = 0; break; }
+        if (this.canClimb && this.jumpCd <= 0) {
+          const ta = p.alt || 0;
+          if (ta > this.alt + 30 && dist < 220 && !p.air) {
+            // leap for the reachable ledge nearest the target
+            let best = null, bd = 1e9;
+            for (const pl of g.surf) {
+              if (pl.h <= this.alt + 20 || pl.h - this.alt > 88 || pl.h > ta + 5) continue;
+              const lx = clamp(p.x, pl.x + 12, pl.x + pl.w - 12), d = Math.abs(lx - p.x) + Math.abs(ta - pl.h);
+              if (d < bd) { bd = d; best = { pl, lx }; }
+            }
+            if (best && Math.abs(best.lx - this.x) < 150) {
+              const h = best.pl.h - this.alt, tl = (560 + Math.sqrt(560 * 560 - 3000 * h)) / 1500;
+              this.air = true; this.vy = 560; this.vx = (best.lx - this.x) / tl; this.facing = best.lx >= this.x ? 1 : -1; this.jumpCd = 1.2; G.sfx('roll'); break;
+            }
+          } else if (ta < this.alt - 30 && this.alt > 0) { this.air = true; this.dropT = 0.25; this.vy = 0; this.vx = this.facing * this.speed; this.jumpCd = 0.8; break; }
+        }
         if (this.cd <= 0 && !p.dead) {
           const c = this.def.attacks.filter(a => dist >= (a.min || 0) && dist <= (a.trigger || a.reach * m.reach * this.scale * 0.92));
           if (c.length) { this.atk = G.pick(c); this.set('windup'); this.vx = 0; if (this.def.poise) G.sfx('grunt'); }
@@ -398,7 +446,7 @@ G.Enemy = class {
         if (this.atk.spew) G.blood(this.x + this.facing * 26 * this.scale, gy - 62 * this.scale, 5, this.facing, 460);   // a gout of infected blood
         // the knight jumped clean over a low attack, or stands on a ledge above this weapon's reach
         const reachUp = this.alt + (['spear', 'scythe', 'axe', 'greatsword'].includes(this.def.weapon) ? 150 : 96 * this.scale);
-        const over = (p.alt > 44 && (this.crawling || this.def.model === 'hound')) || (p.alt || 0) > reachUp;
+        const over = (p.alt > 44 && (this.crawling || this.def.model === 'hound')) || (p.alt || 0) > reachUp || this.alt - (p.alt || 0) > 60;
         if (!this.hitDone && !over && rel > -14 && rel < this.atk.reach * m.reach * this.scale) { if (p.damage(this.atk.dmg * m.dmg, this.x, g)) { this.hitDone = true; if (this.atk.spew && p.infect) p.infect(this.atk.spew, g); } else if (p.state === 'block') this.hitDone = true; }
         if (this.t >= this.atk.active) this.set('recover');
         break;
@@ -424,6 +472,21 @@ G.Enemy = class {
     this.x = clamp(this.x, 30, g.level.length - 30);
     if (boss && !this.dormant) this.x = clamp(this.x, g.level.boss.gate + 30, g.level.boss.end);
     this.x = g.gateClamp(px0, this.x, this.alt, this.def.fly);
+    // on a ledge, with the quarry level or above: stay on it rather than stepping off the edge
+    if (!this.def.fly && !this.air && this.alt > 0 && (p.alt || 0) >= this.alt - 5 && this.state !== 'stagger') {
+      const pl = g.surf.find(q => Math.abs(q.h - this.alt) < 1 && this.x >= q.x - 4 && this.x <= q.x + q.w + 4);
+      if (pl) this.x = clamp(this.x, pl.x + 2, pl.x + pl.w - 2);
+    }
+    // pits: the infected will not walk into one, but a blow can knock them in
+    if (!this.def.fly && this.alt === 0 && g.pitAt(this.x)) {
+      if (['idle', 'chase', 'windup', 'strike', 'recover'].includes(this.state)) this.x = px0;
+      if (g.pitAt(this.x)) this.fallInPit(g);
+    }
+  }
+  fallInPit(g) {
+    if (this.dead || this.def.boss) return;
+    this.alt = -40; this.vx = 0; G.blood(this.x, G.GROUND + 20, 40, 0, 240); G.sfx('sever');
+    G.text(this.x, G.GROUND - 70, 'IMPALED', '#e0222c', 16); this.die({ dir: this.facing });
   }
 
   pose() {
@@ -454,7 +517,7 @@ G.Enemy = class {
   }
 
   draw(ctx, g) {
-    const d = this.def, o = { x: this.x, y: G.GROUND, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
+    const d = this.def, o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
     // attack telegraph
     if (this.state === 'windup') {   // a blinking pixel warning over the attacker
       const u = Math.min(1, this.t / this.atk.wind), on = Math.sin(this.t * (14 + u * 30)) > -0.3, x = Math.round(this.x / 2) * 2;
