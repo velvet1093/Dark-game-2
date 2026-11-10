@@ -5,6 +5,8 @@ You are **Ser Aldric Vane**, a knight who comes home after seven years abroad ca
 
 No build step, no dependencies, no asset files — all art and sound are generated in code.
 
+Characters are chibi pixel sprites in the manner of 16-bit JRPG field sprites, placed pixel by pixel in code. Backdrops and effects are still smooth vector art and will follow.
+
 ## Play
 
 Open `index.html` in a browser, or serve the folder:
@@ -123,6 +125,7 @@ Progress saves at vigil candles (browser local storage).
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/fairy.js` | Wist: lines, behaviour and drawing |
 | `js/beasts.js` | hound and crow models |
+| `js/chibi.js` | chibi pixel sprites for every humanoid, pixel gibs, and the vector-to-pixel helper |
 | `js/npc.js` | villagers: fighting, fleeing, dying |
 | `js/quests.js` | quest definitions and the quest log |
 | `js/data.js` | weapons, enemy types, levels, all story text |

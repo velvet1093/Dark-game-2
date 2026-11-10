@@ -205,9 +205,10 @@
       ctx.translate(-cam + rand(-1, 1) * this.shake * 0.5, rand(-1, 1) * this.shake * 0.5);
       this.drawWorldProps(L, t);
       G.drawFx(ctx, 'ground');
-      for (const n of this.npcs) n.draw(ctx, this);
-      for (const e of this.enemies) if (e.dead) e.draw(ctx, this);
-      for (const e of this.enemies) if (!e.dead) e.draw(ctx, this);
+      const vis = x => x > cam - 160 && x < cam + W + 160;   // sprites are built per frame, so skip what is off screen
+      for (const n of this.npcs) if (vis(n.x)) n.draw(ctx, this);
+      for (const e of this.enemies) if (e.dead && vis(e.x)) e.draw(ctx, this);
+      for (const e of this.enemies) if (!e.dead && vis(e.x)) e.draw(ctx, this);
       p.draw(ctx, this);
       this.fairy.draw(ctx, this);
       G.drawFx(ctx, 'air');

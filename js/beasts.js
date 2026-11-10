@@ -80,5 +80,10 @@
     e.out = { head: [e.x + e.facing * s * 8, y - 3 * s], sh: [e.x, y - 2], hip: [e.x - e.facing * s * 4, y] };
   }
 
-  G.drawBeast = (ctx, e, time) => (e.def.model === 'hound' ? hound : crow)(ctx, e, time);
+  // drawn as vectors into a half-size buffer, then outlined and scaled up as pixels
+  G.drawBeast = (ctx, e, time) => {
+    const fly = e.def.model === 'crow', wy = G.GROUND - (e.alt || 0), ay = fly ? 70 : 96;
+    (fly ? crow : hound)(G.pixBegin(e.x, wy, 64, ay), e, time);
+    G.pixEnd(ctx, e.x, wy, 64, ay);
+  };
 })();

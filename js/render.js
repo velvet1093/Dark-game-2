@@ -297,7 +297,7 @@ G.drawFx = (ctx, layer) => {
     for (const g of f.gibs) G.drawGib(ctx, g);
     return;
   }
-  for (const p of f.drops) { ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
+  for (const p of f.drops) { const s = p.r > 2.2 ? 4 : 2; ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x / 2) * 2, Math.round(p.y / 2) * 2, s, s); }
   ctx.fillStyle = '#ffd98a';
   for (const s of f.sparks) ctx.fillRect(s.x, s.y, 2, 2);
   ctx.textAlign = 'center';

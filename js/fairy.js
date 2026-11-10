@@ -89,6 +89,9 @@ G.Fairy = class {
     const gl = ctx.createRadialGradient(0, 0, 2, 0, 0, 46);
     gl.addColorStop(0, glee ? 'rgba(210,120,220,0.34)' : 'rgba(180,150,240,0.3)'); gl.addColorStop(1, 'rgba(180,150,240,0)');
     ctx.fillStyle = gl; ctx.fillRect(-46, -46, 92, 92);
+    ctx.restore();
+    // the fairy herself is drawn as vectors into a half-size buffer and shown as an outlined pixel sprite
+    const main = ctx; ctx = G.pixBegin(0, 0); ctx.save();
     ctx.scale(this.facing * 1.4, 1.4); ctx.rotate(0.12); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     // wings: two long pairs, fluttering
     const flap = Math.sin(t * 34) * 0.22;
@@ -128,11 +131,12 @@ G.Fairy = class {
     // face: sweet until something bleeds
     ctx.fillStyle = glee ? '#d0122a' : '#8a5fd0';
     if (glee) { ctx.shadowColor = '#ff2a3a'; ctx.shadowBlur = 6; }
-    ctx.beginPath(); ctx.arc(1, -14.5, 1.1, 0, 7); ctx.arc(4.4, -14.5, 1.1, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillRect(-0.4, -16, 1.7, 3); ctx.fillRect(3.4, -16, 1.7, 3); ctx.shadowBlur = 0;
     ctx.strokeStyle = '#5a1030'; ctx.lineWidth = 0.9; ctx.beginPath();
     if (glee) ctx.arc(2.7, -12.6, 2.3, 0.1, Math.PI - 0.1); else ctx.arc(2.7, -12.4, 1.1, 0.2, Math.PI - 0.2);
     ctx.stroke();
     ctx.restore();
+    G.pixEnd(main, this.x, this.y); ctx = main;
     // speech bubble
     if (this.say) {
       ctx.font = 'italic 13px Georgia, serif'; ctx.textAlign = 'left';
