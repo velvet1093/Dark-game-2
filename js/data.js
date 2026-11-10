@@ -232,7 +232,8 @@ G.LEVELS = [
   {
     name: 'The Gallows Road', chapter: 'Chapter I', theme: 'road', length: 6300, seed: 11,
     shrines: [1380, 4580], chapels: [{ x: 4760 }],
-    items: [{ x: 3780, weapon: 'greataxe', needs: 'boss_hangman_dead' }],
+    items: [{ x: 3780, weapon: 'greataxe', needs: 'boss_hangman_dead' }, { x: 2085, alt: 142, cache: 180 }, { x: 5510, alt: 72, cache: 120 }],
+    platforms: [{ x: 1880, w: 170, h: 72 }, { x: 2010, w: 140, h: 142 }, { x: 5420, w: 180, h: 72 }],
     enemies: [
       ['wretch', 760], ['crow', 900], ['wretch', 1060], ['wretch', 1130], ['deserter', 1750], ['wretch', 2050, 'marta'], ['wretch', 2120, 'marta'],
       ['deserter', 2560], ['hound', 2700], ['hound', 2760], ['wretch', 2950], ['pikeman', 3050], ['crow', 3300], ['deserter', 4060], ['wretch', 4150], ['hound', 4250],
@@ -317,6 +318,8 @@ G.LEVELS = [
   {
     name: "Brannoc's Hold", chapter: 'Chapter II', theme: 'town', length: 3900, seed: 51,
     shrines: [320], chapels: [{ x: 2330, big: true }],
+    items: [{ x: 1695, alt: 146, cache: 250 }],
+    platforms: [{ x: 1440, w: 190, h: 74 }, { x: 1590, w: 160, h: 146 }, { x: 3020, w: 170, h: 72 }],
     enemies: [],
     npcs: [
       {
@@ -444,7 +447,8 @@ G.LEVELS = [
         repeat: [['Garrow', 'Hollowmere is past the stones. Go quiet.']],
       },
     ],
-    items: [{ x: 1200, id: 'lily' }, { x: 2650, id: 'lily' }, { x: 4350, id: 'lily' }, { x: 5080, id: 'lily' }, { x: 4030, weapon: 'spear' }],
+    items: [{ x: 1200, id: 'lily' }, { x: 2650, id: 'lily' }, { x: 4350, id: 'lily' }, { x: 5080, id: 'lily' }, { x: 4030, weapon: 'spear' }, { x: 2485, alt: 138, cache: 220 }],
+    platforms: [{ x: 2260, w: 170, h: 70 }, { x: 2390, w: 150, h: 138 }, { x: 4180, w: 170, h: 72 }],
     lore: [
       { x: 1820, title: 'Scratched on a Boat Hull', text: 'day 1 they do not sleep\nday 4 they do not eat\nday 9 father looked at me and did not know me\nday 10 he knew me\nthat was worse' },
       { x: 3560, title: "Sister Corra's Tally", text: 'Washed at the drowned oak: 61.\nOf those, came back a second time: 40.\nA third: 22.\n\nIt is not a cure. It is a delay. I say this to every one of them and every one of them thanks me as if I had said the opposite.' },
@@ -465,7 +469,8 @@ G.LEVELS = [
   {
     name: 'Hollowmere', chapter: 'Chapter IV', theme: 'village', length: 6500, seed: 23,
     shrines: [220, 2680, 4960], chapels: [{ x: 5120 }],
-    items: [{ x: 3330, weapon: 'flail' }],
+    items: [{ x: 3330, weapon: 'flail' }, { x: 1485, alt: 144, cache: 260 }, { x: 5905, alt: 72, cache: 140 }],
+    platforms: [{ x: 1250, w: 180, h: 74 }, { x: 1390, w: 150, h: 144 }, { x: 5820, w: 170, h: 72 }],
     enemies: [
       ['wretch', 700], ['wretch', 780], ['flagellant', 1100], ['bloat', 1750], ['deserter', 1830], ['hound', 2000], ['flagellant', 2100],
       ['brute', 2380], ['crow', 2950], ['flagellant', 3180], ['flagellant', 3260], ['wretch', 3560], ['wretch', 3620], ['bloat', 3720],
@@ -539,6 +544,8 @@ G.LEVELS = [
   {
     name: 'Cathedral of Saint Avaric', chapter: 'Chapter V', theme: 'cathedral', length: 6600, seed: 37,
     shrines: [220, 5280], chapels: [],
+    items: [{ x: 1775, alt: 148, cache: 400 }, { x: 4390, alt: 74, cache: 200 }],
+    platforms: [{ x: 1500, w: 200, h: 76 }, { x: 1670, w: 170, h: 148 }, { x: 4300, w: 180, h: 74 }],
     enemies: [
       ['flagellant', 720], ['flagellant', 800], ['reaper', 1050], ['templar', 1300], ['crow', 1500], ['wretch', 1600], ['wretch', 1660], ['templar', 1800],
       ['reaper', 2050], ['brute', 2300], ['bloat', 2650], ['flagellant', 2750], ['templar', 2850], ['templar', 3300], ['reaper', 3420], ['pikeman', 3650], ['templar', 3760],

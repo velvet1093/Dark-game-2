@@ -62,6 +62,13 @@
     // --------------------------- interactions ------------------------------
     findInteract() {
       const p = this.player, L = this.level, near = (x, r) => Math.abs(p.x - x) < r;
+      if (p.alt >= 30) {   // up on a ledge: only what is up here with you can be reached
+        for (const [i, it] of (L.items || []).entries()) {
+          const k = 'item_' + this.levelIdx + '_' + i;
+          if (it.cache && !this.flags[k] && near(it.x, 40) && Math.abs(p.alt - (it.alt || 0)) < 30) return { x: it.x, y: G.GROUND - it.alt - 54, label: 'Open the reliquary', fn: () => { this.flags[k] = 1; this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, G.GROUND - it.alt - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); this.save(); } };
+        }
+        return null;
+      }
       for (const e of this.enemies) {
         if (e.state === 'broken' && near(e.x, 90 * e.scale)) {
           return { x: e.x, y: G.GROUND - (e.crawling ? 50 : 105 * e.scale), label: 'Execute', hot: true, fn: () => {
@@ -84,7 +91,8 @@
       }
       for (const [i, it] of (L.items || []).entries()) {
         const k = 'item_' + this.levelIdx + '_' + i;
-        if (this.flags[k] || !near(it.x, 40) || (it.needs && !this.flags[it.needs])) continue;
+        if (this.flags[k] || !near(it.x, 40) || Math.abs(p.alt - (it.alt || 0)) > 30 || (it.needs && !this.flags[it.needs])) continue;
+        if (it.cache) return { x: it.x, y: G.GROUND - (it.alt || 0) - 54, label: 'Open the reliquary', fn: () => { this.flags[k] = 1; this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, G.GROUND - (it.alt || 0) - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); this.save(); } };
         if (it.weapon) return { x: it.x, y: G.GROUND - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: () => { this.flags[k] = 1; this.gainWeapon(it.weapon); } };
         return { x: it.x, y: G.GROUND - 40, label: 'Gather the white lily', fn: () => { this.flags[k] = 1; this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, G.GROUND - 50, 'White lily', '#efeaf2', 13); } };
       }
@@ -200,7 +208,7 @@
       this.lvT += dt; this.card -= dt; this.shake = Math.max(0, this.shake - dt * 40);
 
       this.bounds = this.bossFight ? [L.boss.gate + 24, L.boss.end + 20] : [30, L.length - 30];
-      this.prompt = (p.state === 'idle' || p.state === 'block') && p.alt === 0 ? this.findInteract() : null;
+      this.prompt = (p.state === 'idle' || p.state === 'block') && !p.air ? this.findInteract() : null;
       if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); return; }   // the world may have changed under us; pick up next frame
 
       p.update(dt, this);
@@ -270,6 +278,18 @@
 
     drawWorldProps(L, t) {
       const gy = G.GROUND, glow = (x, y, r, col) => { const g = ctx.createRadialGradient(x, y, 1, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); };
+      // ledges: scaffolds outdoors, stone galleries in the cathedral. Solid from above only.
+      for (const pl of L.platforms || []) {
+        const x = pl.x, y = gy - pl.h, w = pl.w, stone = L.theme === 'cathedral';
+        const dark = stone ? '#1c181c' : '#1c1210', mid = stone ? '#34303a' : '#3a2618', lite = stone ? '#55505c' : '#5e4028';
+        ctx.fillStyle = dark;
+        for (const px of [x + 8, x + w - 14]) ctx.fillRect(px, y + 8, 6, pl.h - 8);
+        if (!stone) { ctx.strokeStyle = dark; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x + 11, y + 10); ctx.lineTo(x + w - 11, y + Math.min(pl.h, 70)); ctx.moveTo(x + w - 11, y + 10); ctx.lineTo(x + 11, y + Math.min(pl.h, 70)); ctx.stroke(); }
+        else for (let a = x + 30; a < x + w - 30; a += 36) { ctx.beginPath(); ctx.arc(a + 18, y + 26, 16, Math.PI, 0); ctx.lineTo(a + 34, y + 8); ctx.lineTo(a + 2, y + 8); ctx.fill(); }
+        ctx.fillStyle = mid; ctx.fillRect(x, y, w, 10); ctx.fillStyle = lite; ctx.fillRect(x, y, w, 2);
+        ctx.fillStyle = dark; for (let a = x + (stone ? 22 : 26); a < x + w - 6; a += stone ? 22 : 26) ctx.fillRect(a, y + 2, 2, 8);
+        if (stone) { ctx.fillStyle = mid; for (let a = x + 4; a < x + w - 4; a += 12) ctx.fillRect(a, y - 14, 4, 14); ctx.fillStyle = lite; ctx.fillRect(x, y - 16, w, 4); }
+      }
       // archways: onward at the far end, and back the way you came at the near end
       const arch = (x, col) => {
         glow(x, gy - 70, 130, col);
@@ -297,6 +317,8 @@
         ctx.beginPath(); ctx.moveTo(x - w / 2 - 12, gy - h); ctx.lineTo(x, gy - h - 80 * k); ctx.lineTo(x + w / 2 + 12, gy - h); ctx.fill();
         ctx.fillRect(x - 3, gy - h - 118 * k, 6, 44 * k); ctx.fillRect(x - 14 * k, gy - h - 104 * k, 28 * k, 6);
         ctx.fillStyle = `rgba(214,196,255,${0.75 + Math.sin(t * 2 + x) * 0.08})`; ctx.beginPath(); ctx.arc(x, gy - h - 22 * k, 15 * k, 0, 7); ctx.fill();
+        ctx.fillStyle = '#1a1318'; for (let r2 = 0; r2 < h; r2 += 14) { ctx.fillRect(x - w / 2, gy - h + r2, w, 2); for (let q = ((r2 / 14) & 1) * 16; q < w; q += 32) ctx.fillRect(x - w / 2 + q, gy - h + r2, 2, 14); }
+        ctx.fillStyle = '#241a20'; ctx.fillRect(x - w / 2 - 12, gy - h - 2, w + 24, 4);
         ctx.strokeStyle = '#0c090c'; ctx.lineWidth = 2.5; ctx.beginPath();
         for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3; ctx.moveTo(x - Math.cos(a) * 15 * k, gy - h - 22 * k - Math.sin(a) * 15 * k); ctx.lineTo(x + Math.cos(a) * 15 * k, gy - h - 22 * k + Math.sin(a) * 15 * k); }
         ctx.stroke();
@@ -305,6 +327,13 @@
       // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
         if (this.flags['item_' + this.levelIdx + '_' + i] || (it.needs && !this.flags[it.needs])) return;
+        if (it.cache) {   // a reliquary left on a high ledge
+          const x = it.x, y = gy - (it.alt || 0);
+          glow(x, y - 12, 40 + Math.sin(t * 3 + i) * 5, 'rgba(240,200,110,0.4)');
+          ctx.fillStyle = '#3a2416'; ctx.fillRect(x - 12, y - 16, 24, 16); ctx.fillStyle = '#5a3a20'; ctx.fillRect(x - 12, y - 20, 24, 6);
+          ctx.fillStyle = '#c9a13b'; ctx.fillRect(x - 12, y - 14, 24, 2); ctx.fillRect(x - 2, y - 16, 4, 8); ctx.fillRect(x - 12, y - 20, 2, 20); ctx.fillRect(x + 10, y - 20, 2, 20);
+          return;
+        }
         if (it.weapon) {
           const x = it.x, kind = G.WEAPONS[it.weapon].draw;
           glow(x, gy - 34, 46 + Math.sin(t * 3 + i) * 5, 'rgba(240,210,150,0.34)');

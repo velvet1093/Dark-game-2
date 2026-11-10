@@ -40,7 +40,7 @@ G.Player = class {
   reset() {
     this.hp = this.maxHp; this.st = this.maxSt; this.flasks = this.flaskMax;
     this.state = 'idle'; this.t = 0; this.vx = 0; this.dead = false; this.walk = 0;
-    this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = []; this.turned = false; this.curing = false; this.alt = 0; this.vy = 0;
+    this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = []; this.turned = false; this.curing = false; this.alt = 0; this.vy = 0; this.air = false; this.dropT = 0;
   }
   set(state) { this.state = state; this.t = 0; }
   startAttack(atk, combo) {
@@ -94,10 +94,10 @@ G.Player = class {
         if (Math.floor(this.walk / Math.PI) !== before) G.sfx('step');
       }
       this.vx = dir * (blocking ? 62 : 158);
-      if (want('jump') && this.alt === 0 && this.st > 0) {
+      if (want('jump') && !this.air && this.st > 0) {
         // a short hop: clears hounds and crawlers, and lets the sword reach what flies
-        this.buf = null; this.st = Math.max(0, this.st - 10); this.stDelay = 0.4; this.vy = 520; this.alt = 0.01; G.sfx('roll');
-      } else if (want('roll') && this.alt === 0 && this.st > 0) {
+        this.buf = null; this.st = Math.max(0, this.st - 10); this.stDelay = 0.4; this.vy = 520; this.air = true; G.sfx('roll');
+      } else if (want('roll') && !this.air && this.st > 0) {
         this.buf = null; this.st = Math.max(0, this.st - 22); this.stDelay = 0.6;
         if (dir) this.facing = dir; this.set('roll'); G.sfx('roll');
       } else if (want('attack') && this.st > 0) this.startAttack(w.light[0], 0);
@@ -109,7 +109,7 @@ G.Player = class {
       if (!this.swung && this.t >= t1) { this.swung = true; this.vx = this.facing * a.lunge; G.sfx('swing'); }
       if (this.t >= t1 && this.t < t2) {
         for (const e of g.enemies) {
-          if (e.dead || e.state === 'executed' || this.hitSet.has(e.id) || e.alt - this.alt > 95) continue;
+          if (e.dead || e.state === 'executed' || this.hitSet.has(e.id) || e.alt - this.alt > 95 || this.alt - e.alt > 64) continue;
           const rel = (e.x - this.x) * this.facing;
           if (rel > -12 && rel < a.reach + 14 * e.scale) { this.hitSet.add(e.id); e.takeHit(a.dmg * this.dmgMul, a, this.facing, g, w); this.bloody = Math.min(1, this.bloody + 0.25); }
         }
@@ -145,15 +145,27 @@ G.Player = class {
     if (this.state !== 'idle' && this.state !== 'block') this.vx *= Math.pow(friction, dt);
     if (this.state !== 'roll' && this.state !== 'execute') {
       for (const e of g.enemies) {
-        if (e.dead || e.crawling || e.state === 'broken' || e.def.fly || (this.alt > 30 && e.def.model === 'hound')) continue;
+        if (e.dead || e.crawling || e.state === 'broken' || e.def.fly || (this.alt > 30 && e.def.model === 'hound') || Math.abs(this.alt - e.alt) > 50) continue;
         const d = this.x - e.x, min = 22 * e.scale;
         if (Math.abs(d) < min) this.x = e.x + (d >= 0 ? min : -min);
       }
     }
     this.x = clamp(this.x, g.bounds[0], g.bounds[1]);
-    if (this.alt > 0) {
-      this.vy -= 1500 * dt; this.alt += this.vy * dt;
-      if (this.alt <= 0) { this.alt = 0; this.vy = 0; G.sfx('step'); G.sfx('thud'); }
+    // gravity, ledges and the ground. Ledges are solid from above only; hold down to drop through one.
+    const plats = g.level.platforms || [];
+    this.dropT -= dt;
+    if (!this.air && this.alt > 0) {
+      if (I.down('down')) { this.air = true; this.dropT = 0.25; this.vy = 0; }
+      else if (!plats.some(pl => Math.abs(pl.h - this.alt) < 1 && this.x >= pl.x - 4 && this.x <= pl.x + pl.w + 4)) { this.air = true; this.vy = 0; }
+    }
+    if (this.air) {
+      const prev = this.alt; this.vy -= 1500 * dt; this.alt += this.vy * dt;
+      if (this.vy <= 0) {
+        let land = -1;
+        if (this.dropT <= 0) for (const pl of plats) if (this.x >= pl.x && this.x <= pl.x + pl.w && pl.h <= prev + 0.5 && pl.h >= this.alt && pl.h > land) land = pl.h;
+        if (land < 0 && this.alt <= 0) land = 0;
+        if (land >= 0) { this.alt = land; this.vy = 0; this.air = false; G.sfx('step'); G.sfx('thud'); }
+      }
     }
   }
 
@@ -186,8 +198,8 @@ G.Player = class {
 
   draw(ctx, g) {
     const pose = this.pose();
-    if (this.alt > 0 && (this.state === 'idle' || this.state === 'block')) { pose.footF = 9; pose.footB = -3; pose.liftF = 7; pose.liftB = 3; pose.crouch = 2; pose.lean = 0.15; }
-    if (this.alt > 0) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
+    if (this.air && (this.state === 'idle' || this.state === 'block')) { pose.footF = 9; pose.footB = -3; pose.liftF = 7; pose.liftB = 3; pose.crouch = 2; pose.lean = 0.15; }
+    if (this.air) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
     const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: this.look, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
     if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
     G.drawHumanoid(ctx, o);
@@ -379,7 +391,9 @@ G.Enemy = class {
       case 'strike': {
         const rel = (p.x - this.x) * this.facing;
         if (this.atk.spew) G.blood(this.x + this.facing * 26 * this.scale, gy - 62 * this.scale, 5, this.facing, 460);   // a gout of infected blood
-        const over = p.alt > 44 && (this.crawling || this.def.model === 'hound');   // the knight jumped clean over a low attack
+        // the knight jumped clean over a low attack, or stands on a ledge above this weapon's reach
+        const reachUp = this.alt + (['spear', 'scythe', 'axe', 'greatsword'].includes(this.def.weapon) ? 150 : 96 * this.scale);
+        const over = (p.alt > 44 && (this.crawling || this.def.model === 'hound')) || (p.alt || 0) > reachUp;
         if (!this.hitDone && !over && rel > -14 && rel < this.atk.reach * m.reach * this.scale) { if (p.damage(this.atk.dmg * m.dmg, this.x, g)) { this.hitDone = true; if (this.atk.spew && p.infect) p.infect(this.atk.spew, g); } else if (p.state === 'block') this.hitDone = true; }
         if (this.t >= this.atk.active) this.set('recover');
         break;

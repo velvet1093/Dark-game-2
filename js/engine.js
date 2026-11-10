@@ -19,7 +19,7 @@ G.rng = seed => () => {
 // ------------------------------- input -------------------------------------
 const KEYMAP = {
   KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
-  KeyW: 'jump', ArrowUp: 'jump', KeyJ: 'attack', KeyK: 'heavy', Space: 'roll', KeyL: 'block', ShiftLeft: 'block',
+  KeyW: 'jump', ArrowUp: 'jump', KeyS: 'down', ArrowDown: 'down', KeyJ: 'attack', KeyK: 'heavy', Space: 'roll', KeyL: 'block', ShiftLeft: 'block',
   KeyE: 'use', KeyQ: 'flask', KeyM: 'mute', KeyR: 'cure', KeyC: 'swap', KeyX: 'swap', KeyF: 'cure', Tab: 'journal', KeyT: 'journal', Enter: 'confirm', Escape: 'pause',
   Digit1: 'opt1', Digit2: 'opt2', Digit3: 'opt3', Digit4: 'opt4',
 };

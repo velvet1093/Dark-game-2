@@ -428,12 +428,18 @@ G.drawBackdrop = (ctx, level, cam, t) => {
     for (let x = 0; x <= W; x += 20) { const wx = x + cam * 0.12; ctx.lineTo(x, gy - 70 - Math.sin(wx * 0.004) * 36 - Math.sin(wx * 0.013) * 14); }
     ctx.lineTo(W, gy); ctx.fill();
   }
+  G.drawFar(ctx, level, cam, t);
   const par = T.indoor ? 0.6 : 0.5;
   ctx.fillStyle = ctx.strokeStyle = T.indoor ? '#0f0b0d' : '#0b0708'; ctx.lineCap = 'round';
   for (const p of level._mid) { const x = Math.round((p.x - cam * par) / 2) * 2; if (x > -300 && x < W + 300) PROPS[p.k](ctx, x, gy + 4, p.s, p.seed, t); }
   // ground
   ctx.fillStyle = T.ground; ctx.fillRect(0, gy - 3, W, H - gy + 3);
   ctx.fillStyle = T.edge; ctx.fillRect(0, gy - 3, W, 2);
+  if (level.theme === 'town') {   // cobbles
+    for (let row = 0; row < 5; row++) for (let wx = Math.floor(cam / 22) * 22 - 22; wx < cam + W; wx += 22) {
+      const x = Math.round((wx - cam + (row & 1) * 11) / 2) * 2, y = gy + 2 + row * 12; ctx.fillStyle = ((wx / 22 + row) & 3) ? 'rgba(255,235,225,0.045)' : 'rgba(0,0,0,0.3)'; ctx.fillRect(x, y, 18, 2); ctx.fillRect(x, y, 2, 10);
+    }
+  }
   for (let wx = Math.floor(cam / 12) * 12; wx < cam + W; wx += 12) {   // pebbles and scuffs so the ground is not flat
     const h = Math.imul(wx | 0, 2654435761) >>> 0, x = Math.round((wx - cam + h % 11) / 2) * 2, y = gy + 4 + Math.round((h >>> 5) % 84 / 2) * 2;
     ctx.fillStyle = (h & 3) ? 'rgba(0,0,0,0.28)' : 'rgba(255,235,225,0.06)'; ctx.fillRect(x, y, 2 + ((h >>> 12) & 1) * 4, 2);
@@ -483,4 +489,129 @@ G.drawAtmosphere = (ctx, level, cam, t, hurt, fever = 0) => {
   }
   c.putImageData(img, 0, 0);
   const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(ovBuf, 0, 0, W, H); ctx.imageSmoothingEnabled = sm;
+};
+
+// ---------------------------------------------------------------------------
+// Scenery detail. The props above are silhouettes; these versions add the
+// things that make a place read as a place: timber frames, tiles, lit and dark
+// windows, brick courses, stained glass, market goods. A distant skyline per
+// theme sits between the hills and the nearer buildings.
+// ---------------------------------------------------------------------------
+const D1 = '#1c1215', D2 = '#2a1a1e', D3 = '#3a2428';
+const lit = (c, x, y, w, h, on, t, seed, col = '224,130,56') => {
+  c.fillStyle = on ? `rgba(${col},${0.78 + Math.sin(t * 3.1 + seed) * 0.1})` : '#05030a'; c.fillRect(x, y, w, h);
+  if (on) { const g = c.createRadialGradient(x + w / 2, y + h / 2, 2, x + w / 2, y + h / 2, w * 2.6); g.addColorStop(0, `rgba(${col},0.28)`); g.addColorStop(1, `rgba(${col},0)`); c.fillStyle = g; c.fillRect(x - w * 2.6, y - h * 2.6, w * 6.2, h * 6.2); }
+  c.fillStyle = D1; c.fillRect(x + w / 2 - 1, y, 2, h); c.fillRect(x, y + h / 2 - 1, w, 2);
+};
+Object.assign(PROPS, {
+  house(c, x, y, s, seed, t) {
+    const w = Math.round(170 * s), h = Math.round(110 * s), rh = Math.round(70 * s), r = G.rng(seed);
+    c.fillRect(x, y - h, w, h); c.beginPath(); c.moveTo(x - 14, y - h); c.lineTo(x + w * 0.5, y - h - rh); c.lineTo(x + w + 14, y - h); c.fill();
+    c.fillRect(x + w * 0.7, y - h - rh, 16 * s, 50 * s);
+    c.save();
+    c.fillStyle = D1; for (let i = 1; i < 7; i++) { const k = i / 7, half = (w / 2 + 14) * k; c.fillRect(x + w / 2 - half, y - h - rh + rh * k, half * 2, 2); }      // roof courses
+    c.fillStyle = D2; c.fillRect(x - 14, y - h - 2, w + 28, 4); c.fillRect(x + w * 0.7 - 2, y - h - rh - 4, 16 * s + 4, 4);
+    c.fillStyle = D1; c.fillRect(x, y - h * 0.52, w, 4); for (const k of [0, 0.34, 0.67, 1]) c.fillRect(x + k * (w - 5), y - h, 5, h);                      // timber frame
+    c.strokeStyle = D1; c.lineWidth = 4; c.beginPath(); c.moveTo(x + 4, y - h * 0.5); c.lineTo(x + w * 0.33, y - h + 4); c.moveTo(x + w - 4, y - h * 0.5); c.lineTo(x + w * 0.67, y - h + 4); c.stroke();
+    const dx = x + w * 0.42, dw = Math.round(28 * s), dh = Math.round(50 * s);
+    c.fillStyle = '#0a0607'; c.fillRect(dx, y - dh, dw, dh); c.fillStyle = D2; c.fillRect(dx, y - dh, dw, 3); c.fillRect(dx, y - dh, 3, dh); c.fillRect(dx + dw - 3, y - dh, 3, dh); c.fillRect(dx + dw / 2 - 1, y - dh, 2, dh);
+    c.fillStyle = D3; c.fillRect(dx + dw - 9, y - dh / 2, 3, 3);
+    lit(c, x + w * 0.12, y - h * 0.86, Math.round(22 * s), Math.round(26 * s), r() < 0.5, t, seed);
+    lit(c, x + w * 0.74, y - h * 0.86, Math.round(22 * s), Math.round(26 * s), r() < 0.35, t, seed + 3);
+    lit(c, x + w * 0.76, y - h * 0.4, Math.round(20 * s), Math.round(24 * s), r() < 0.3, t, seed + 7);
+    if (r() < 0.5) { c.fillStyle = D2; c.fillRect(x + w * 0.1, y - 16, 20, 16); c.fillRect(x + w * 0.1 + 22, y - 10, 12, 10); }                             // crates by the wall
+    c.restore();
+  },
+  chapel(c, x, y, s, seed, t) {
+    const w = 120 * s, h = 130 * s;
+    c.fillRect(x, y - h, w, h); c.beginPath(); c.moveTo(x + 30 * s, y - h); c.lineTo(x + 60 * s, y - 260 * s); c.lineTo(x + 90 * s, y - h); c.fill();
+    c.fillRect(x + 57 * s, y - 290 * s, 6 * s, 40 * s); c.fillRect(x + 48 * s, y - 278 * s, 24 * s, 6 * s);
+    c.save();
+    c.fillStyle = D1; for (let r2 = 0; r2 < h; r2 += 12) { c.fillRect(x, y - h + r2, w, 2); for (let k = (r2 / 12 & 1) * 12; k < w; k += 24) c.fillRect(x + k, y - h + r2, 2, 12); }   // stone courses
+    for (let i = 1; i < 6; i++) c.fillRect(x + 60 * s - i * 5 * s, y - 260 * s + i * 22 * s, i * 10 * s, 2);
+    c.fillStyle = '#0a0607'; c.beginPath(); c.moveTo(x + w / 2 - 16, y); c.lineTo(x + w / 2 - 16, y - 40 * s); c.quadraticCurveTo(x + w / 2, y - 66 * s, x + w / 2 + 16, y - 40 * s); c.lineTo(x + w / 2 + 16, y); c.fill();
+    c.fillStyle = `rgba(190,170,240,${0.55 + Math.sin(t * 1.7 + seed) * 0.08})`; c.beginPath(); c.arc(x + w / 2, y - h * 0.72, 11 * s, 0, 7); c.fill();
+    c.fillStyle = D1; c.fillRect(x + w / 2 - 1, y - h * 0.72 - 11 * s, 2, 22 * s); c.fillRect(x + w / 2 - 11 * s, y - h * 0.72 - 1, 22 * s, 2);
+    c.restore();
+  },
+  wall(c, x, y, s, seed, t) {
+    const w = Math.round(260 * s), h = 150;
+    c.fillRect(x, y - h, w, h); for (let i = 0; i < w; i += 34) c.fillRect(x + i, y - h - 16, 20, 16); c.fillRect(x + w * 0.4, y - h - 60, 54, 60); for (let i = 0; i < 54; i += 18) c.fillRect(x + w * 0.4 + i, y - h - 72, 10, 12);
+    c.save();
+    c.fillStyle = D1; for (let r2 = 0; r2 < h; r2 += 14) { c.fillRect(x, y - h + r2, w, 2); for (let k = (r2 / 14 & 1) * 16; k < w; k += 32) c.fillRect(x + k, y - h + r2, 2, 14); }
+    c.fillStyle = '#05030a'; c.fillRect(x + w * 0.4 + 24, y - h - 44, 6, 22); c.fillRect(x + w * 0.15, y - h + 40, 5, 20); c.fillRect(x + w * 0.8, y - h + 40, 5, 20);
+    c.fillStyle = '#3a2618'; c.fillRect(x + w * 0.62, y - 96, 4, 26);                                                                                    // a torch in its bracket
+    const f = 0.8 + Math.sin(t * 9 + seed) * 0.15, g = c.createRadialGradient(x + w * 0.62 + 2, y - 102, 1, x + w * 0.62 + 2, y - 102, 70);
+    g.addColorStop(0, `rgba(255,170,80,${0.4 * f})`); g.addColorStop(1, 'rgba(255,170,80,0)'); c.fillStyle = g; c.fillRect(x + w * 0.62 - 70, y - 172, 144, 140);
+    c.fillStyle = `rgba(255,${190 * f | 0},90,0.95)`; c.fillRect(x + w * 0.62 - 2, y - 108, 8, 12); c.fillStyle = '#fff0b0'; c.fillRect(x + w * 0.62, y - 104, 4, 6);
+    c.fillStyle = '#4a1014'; c.fillRect(x + w * 0.4 + 18, y - h - 96, 4, 26); c.fillRect(x + w * 0.4 + 22, y - h - 96, 22 + Math.sin(t * 2 + seed) * 4, 14);        // banner on the tower
+    c.restore();
+  },
+  window(c, x, y, s, seed, t) {
+    // stained glass: a leaded mosaic of dim panes under a pointed arch
+    c.save(); c.beginPath(); c.moveTo(x - 32, y - 110); c.lineTo(x - 32, y - 290); c.quadraticCurveTo(x, y - 366, x + 32, y - 290); c.lineTo(x + 32, y - 110); c.closePath(); c.clip();
+    const pal = ['#6a0d18', '#8a1420', '#4a0c2a', '#7a3a10', '#2a1440', '#5a0a12', '#96281c'], fl = 0.86 + Math.sin(t * 1.3 + seed) * 0.1;
+    c.globalAlpha = fl;
+    for (let r2 = 0; r2 < 22; r2++) for (let k = 0; k < 6; k++) { const h2 = Math.imul(seed * 31 + r2 * 7 + k, 2654435761) >>> 0; c.fillStyle = pal[h2 % pal.length]; c.fillRect(x - 32 + k * 11 + (r2 & 1) * -5, y - 366 + r2 * 12, 11, 12); }
+    c.globalAlpha = 1; c.fillStyle = 'rgba(255,200,150,0.5)'; c.beginPath(); c.arc(x, y - 250, 10, 0, 7); c.fill();                                         // the saint's halo
+    c.fillStyle = '#d8c8b0'; c.fillRect(x - 4, y - 242, 8, 34); c.fillRect(x - 10, y - 232, 20, 5);
+    c.fillStyle = '#0a0607'; for (let r2 = 0; r2 < 22; r2++) c.fillRect(x - 34, y - 366 + r2 * 12, 68, 1); for (let k = 1; k < 6; k++) c.fillRect(x - 32 + k * 11, y - 366, 1, 260);
+    c.restore();
+    c.save(); c.strokeStyle = '#17110f'; c.lineWidth = 6; c.beginPath(); c.moveTo(x - 32, y - 110); c.lineTo(x - 32, y - 290); c.quadraticCurveTo(x, y - 366, x + 32, y - 290); c.lineTo(x + 32, y - 110); c.closePath(); c.stroke();
+    c.fillStyle = '#17110f'; c.fillRect(x - 2, y - 340, 4, 230); c.fillRect(x - 38, y - 112, 76, 8); c.restore();
+  },
+  pillar(c, x, y) {
+    c.fillRect(x - 22, 0, 44, y); c.fillRect(x - 32, y - 26, 64, 26); c.fillRect(x - 30, 60, 60, 16);
+    c.save(); c.fillStyle = '#1a1418'; for (const k of [-14, -5, 4, 13]) c.fillRect(x + k, 76, 3, y - 102);                                                  // fluting
+    c.fillStyle = '#231b20'; c.fillRect(x - 22, 76, 3, y - 102); c.fillRect(x - 32, y - 26, 64, 3); c.fillRect(x - 30, 60, 60, 3); c.fillRect(x - 26, 50, 52, 10);
+    c.fillStyle = '#080506'; c.fillRect(x + 19, 76, 3, y - 102); c.restore();
+  },
+  pew(c, x, y, s) {
+    c.fillRect(x, y - 30 * s, 100 * s, 8); c.fillRect(x, y - 56 * s, 8, 56 * s); c.fillRect(x + 92 * s, y - 30 * s, 8, 30 * s);
+    c.save(); c.fillStyle = D1; c.fillRect(x, y - 56 * s, 100 * s, 5); for (let k = 14; k < 92 * s; k += 14) c.fillRect(x + k, y - 51 * s, 3, 21 * s); c.fillStyle = D2; c.fillRect(x, y - 30 * s, 100 * s, 2); c.restore();
+  },
+  stall(c, x, y, s, seed) {
+    c.fillRect(x, y - 34 * s, 96 * s, 6); c.fillRect(x + 4, y - 34 * s, 5, 34 * s); c.fillRect(x + 88 * s, y - 34 * s, 5, 34 * s); c.fillRect(x + 2, y - 86 * s, 4, 54 * s); c.fillRect(x + 90 * s, y - 86 * s, 4, 54 * s);
+    c.save();
+    for (let k = 0; k < 8; k++) { c.fillStyle = k & 1 ? '#3a1418' : '#22161a'; c.beginPath(); c.moveTo(x - 10 + k * 14.5 * s, y - 80 * s); c.lineTo(x - 10 + (k + 1) * 14.5 * s, y - 80 * s); c.lineTo(x + (k + 1) * 12 * s, y - 98 * s); c.lineTo(x + k * 12 * s, y - 98 * s); c.fill(); }
+    const goods = ['#6a1a1a', '#7a6030', '#3a4a2a', '#6a5a4a', '#5a2a4a']; for (let k = 0; k < 6; k++) { c.fillStyle = goods[(seed + k) % goods.length]; c.fillRect(x + 10 + k * 13 * s, y - 42 * s, 9, 8); }
+    c.fillStyle = D2; c.fillRect(x, y - 34 * s, 96 * s, 2); c.restore();
+  },
+  cart(c, x, y, s) {
+    c.fillRect(x, y - 44 * s, 110 * s, 22 * s); c.beginPath(); c.arc(x + 26 * s, y - 16 * s, 16 * s, 0, 7); c.arc(x + 90 * s, y - 16 * s, 16 * s, 0, 7); c.fill(); c.beginPath(); c.ellipse(x + 55 * s, y - 50 * s, 46 * s, 14 * s, 0, Math.PI, 0); c.fill();
+    c.save(); c.fillStyle = D1; for (let k = 0; k < 110 * s; k += 16) c.fillRect(x + k, y - 44 * s, 2, 22 * s); c.fillRect(x, y - 44 * s, 110 * s, 2);
+    c.strokeStyle = D2; c.lineWidth = 2; for (const wx of [26, 90]) for (let a = 0; a < 3; a++) { c.beginPath(); c.moveTo(x + wx * s - Math.cos(a * 1.05) * 14 * s, y - 16 * s - Math.sin(a * 1.05) * 14 * s); c.lineTo(x + wx * s + Math.cos(a * 1.05) * 14 * s, y - 16 * s + Math.sin(a * 1.05) * 14 * s); c.stroke(); }
+    c.fillStyle = '#2a2224'; c.fillRect(x + 30 * s, y - 60 * s, 14, 6); c.fillRect(x + 62 * s, y - 62 * s, 10, 8); c.restore();                                 // what the cart was carrying
+  },
+  grave(c, x, y, s) {
+    c.beginPath(); c.moveTo(x - 16 * s, y); c.lineTo(x - 16 * s, y - 30 * s); c.quadraticCurveTo(x, y - 52 * s, x + 16 * s, y - 30 * s); c.lineTo(x + 16 * s, y); c.fill();
+    c.save(); c.fillStyle = D2; c.fillRect(x - 1, y - 38 * s, 3, 18 * s); c.fillRect(x - 6 * s, y - 32 * s, 12 * s, 3); c.fillStyle = '#1a2416'; c.fillRect(x - 16 * s, y - 6, 10, 6); c.fillRect(x + 6 * s, y - 4, 8, 4); c.restore();
+  },
+});
+
+// A distant skyline, far behind the playfield.
+G.drawFar = (ctx, level, cam, t) => {
+  const W = G.W, gy = G.GROUND, th = level.theme, off = cam * 0.25;
+  ctx.save(); ctx.fillStyle = th === 'cathedral' ? '#0c080b' : th === 'fen' ? '#0b1210' : '#150b0f';
+  const each = (step, fn) => { for (let i = Math.floor(off / step) - 1; i * step - off < W + step; i++) fn(Math.round((i * step - off) / 2) * 2, Math.imul(i + 7, 2654435761) >>> 0, i); };
+  if (th === 'road') each(760, (x, h) => {           // a ruined keep on the ridge
+    const y = gy - 60 - h % 30; ctx.fillRect(x, y - 120, 46, 120); ctx.fillRect(x - 6, y - 132, 14, 14); ctx.fillRect(x + 16, y - 128, 12, 10); ctx.fillRect(x + 46, y - 60, 90, 60); ctx.fillRect(x + 136, y - 34, 40, 34);
+    ctx.fillStyle = '#05030a'; ctx.fillRect(x + 18, y - 96, 6, 14); ctx.fillStyle = '#150b0f';
+  });
+  else if (th === 'village') each(980, (x, h) => {    // a windmill, still turning
+    const y = gy - 50 - h % 24; ctx.beginPath(); ctx.moveTo(x - 22, y); ctx.lineTo(x - 12, y - 110); ctx.lineTo(x + 12, y - 110); ctx.lineTo(x + 22, y); ctx.fill(); ctx.beginPath(); ctx.moveTo(x - 16, y - 110); ctx.lineTo(x, y - 132); ctx.lineTo(x + 16, y - 110); ctx.fill();
+    ctx.save(); ctx.translate(x, y - 112); ctx.rotate(t * 0.25 + h % 6); for (let k = 0; k < 4; k++) { ctx.rotate(Math.PI / 2); ctx.fillRect(-3, 0, 6, 70); ctx.fillRect(3, 14, 12, 52); } ctx.restore();
+  });
+  else if (th === 'town') each(120, (x, h) => {       // rooftops and spires beyond the street
+    const hh = 60 + h % 70, w = 90 + (h >>> 8) % 40; ctx.fillRect(x, gy - hh, w, hh); ctx.beginPath(); ctx.moveTo(x - 6, gy - hh); ctx.lineTo(x + w / 2, gy - hh - 34); ctx.lineTo(x + w + 6, gy - hh); ctx.fill();
+    if (h % 5 === 0) { ctx.fillRect(x + w / 2 - 8, gy - hh - 110, 16, 90); ctx.beginPath(); ctx.moveTo(x + w / 2 - 10, gy - hh - 110); ctx.lineTo(x + w / 2, gy - hh - 150); ctx.lineTo(x + w / 2 + 10, gy - hh - 110); ctx.fill(); }
+    if (h % 3 === 0) { ctx.fillStyle = `rgba(200,110,50,${0.35 + Math.sin(t * 2 + h) * 0.08})`; ctx.fillRect(x + 20 + h % 30, gy - hh + 16, 6, 8); ctx.fillStyle = '#150b0f'; }
+  });
+  else if (th === 'fen') each(150, (x, h) => {        // a drowned tree line
+    const hh = 70 + h % 90; ctx.fillRect(x, gy - hh, 5, hh); ctx.fillRect(x - 16, gy - hh * 0.7, 20, 3); ctx.fillRect(x + 4, gy - hh * 0.85, 22, 3); ctx.fillRect(x - 10, gy - hh * 0.45, 12, 3); ctx.fillRect(x + 22, gy - hh * 0.85 - 12, 3, 14);
+  });
+  else each(340, (x) => {                              // the far arcade of the nave
+    ctx.fillRect(x, 0, 26, gy); ctx.beginPath(); ctx.moveTo(x + 26, 150); ctx.quadraticCurveTo(x + 183, -40, x + 340, 150); ctx.lineTo(x + 340, 0); ctx.lineTo(x + 26, 0); ctx.fill();
+  });
+  ctx.restore();
 };
