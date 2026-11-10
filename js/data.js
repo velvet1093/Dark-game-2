@@ -366,7 +366,7 @@ G.LEVELS = [
         repeat: [['Dunstan', 'Keep it oiled. Blood is worse than salt.']],
       },
       {
-        id: 'ilse', x: 1960, name: 'Ilse', look: 'refugee', pose: 'kneel', essential: true,
+        id: 'ilse', x: 2040, name: 'Ilse', look: 'refugee', pose: 'kneel', essential: true,
         lines: [
           ['Ilse', 'We came in from the fen farms. Eleven of us at the gate. The Captain looked at our eyes and let in six.'],
           ['Ilse', 'My brother is out there still. He was not weeping, ser, I swear it. He had only been crying.'],

@@ -80,7 +80,7 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 
 ## Collectables and tools
 
-**Weeping icons** — fifteen small gilt paintings of the Saint, three in every area. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 15 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — nineteen small gilt paintings of the Saint: three in every area, and four more inside buildings. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 19 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -98,13 +98,28 @@ Each tool is also needed once on the main path, so none of them can be skipped:
 
 **Wist notices them.** If an icon is still hidden in the area, she lets something slip every minute or two: only a direction from far away, and what is in the way when you are close. The motes around her turn gold when one is near. She says so once when an area is cleared out.
 
+## Buildings
+
+Six buildings can be entered. Walk up to the door and press the interact key. The street outside waits exactly as you left it, and anything you kill inside stays dead until you rest or travel.
+
+| Area | Building | Inside |
+| --- | --- | --- |
+| Gallows Road | The Cooper's Cottage | the cooper, who never left; a note from his wife; an icon on a shelf |
+| Brannoc's Hold | The Drowned Lamb | Maren the innkeeper and two regulars; an icon up in the loft |
+| Brannoc's Hold | Dunstan's Forge | Dunstan, his furnace and his trade |
+| Weeping Fen | The Eel-Catcher's Hovel | flooded, and not empty; a reliquary on the loft |
+| Hollowmere | The Vane Mill | your family's home, still turning; Ysolde's ledger; an icon in the loft |
+| Cathedral | The Sacristy | the Bishop's seven knives, two guards, a reliquary and an icon |
+
+Wist counts icons behind a door when she hints, and tells you when one is indoors.
+
 ## Trade in Brannoc's Hold
 
 Ichor also buys things in town, which is a reason to travel back to it.
 
 | Who | Sells |
 | --- | --- |
-| Dunstan the Smith | reforges any weapon you own, up to +3; each level adds 15% damage (300, 700, 1300 ichor) |
+| Dunstan the Smith (in his forge) | reforges any weapon you own, up to +3; each level adds 15% damage (300, 700, 1300 ichor) |
 | Fenwick the Peddler | lily tincture to refill a vial (140), two spare flasks for good (900, 1600), one spare tincture vial for good (1400) |
 
 ## Quests
@@ -165,6 +180,7 @@ Progress saves at vigil candles (browser local storage).
 | --- | --- |
 | `js/engine.js` | input, blood / gib particles |
 | `js/audio.js` | synthesised sound effects, ambience and music |
+| `js/interiors.js` | the buildings you can enter: rooms, furniture and street fronts |
 | `js/fairy.js` | Wist: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Wist |
 | `js/chibi.js` | chibi pixel sprites for every humanoid, pixel gibs, and the vector-to-pixel helper |

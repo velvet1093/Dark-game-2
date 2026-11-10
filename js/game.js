@@ -10,7 +10,7 @@
 
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
-    enemies: [], npcs: [], items: {}, npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, surf: [], toldGate: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
+    enemies: [], npcs: [], items: {}, npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, surf: [], toldGate: {}, inside: null, outside: null, cleared: {}, fade: 0, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
     player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
@@ -38,7 +38,7 @@
     },
     save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
-      const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
+      const L = this.level = G.LEVELS[idx]; this.levelIdx = idx; this.inside = null; this.outside = null; this.cleared = {};
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
       this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.toldGate = {};
       // everything that can be stood on: ledges, and the tops of rubble walls
@@ -52,7 +52,7 @@
       if (L.boss && !this.flags['boss_' + L.boss.type + '_dead']) { this.boss = new G.Enemy(L.boss.type, L.boss.x); this.enemies.push(this.boss); }
     },
     respawn() {
-      if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.player.x, n: this.ichor }; this.ichor = 0; }
+      if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.inside ? this.inside.door.x : this.player.x, n: this.ichor }; this.ichor = 0; }   // dying indoors leaves the stain at the door
       const p = this.player; p.turnT = null; p.inf = Math.min(p.inf, 50);   // you wake with the fever broken, not gone
       this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save();
     },
@@ -86,7 +86,7 @@
         if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: (n.def.shop && this.flags['met_' + n.id] ? 'Trade with ' : n.def.cleanse && this.flags['met_' + n.id] && (p.inf > 0 || p.tinct < p.tinctMax) ? 'Be cleansed by ' : 'Speak to ') + n.def.name, hot: n.def.cleanse && p.turnT != null, fn: () => this.talk(n) };
       }
       for (const [i, n] of L.lore.entries()) {
-        if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.levelIdx + ':' + i] = 1; G.ui.note(n.title, n.text); } };
+        if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.lvKey() + ':' + i] = 1; G.ui.note(n.title, n.text); } };
       }
       const found = items(); if (found) return found;
       for (const sx of L.shrines) if (near(sx, 55)) return { x: sx, y: G.GROUND - 100, label: 'Rest at the vigil candle', fn: () => this.rest(sx) };
@@ -97,6 +97,8 @@
         return { x: k.x, y: G.GROUND - 200, label: tool ? k.open : k.shut, fn: () => (tool ? this.openGate(i) : this.gateRefused(k)) };
       }
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
+      if (this.inside) { if (near(60, 50)) return { x: 60, y: G.GROUND - 130, label: 'Leave ' + this.level.name, fn: () => this.leaveBuilding() }; return null; }
+      for (const d of L.doors || []) if (near(d.x, 36)) return { x: d.x, y: G.GROUND - 110, label: 'Enter ' + G.INTERIORS[d.to].name, fn: () => this.enterBuilding(d) };
       if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
       return null;
     },
@@ -141,7 +143,7 @@
     },
     // What can be done with one thing lying in the world, if the knight is beside it and at its height.
     itemPrompt(it, i, p) {
-      const k = 'item_' + this.levelIdx + '_' + i, alt = it.alt || 0, y = G.GROUND - alt;
+      const k = 'item_' + this.lvKey() + '_' + i, alt = it.alt || 0, y = G.GROUND - alt;
       if (this.flags[k] || Math.abs(p.x - it.x) > 40 || Math.abs(p.alt - alt) > 30 || (it.needs && !this.flags[it.needs])) return null;
       const take = fn => () => { this.flags[k] = 1; fn(); this.save(); };
       if (it.icon) {
@@ -158,9 +160,13 @@
       if (it.weapon) return { x: it.x, y: y - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: take(() => this.gainWeapon(it.weapon)) };
       return { x: it.x, y: y - 40, label: 'Gather the white lily', fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, 'White lily', '#efeaf2', 13); }) };
     },
-    iconTotal() { return G.LEVELS.reduce((n, l) => n + (l.items || []).filter(it => it.icon).length, 0); },
+    iconTotal() { return G.LEVELS.concat(Object.values(G.INTERIORS)).reduce((n, l) => n + (l.items || []).filter(it => it.icon).length, 0); },
     // Icons still to be found in the area the knight is in (Wist hints at these).
-    iconsHere() { return (this.level.items || []).map((it, i) => ({ it, i })).filter(o => o.it.icon && !this.flags['item_' + this.levelIdx + '_' + o.i]).map(o => o.it); },
+    iconsHere() {
+      const key = this.lvKey(), out = (this.level.items || []).map((it, i) => ({ it, i })).filter(o => o.it.icon && !this.flags['item_' + key + '_' + o.i]).map(o => o.it);
+      if (!this.inside) for (const d of this.level.doors || []) (G.INTERIORS[d.to].items || []).forEach((it, i) => { if (it.icon && !this.flags['item_in_' + d.to + '_' + i]) out.push({ x: d.x, alt: 0, gate: 'inside' }); });   // icons behind a door count, hinted at the door
+      return out;
+    },
     gainIcon(x, y) {
       const n = this.items.icon = (this.items.icon || 0) + 1, total = this.iconTotal(), p = this.player; let sub = n + ' of ' + total + ' found';
       if (n === 5) { p.stats.flask = (p.stats.flask || 0) + 1; p.flasks++; sub += '  ·  +1 flask, for good'; }
@@ -209,8 +215,27 @@
       p.alt = 0; p.vy = 0; p.vx = 0; p.air = false; p.pitRef = null; p.pitInv = 0.7;
       this.fairy.bark('hurt', true);
     },
+    // ---- buildings: step through a door into a room; the street waits as you left it
+    lvKey() { return this.inside ? 'in_' + this.inside.id : this.levelIdx; },
+    enterBuilding(d) {
+      const B = G.INTERIORS[d.to]; if (!B) return;
+      this.outside = { level: this.level, enemies: this.enemies, npcs: this.npcs, surf: this.surf, boss: this.boss, cam: this.cam, x: d.x, decals: G.fx.decals.slice(), gibs: G.fx.gibs.slice() };
+      this.inside = { id: d.to, door: d }; this.level = B; G.fxReset();
+      const gone = this.cleared[d.to] || {};
+      this.enemies = (B.enemies || []).map(([t, x], i) => { const e = new G.Enemy(t, x); e.inIdx = i; return e; }).filter(e => !gone[e.inIdx]);
+      this.npcs = (B.npcs || []).map(n => new G.Npc(n, this)); this.surf = (B.platforms || []).slice(); this.boss = null; this.bossFight = false;
+      const p = this.player; Object.assign(p, { x: B.entry, alt: 0, air: false, vy: 0, vx: 0, facing: 1 }); p.set('idle');
+      this.cam = 0; this.fairy.place(p); this.toldGate = {}; this.card = 3; this.fade = 0.5; G.sfx('page'); G.sfx('thud'); G.ambience('hall');
+    },
+    leaveBuilding() {
+      const o = this.outside; if (!o) return;
+      Object.assign(this, { level: o.level, enemies: o.enemies, npcs: o.npcs, surf: o.surf, boss: o.boss, cam: o.cam, inside: null, outside: null });
+      G.fx.decals.splice(0, G.fx.decals.length, ...o.decals); G.fx.gibs.splice(0, G.fx.gibs.length, ...o.gibs); G.fx.drops.length = 0;
+      const p = this.player; Object.assign(p, { x: o.x, alt: 0, air: false, vy: 0, vx: 0 }); p.set('idle');
+      this.fairy.place(p); this.fade = 0.5; G.sfx('page'); G.ambience({ road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall' }[this.level.theme]);
+    },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
-    onEnemyDeath(e) { G.questLog.onKill(e, this); },
+    onEnemyDeath(e) { G.questLog.onKill(e, this); if (this.inside && e.inIdx != null) (this.cleared[this.inside.id] || (this.cleared[this.inside.id] = {}))[e.inIdx] = 1; },
     onNpcTurn(n) {
       G.text(n.x, G.GROUND - 130, n.def.name + ' has turned', '#e060f0', 16); G.sfx('infect');
       this.fairy.cd = 0; this.fairy.bark('npcturn', true); this.save();
@@ -220,7 +245,7 @@
       this.fairy.cd = 0; this.fairy.bark('npcdeath', true); this.save();
     },
     rest(x) {
-      this.player.reset(); this.spawnEnemies(); for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
+      this.player.reset(); this.spawnEnemies(); this.cleared = {}; for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
       this.cp = { lv: this.levelIdx, x }; this.save();
       G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); G.ui.shrine();
     },
@@ -278,7 +303,7 @@
       if (this.hitstop > 0) { this.hitstop -= dt; return; }
       if (this.slow > 0) { this.slow -= dt; dt *= 0.3; }
       const p = this.player, L = this.level;
-      this.lvT += dt; this.card -= dt; this.shake = Math.max(0, this.shake - dt * 40);
+      this.lvT += dt; this.card -= dt; this.fade = Math.max(0, this.fade - dt); this.shake = Math.max(0, this.shake - dt * 40);
 
       this.bounds = this.bossFight ? [L.boss.gate + 24, L.boss.end + 20] : [30, L.length - 30];
       this.prompt = (p.state === 'idle' || p.state === 'block') && !p.air ? this.findInteract() : null;
@@ -308,7 +333,7 @@
       }
       // reclaim ichor from where you last fell
       const s = this.stain;
-      if (s && s.lv === this.levelIdx && Math.abs(p.x - s.x) < 30 && !p.dead) { this.ichor += s.n; G.text(p.x, G.GROUND - 110, 'Ichor reclaimed +' + s.n, '#d9c9b0', 15); G.sfx('ichor'); this.stain = null; }
+      if (s && !this.inside && s.lv === this.levelIdx && Math.abs(p.x - s.x) < 30 && !p.dead) { this.ichor += s.n; G.text(p.x, G.GROUND - 110, 'Ichor reclaimed +' + s.n, '#d9c9b0', 15); G.sfx('ichor'); this.stain = null; }
       if (p.dead && (this.deathT += dt) > 1.7) { this.deathT = -99; this.fairy.say = null; G.ui.death(this.ichor, () => this.respawn(), this.fairy.last.death, this.flags.deaths, p.turned); }
 
       let target = p.x - W * 0.42 + p.facing * 40;
@@ -325,9 +350,9 @@
       const shx = Math.round(rand(-1, 1) * this.shake * 0.25) * 2, shy = Math.round(rand(-1, 1) * this.shake * 0.25) * 2;
       // backdrop, props and ground blood go through the pixel buffer; characters are drawn over it
       const main = ctx; ctx = G.bgBegin();
-      G.drawBackdrop(ctx, L, cam, t);
+      if (this.inside) G.drawInterior(ctx, L, cam, t); else G.drawBackdrop(ctx, L, cam, t);
       ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.drawFx(ctx, 'ground'); ctx.restore();
-      G.drawFog(ctx, L, cam, t);
+      if (!this.inside) G.drawFog(ctx, L, cam, t);
       ctx = main; G.bgEnd(ctx, shx, shy);
       ctx.save();
       ctx.translate(-cam + shx, shy);
@@ -349,6 +374,7 @@
       ctx.restore();
       G.drawAtmosphere(ctx, L, cam, t, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
+      if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
     },
 
@@ -360,7 +386,7 @@
         const dark = stone ? '#1c181c' : '#1c1210', mid = stone ? '#34303a' : '#3a2618', lite = stone ? '#55505c' : '#5e4028';
         ctx.fillStyle = dark;
         for (const px of [x + 8, x + w - 14]) ctx.fillRect(px, y + 8, 6, pl.h - 8);
-        if (!stone) { ctx.strokeStyle = dark; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x + 11, y + 10); ctx.lineTo(x + w - 11, y + Math.min(pl.h, 70)); ctx.moveTo(x + w - 11, y + 10); ctx.lineTo(x + 11, y + Math.min(pl.h, 70)); ctx.stroke(); }
+        if (!stone && !L.interior) { ctx.strokeStyle = dark; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x + 11, y + 10); ctx.lineTo(x + w - 11, y + Math.min(pl.h, 70)); ctx.moveTo(x + w - 11, y + 10); ctx.lineTo(x + 11, y + Math.min(pl.h, 70)); ctx.stroke(); }
         else for (let a = x + 30; a < x + w - 30; a += 36) { ctx.beginPath(); ctx.arc(a + 18, y + 26, 16, Math.PI, 0); ctx.lineTo(a + 34, y + 8); ctx.lineTo(a + 2, y + 8); ctx.fill(); }
         ctx.fillStyle = mid; ctx.fillRect(x, y, w, 10); ctx.fillStyle = lite; ctx.fillRect(x, y, w, 2);
         ctx.fillStyle = dark; for (let a = x + (stone ? 22 : 26); a < x + w - 6; a += stone ? 22 : 26) ctx.fillRect(a, y + 2, 2, 8);
@@ -423,7 +449,11 @@
         ctx.beginPath(); ctx.moveTo(x - 46, gy - 150); ctx.quadraticCurveTo(x, gy - 215, x + 46, gy - 150); ctx.lineTo(x + 32, gy - 150); ctx.quadraticCurveTo(x, gy - 190, x - 32, gy - 150); ctx.fill();
       };
       if (L.exit) arch(L.exit.x, 'rgba(150,40,30,0.28)');
-      if (this.levelIdx > 0) arch(BACK_X, 'rgba(90,90,120,0.22)');
+      if (this.levelIdx > 0 && !this.inside) arch(BACK_X, 'rgba(90,90,120,0.22)');
+      if (!this.inside) for (const d of L.doors || []) {   // building fronts, with a marker if someone inside has a quest
+        const B = G.INTERIORS[d.to], mk = (B.npcs || []).map(n => !this.flags['dead_' + n.id] && G.questLog.marker(n.id)).find(Boolean);
+        G.drawFacade(ctx, d, t, mk);
+      }
       // boss altar & fog door
       if (L.boss) {
         if (L.boss.final) {
@@ -452,7 +482,7 @@
       }
       // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
-        if (this.flags['item_' + this.levelIdx + '_' + i] || (it.needs && !this.flags[it.needs])) return;
+        if (this.flags['item_' + this.lvKey() + '_' + i] || (it.needs && !this.flags[it.needs])) return;
         if (it.icon) {
           const x = it.x, y = gy - (it.alt || 0), bob = Math.round(Math.sin(t * 2 + i) * 2);
           if (it.gate === 'bars') { ctx.fillStyle = '#17110f'; ctx.fillRect(x - 22, y - 58, 44, 58); ctx.fillStyle = '#060304'; ctx.fillRect(x - 16, y - 50, 32, 50); ctx.fillStyle = '#241a1c'; ctx.fillRect(x - 24, y - 62, 48, 6); }
@@ -507,13 +537,13 @@
       }
       // lore
       L.lore.forEach((n, i) => {
-        const seen = this.read[this.levelIdx + ':' + i];
+        const seen = this.read[this.lvKey() + ':' + i];
         if (!seen) glow(n.x, gy - 8, 34 + Math.sin(t * 3) * 5, 'rgba(230,210,160,0.35)');
         ctx.save(); ctx.translate(n.x, gy - 5); ctx.rotate(-0.2); ctx.fillStyle = seen ? '#5a4f40' : '#c9b78f'; ctx.fillRect(-8, -5, 16, 10); ctx.restore();
       });
       // bloodstain
       const s = this.stain;
-      if (s && s.lv === this.levelIdx) { glow(s.x, gy - 14, 44 + Math.sin(t * 4) * 6, 'rgba(220,20,30,0.5)'); ctx.fillStyle = '#7a0509'; ctx.beginPath(); ctx.ellipse(s.x, gy + 6, 22, 5, 0, 0, 7); ctx.fill(); }
+      if (s && !this.inside && s.lv === this.levelIdx) { glow(s.x, gy - 14, 44 + Math.sin(t * 4) * 6, 'rgba(220,20,30,0.5)'); ctx.fillStyle = '#7a0509'; ctx.beginPath(); ctx.ellipse(s.x, gy + 6, 22, 5, 0, 0, 7); ctx.fill(); }
     },
 
     drawHud(p, L, t) {

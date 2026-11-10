@@ -40,7 +40,7 @@ G.FAIRY = {
   // Hints at an icon still hidden in this area. She would rather not, but she cannot help noticing.
   clueFar: ['I smell old paint and candle smoke. Somewhere {dir}. Probably nothing.', 'Something gilt is sulking {dir}. Do not go and look.', 'There is a little painted face {dir} that has not been found. Not that I care.'],
   clueNear: ['Mm. Close. {how}', 'You are standing very near something. {how}', 'Warm. Warmer. {how}'],
-  clueHow: { high: 'Not down here, though. Look up.', bars: 'Someone shut it behind iron.', veil: 'It is sitting in that red mist. Lovely colour.', plain: 'It is not even hidden properly.' },
+  clueHow: { high: 'Not down here, though. Look up.', bars: 'Someone shut it behind iron.', veil: 'It is sitting in that red mist. Lovely colour.', plain: 'It is not even hidden properly.', inside: 'It is indoors. Knock, why not.' },
   clueNone: ['Nothing left to steal here. You have been thorough. How dull.'],
   rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
