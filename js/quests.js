@@ -34,7 +34,7 @@ G.QUESTS = {
     ],
     waiting: [['The Hanged Man', 'The Headsman. Far end of the road. I am not going anywhere.']],
     steps: [
-      { type: 'kill', enemy: 'brute', level: 0, n: 1, text: 'Slay the Headsman at the far end of the Gallows Road' },
+      { type: 'flag', flag: 'boss_hangman_dead', text: 'Slay Gaunt, the High Headsman, who bars the Gallows Road' },
       { type: 'talk', npc: 'hanged', text: 'Return to the Hanged Man and cut him down', lines: [
         ['The Hanged Man', 'I heard him fall from here. Like a cart going over.'],
         ['The Hanged Man', 'Now the rope, ser. Gently... there. Oh. Oh, the ground is cold. I had forgotten. Thank you.'],

@@ -14,11 +14,14 @@
       Object.assign(this, { def, id: def.id, x: def.x, home: def.x, look: G.LOOKS[def.look], maxHp: def.hp || 90, hp: def.hp || 90,
         fighter: !!def.fighter, state: 'idle', t: 9, vx: 0, facing: 1, flash: 0, walk: 0, cd: 0, cry: 0, struck: false, foe: null });
       this.dead = !!g.flags['dead_' + def.id];
+      // infection: wounds raise it; at 100 the villager has a few seconds left before turning on you
+      this.inf = (g.npcInf && g.npcInf[def.id]) || 0; this.turnT = this.inf >= 100 ? 12 : null; this.gone = !!g.flags['turned_' + def.id];
       if (this.dead) this.state = 'dead';
     }
     get atRest() { return !!(this.def.restFlag && G.game.flags[this.def.restFlag]); }
-    get targetable() { return !this.dead && !this.def.essential && this.def.pose !== 'hang' && !this.atRest; }
-    get canTalk() { const g = G.game; return !this.dead && !this.atRest && this.state !== 'cower' && (!this.def.needs || g.flags[this.def.needs]); }
+    get canTurn() { return !this.def.cleanse && !this.def.essential && this.def.pose !== 'hang'; }   // the Sisters wash daily and do not turn
+    get targetable() { return !this.gone && !this.dead && !this.def.essential && this.def.pose !== 'hang' && !this.atRest; }
+    get canTalk() { const g = G.game; return !this.gone && !this.dead && !this.atRest && this.state !== 'cower' && (!this.def.needs || g.flags[this.def.needs]); }
     set(s) { this.state = s; this.t = 0; }
 
     // Same signature as Player.damage so enemies can strike either.
@@ -26,6 +29,10 @@
       if (!this.targetable) return false;
       const dir = this.x >= fromX ? 1 : -1;
       this.hp -= dmg * 0.6; this.flash = 0.12; this.vx = dir * 120;
+      if (this.canTurn && this.turnT == null) {
+        this.inf = Math.min(100, this.inf + dmg * 2); g.npcInf[this.id] = this.inf;
+        if (this.inf >= 100) { this.turnT = 12; G.sfx('infect'); G.text(this.x, G.GROUND - 118, G.pick(['My eyes — my eyes!', 'It is in me. Oh God, it is in me.', 'Do not let me — please —']), '#e060f0', 14); }
+      }
       G.blood(this.x, G.GROUND - 50, 12, dir, 220); G.sfx('hit');
       if (this.hp <= 0) {
         this.hp = 0; this.dead = true; this.set('dead'); this.fall = dir * this.facing > 0 ? -1 : 1;
@@ -35,8 +42,19 @@
       return true;
     }
 
+    cure(g) { this.inf = 0; this.turnT = null; g.npcInf[this.id] = 0; this.sick = null; }
+    // The fever wins: the villager is gone, and one more of the infected stands in their place.
+    turn(g) {
+      const d = this.def, base = G.ENEMIES[this.fighter ? 'deserter' : 'wretch'], key = 'turned_' + this.id;
+      G.ENEMIES[key] = Object.assign({}, base, { name: d.name + ', turned', weapon: this.fighter ? d.weapon : 'none', wlen: d.wlen || base.wlen, hunch: this.fighter ? 0.1 : 0.3,
+        look: Object.assign({}, this.look, { eye: '#ff3b2f', soft: 0 }) });
+      const e = new G.Enemy(key, this.x); e.facing = this.facing; e.set('stagger'); e.stun = 1.1; g.enemies.push(e);
+      G.blood(this.x, G.GROUND - 70, 30, 0, 260);
+      this.gone = true; this.dead = true; this.turnT = null; g.flags['dead_' + this.id] = 1; g.flags[key] = 1; g.onNpcTurn(this);
+    }
     update(dt, g) {
       this.t += dt; this.flash -= dt; this.cd -= dt; this.cry -= dt;
+      if (this.turnT != null && !this.dead && (this.turnT -= dt) <= 0) { this.turn(g); return; }
       if (this.dead || !this.targetable) { this.vx = 0; return; }
       // nearest enemy that is awake and close
       let foe = null, fd = 300;
@@ -90,6 +108,9 @@
     }
 
     draw(ctx, g) {
+      if (this.gone) return;
+      const sickening = !this.dead && this.inf >= 60;
+      if (sickening && !this.sick) this.sick = Object.assign({}, this.look, { eye: '#ff3b2f', soft: 0 });
       const d = this.def, gy = G.GROUND, t = g.time;
       let y = gy, facing = this.facing, P = this.pose();
       if (d.pose === 'hang') {
@@ -104,8 +125,13 @@
         }
       }
       if (d.id === 'ysolde') { const gl = ctx.createRadialGradient(this.x, gy - 50, 1, this.x, gy - 50, 90); gl.addColorStop(0, 'rgba(230,220,210,0.16)'); gl.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gl; ctx.fillRect(this.x - 90, gy - 140, 180, 180); }
-      G.drawHumanoid(ctx, { x: this.x, y, facing, scale: 1, pose: P, look: this.look, weapon: this.fighter ? d.weapon : 'none', wlen: d.wlen, flash: this.flash, time: t, vx: this.vx });
+      G.drawHumanoid(ctx, { x: this.x, y, facing, scale: 1, pose: P, look: sickening ? this.sick : this.look, weapon: this.fighter ? d.weapon : 'none', wlen: d.wlen, flash: this.flash, time: t, vx: this.vx });
       if (this.dead || this.atRest) return;
+      if (this.inf > 0) { ctx.fillStyle = '#000'; ctx.fillRect(this.x - 21, gy - 91, 42, 4); ctx.fillStyle = this.turnT != null && Math.sin(t * 12) > 0 ? '#e060f0' : '#8a2a9a'; ctx.fillRect(this.x - 20, gy - 90, 40 * this.inf / 100, 2); }
+      if (this.turnT != null) {
+        ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('TURNING  0:' + String(Math.ceil(this.turnT)).padStart(2, '0'), this.x + 1, gy - 103);
+        ctx.fillStyle = Math.sin(t * 12) > 0 ? '#ff7aff' : '#c04ad0'; ctx.fillText('TURNING  0:' + String(Math.ceil(this.turnT)).padStart(2, '0'), this.x, gy - 104);
+      }
       if (this.hp < this.maxHp) {
         ctx.fillStyle = '#000'; ctx.fillRect(this.x - 21, gy - 97, 42, 5); ctx.fillStyle = '#6f8a4a'; ctx.fillRect(this.x - 20, gy - 96, 40 * this.hp / this.maxHp, 3);
       }

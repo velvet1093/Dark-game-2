@@ -349,8 +349,13 @@ G.Enemy = class {
       }
     }
     const boss = this.def.boss, m = this.mods;
-    if (boss && !this.phase2 && this.hp < this.maxHp * 0.5) { this.phase2 = true; this.frenzy = true; G.text(this.x, gy - 150, '"I HELD THE DOOR!"', '#e0222c', 18); G.sfx('bell'); G.sfx('roar'); g.shake = 12; }
+    if (boss && !this.phase2 && this.hp < this.maxHp * 0.5) { this.phase2 = true; this.frenzy = true; G.text(this.x, gy - 150 * this.scale / 1.3, this.def.shout || '"I HELD THE DOOR!"', '#e0222c', 18); G.sfx('bell'); G.sfx('roar'); g.shake = 12; }
 
+    const sm = this.def.summon;   // some bosses call for help as their health falls
+    if (sm && this.state !== 'broken' && (this.summoned || 0) < sm.at.length && this.hp < this.maxHp * sm.at[this.summoned || 0]) {
+      this.summoned = (this.summoned || 0) + 1; G.sfx('roar'); G.text(this.x, gy - 170, 'SHE CALLS HER HOUNDS', '#e0222c', 16); g.shake = 8;
+      for (let k = 0; k < sm.n; k++) { const e = new G.Enemy(sm.type, clamp(this.x + (k ? -1 : 1) * rand(150, 210), g.level.boss.gate + 40, g.level.boss.end)); e.set('chase'); g.enemies.push(e); }
+    }
     switch (this.state) {
       case 'idle':
         if (!this.dormant && dist < this.def.aggro) { this.set('chase'); G.sfx('growl'); }
@@ -373,8 +378,9 @@ G.Enemy = class {
         break;
       case 'strike': {
         const rel = (p.x - this.x) * this.facing;
+        if (this.atk.spew) G.blood(this.x + this.facing * 26 * this.scale, gy - 62 * this.scale, 5, this.facing, 460);   // a gout of infected blood
         const over = p.alt > 44 && (this.crawling || this.def.model === 'hound');   // the knight jumped clean over a low attack
-        if (!this.hitDone && !over && rel > -14 && rel < this.atk.reach * m.reach * this.scale) { if (p.damage(this.atk.dmg * m.dmg, this.x, g)) this.hitDone = true; else if (p.state === 'block') this.hitDone = true; }
+        if (!this.hitDone && !over && rel > -14 && rel < this.atk.reach * m.reach * this.scale) { if (p.damage(this.atk.dmg * m.dmg, this.x, g)) { this.hitDone = true; if (this.atk.spew && p.infect) p.infect(this.atk.spew, g); } else if (p.state === 'block') this.hitDone = true; }
         if (this.t >= this.atk.active) this.set('recover');
         break;
       }

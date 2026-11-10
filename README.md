@@ -90,6 +90,7 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 
 - **Fighters** (Wynn, Ser Oswin, Edda, Ser Rowan, Garrow, the wayside Sisters) draw a weapon, fight beside you and can still be overwhelmed.
 - **The helpless** (Marta, Jory, Wenna, the Plague Doctor, Old Tobias, Greta, Brother Anselm) back away and beg. If you do not reach them in time they die.
+- **They can turn.** Every wound a villager takes fills a small purple bar under their health. When it fills they have **12 seconds**: stand next to them and press `E` to give them your own tincture, or they become one of the infected and attack you. The Sisters do not turn. Like a death, turning is permanent.
 - A death is permanent for that save, and resting does not bring anyone back. Survivors are healed when you rest.
 - A few people the story needs, and everyone inside the walls of Brannoc's Hold, cannot be harmed.
 
@@ -99,12 +100,14 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 | --- | --- |
 | Weeping Wretch, Deserter, Flagellant, Knight of the Veil | the infected, in whatever they were wearing when it took them |
 | Headsman | huge, slow, cannot be staggered by light hits |
+| **Gaunt, the High Headsman** | boss of the Gallows Road; a greataxe and a long charge. His axe is yours when he falls |
+| **The Drowned Matron** | boss of the Weeping Fen; calls hounds twice as she weakens and vomits blood that fills your infection bar |
 | Carrion Hound | four-legged, fast, pounces; cut a leg off and it drags itself |
 | Gallows Crow | flies out of reach and dives; strike as it pulls up, or take a wing |
 | Weeping Bloat | bursts over everyone nearby when killed — unless you execute it |
 | Rot-Pike | long spear thrust |
 | Pale Reaper | tall, wide scythe sweeps |
-| Ser Garrick | the boss |
+| **Ser Garrick, the Oathkeeper** | the last boss |
 
 ## Wist
 
@@ -144,7 +147,7 @@ You start with the longsword. Three more are lying in the world, each driven int
 | Weapon | Where | Character |
 | --- | --- | --- |
 | Knight's Longsword | start | balanced three-hit combo |
-| Headsman's Greataxe | the Gallows Road, just past the Headsman | slow, heavy, every blow breaks poise and severs limbs easily |
+| Headsman's Greataxe | the Gallows Road, dropped by Gaunt | slow, heavy, every blow breaks poise and severs limbs easily |
 | Fen-Warden Spear | the Weeping Fen | long reach, thrusts only, weak at severing |
 | Penitent's Flail | Hollowmere | fast, light, builds bleeding quickly, rarely severs |
 

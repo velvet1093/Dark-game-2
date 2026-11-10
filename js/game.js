@@ -10,13 +10,13 @@
 
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
-    enemies: [], npcs: [], items: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
+    enemies: [], npcs: [], items: {}, npcInf: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
     player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword' });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {} });
       G.questLog.reset();
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -30,9 +30,11 @@
       this.player.inf = s.inf || 0; this.player.tinct = s.tinct == null ? 1 : s.tinct;
       this.weapons = (s.weapons || ['longsword']).filter(id => G.WEAPONS[id]); this.equip(this.weapons.includes(s.weapon) ? s.weapon : 'longsword');
       G.questLog.reset(s.quests);
+      if (this.flags.bossDead) this.flags.boss_garrick_dead = 1; if (this.flags.metBoss) this.flags.boss_garrick_met = 1;   // saves from before there were three bosses
+      this.npcInf = s.npcInf || {};
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
@@ -43,7 +45,7 @@
     spawnEnemies() {
       const L = this.level;
       this.enemies = L.enemies.map(([t, x, tag]) => new G.Enemy(t, x, tag)); this.boss = null; this.bossFight = false;
-      if (L.boss && !this.flags.bossDead) { this.boss = new G.Enemy(L.boss.type, L.boss.x); this.enemies.push(this.boss); }
+      if (L.boss && !this.flags['boss_' + L.boss.type + '_dead']) { this.boss = new G.Enemy(L.boss.type, L.boss.x); this.enemies.push(this.boss); }
     },
     respawn() {
       if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.player.x, n: this.ichor }; this.ichor = 0; }
@@ -67,6 +69,12 @@
           } };
         }
       }
+      for (const n of this.npcs) {   // a wounded villager can be saved with your own tincture, even mid-fight
+        if (n.dead || n.gone || n.inf < 35 || !near(n.x, 70)) continue;
+        if (p.tinct > 0) return { x: n.x, y: G.GROUND - 132, label: 'Give your tincture to ' + n.def.name, hot: n.turnT != null, fn: () => {
+          p.tinct--; n.cure(this); G.sfx('cleanse'); G.text(n.x, G.GROUND - 110, 'Cleansed', '#d8c6ff', 16); this.fairy.cd = 0; this.fairy.bark('cleansed', true); this.save();
+        } };
+      }
       if (this.enemies.some(e => !e.dead && !e.dormant && e.state !== 'idle' && near(e.x, 260))) return null; // not mid-fight
       for (const n of this.npcs) {
         if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: (n.def.cleanse && this.flags['met_' + n.id] && (p.inf > 0 || p.tinct < p.tinctMax) ? 'Be cleansed by ' : 'Speak to ') + n.def.name, hot: n.def.cleanse && p.turnT != null, fn: () => this.talk(n) };
@@ -76,7 +84,7 @@
       }
       for (const [i, it] of (L.items || []).entries()) {
         const k = 'item_' + this.levelIdx + '_' + i;
-        if (this.flags[k] || !near(it.x, 40)) continue;
+        if (this.flags[k] || !near(it.x, 40) || (it.needs && !this.flags[it.needs])) continue;
         if (it.weapon) return { x: it.x, y: G.GROUND - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: () => { this.flags[k] = 1; this.gainWeapon(it.weapon); } };
         return { x: it.x, y: G.GROUND - 40, label: 'Gather the white lily', fn: () => { this.flags[k] = 1; this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, G.GROUND - 50, 'White lily', '#efeaf2', 13); } };
       }
@@ -123,6 +131,10 @@
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); },
+    onNpcTurn(n) {
+      G.text(n.x, G.GROUND - 130, n.def.name + ' has turned', '#e060f0', 16); G.sfx('infect');
+      this.fairy.cd = 0; this.fairy.bark('npcturn', true); this.save();
+    },
     onNpcDeath(n) {
       G.text(n.x, G.GROUND - 120, n.def.name + ' is dead', '#d9c9b0', 15);
       this.fairy.cd = 0; this.fairy.bark('npcdeath', true); this.save();
@@ -167,7 +179,10 @@
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.12);
       this.hitstop = 0.14; this.shake = 14; this.slow = 0.55; G.sfx('exec');
       G.text(e.x, G.GROUND - 130 * e.scale, 'EXECUTED', '#e0222c', 20);
-      if (e.def.boss) { this.flags.bossDead = 1; this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(null); this.save(); }
+      if (e.def.boss) {
+        const B = this.level.boss; this.flags['boss_' + B.type + '_dead'] = 1; if (B.final) this.flags.bossDead = 1;
+        this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : ({ fen: 'road' }[this.level.theme] || this.level.theme)); this.save();
+      }
     },
 
     // ------------------------------ update ---------------------------------
@@ -204,7 +219,8 @@
       // the Oathkeeper's door
       if (this.boss && this.boss.dormant && !p.dead && p.x > L.boss.gate + 70) {
         p.vx = 0; p.set('idle');
-        G.ui.dialogue(this.flags.metBoss ? L.boss.retry : G.FAIRY.boss.concat(L.boss.intro), () => { this.flags.metBoss = 1; this.bossFight = true; this.boss.dormant = false; G.sfx('bell'); G.music('boss'); });
+        const met = 'boss_' + L.boss.type + '_met';
+        G.ui.dialogue(this.flags[met] ? L.boss.retry : (L.boss.final ? G.FAIRY.boss : []).concat(L.boss.intro), () => { this.flags[met] = 1; this.bossFight = true; this.boss.dormant = false; G.sfx('bell'); G.music('boss'); });
       }
       // reclaim ichor from where you last fell
       const s = this.stain;
@@ -264,9 +280,11 @@
       if (this.levelIdx > 0) arch(BACK_X, 'rgba(90,90,120,0.22)');
       // boss altar & fog door
       if (L.boss) {
-        const ax = L.boss.end + 130; glow(ax, gy - 90, 170, 'rgba(170,20,30,0.3)');
-        ctx.fillStyle = '#0a0708'; ctx.fillRect(ax - 60, gy - 30, 150, 30); ctx.fillRect(ax + 30, gy - 190, 8, 160); ctx.fillRect(ax + 12, gy - 165, 44, 7);
-        if (!this.flags.bossDead) {
+        if (L.boss.final) {
+          const ax = L.boss.end + 130; glow(ax, gy - 90, 170, 'rgba(170,20,30,0.3)');
+          ctx.fillStyle = '#0a0708'; ctx.fillRect(ax - 60, gy - 30, 150, 30); ctx.fillRect(ax + 30, gy - 190, 8, 160); ctx.fillRect(ax + 12, gy - 165, 44, 7);
+        }
+        if (!this.flags['boss_' + L.boss.type + '_dead']) {
           const x = L.boss.gate;
           for (let i = 0; i < 6; i++) { ctx.fillStyle = `rgba(200,190,200,${0.06 + 0.03 * Math.sin(t * 2 + i)})`; ctx.fillRect(x - 18 + Math.sin(t * 1.3 + i * 2) * 8, gy - 260, 36, 262); }
         }
@@ -286,7 +304,7 @@
       }
       // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
-        if (this.flags['item_' + this.levelIdx + '_' + i]) return;
+        if (this.flags['item_' + this.levelIdx + '_' + i] || (it.needs && !this.flags[it.needs])) return;
         if (it.weapon) {
           const x = it.x, kind = G.WEAPONS[it.weapon].draw;
           glow(x, gy - 34, 46 + Math.sin(t * 3 + i) * 5, 'rgba(240,210,150,0.34)');

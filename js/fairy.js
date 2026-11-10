@@ -35,6 +35,7 @@ G.FAIRY = {
   npcdeath: ['Oh! And I did not even have to wait for that one.', 'Too slow, ser knight. Hee.', 'One fewer. Do keep up.', 'They were never yours to save. None of them are.'],
   turning: ['Oh! Your eyes! They are going such a pretty red.', 'There it is. Now do not go looking for a Sister. They are all so far away.', 'Tick, tick, tick, ser knight.'],
   cleansed: ['Ugh. Lilies.', 'They cannot cure you, you know. Only make me wait longer.', 'Spoilsport nuns.', 'It will be back. It always comes back.'],
+  npcturn: ['Oh, look. One of yours is one of theirs now.', 'You had a vial. You kept it. How sensible.', 'Hee! They do change quickly, do they not?'],
   rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
     'Hee hee hee! Oh, that was a good one.',
@@ -56,7 +57,7 @@ G.Fairy = class {
     const lines = G.FAIRY[kind]; let s;
     do s = G.pick(lines); while (lines.length > 1 && s === this.last[kind]);
     this.last[kind] = s; this.say = s; this.sayT = 2.6 + s.length * 0.045; this.cd = this.sayT + 3;
-    const cruel = kind === 'hurt' || kind === 'death' || kind === 'low' || kind === 'gore' || kind === 'npcdeath' || kind === 'turning';
+    const cruel = kind === 'hurt' || kind === 'death' || kind === 'low' || kind === 'gore' || kind === 'npcdeath' || kind === 'npcturn' || kind === 'turning';
     if (cruel) this.glee = 2.5;
     G.sfx(cruel ? 'giggle' : 'chime');
   }

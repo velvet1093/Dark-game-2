@@ -131,6 +131,29 @@ G.ENEMIES = {
       { wind: 0.5, active: 0.12, rec: 0.6, dmg: 22, reach: 100, lunge: 120, anim: ANIM.rise },
     ],
   },
+  // --- bosses of the road and the fen ----------------------------------------
+  hangman: {
+    name: 'Gaunt, the High Headsman', boss: true, hp: 430, limbHp: 140, speed: 60, ichor: 700, aggro: 9999,
+    weapon: 'axe', wlen: 50, scale: 1.5, poise: true, noSever: ['armF', 'legF', 'legB'], shout: 'GAUNT BELLOWS',
+    look: { skin: '#8a7f72', body: '#3a1416', trim: '#5a1a1a', arm: '#8a7f72', leg: '#1c1618', helm: 'sack', helmCol: '#5a5044', eye: '#000000' },
+    attacks: [
+      { wind: 0.7, active: 0.14, rec: 0.8, dmg: 34, reach: 112, lunge: 180, anim: ANIM.slam },
+      { wind: 0.55, active: 0.12, rec: 0.65, dmg: 26, reach: 104, lunge: 150, anim: ANIM.rise },
+      { wind: 0.8, active: 0.2, rec: 0.9, dmg: 36, reach: 120, trigger: 300, min: 150, lunge: 620, anim: ANIM.chop },
+    ],
+  },
+  matron: {
+    name: 'The Drowned Matron', boss: true, hp: 520, limbHp: 160, speed: 40, ichor: 900, aggro: 9999,
+    weapon: 'none', scale: 1.5, poise: true, hunch: 0.15, noSever: ['legF', 'legB'], shout: 'THE MATRON WAILS',
+    summon: { type: 'hound', at: [0.66, 0.33], n: 2 },
+    look: { skin: '#7f9484', body: '#4a5a4c', arm: '#7f9484', leg: '#2c3430', helm: 'none', eye: '#ff3b2f', belly: 1, hair: '#2a3028' },
+    attacks: [
+      { wind: 0.75, active: 0.14, rec: 0.85, dmg: 30, reach: 84, lunge: 120, anim: ANIM.slam },
+      { wind: 0.6, active: 0.12, rec: 0.7, dmg: 22, reach: 76, lunge: 100, anim: ANIM.claw },
+      // she vomits the sickness itself: light damage, a great deal of infection
+      { wind: 0.9, active: 0.35, rec: 1.0, dmg: 14, reach: 190, trigger: 230, min: 90, lunge: 0, spew: 22, anim: ANIM.claw },
+    ],
+  },
   garrick: {
     name: 'Ser Garrick, the Oathkeeper', boss: true, hp: 640, limbHp: 150, speed: 84, ichor: 1500, aggro: 9999,
     weapon: 'greatsword', wlen: 62, scale: 1.3, poise: true, noSever: ['armF', 'legF', 'legB'],
@@ -209,10 +232,10 @@ G.LEVELS = [
   {
     name: 'The Gallows Road', chapter: 'Chapter I', theme: 'road', length: 6300, seed: 11,
     shrines: [1380, 4580], chapels: [{ x: 4760 }],
-    items: [{ x: 3780, weapon: 'greataxe' }],
+    items: [{ x: 3780, weapon: 'greataxe', needs: 'boss_hangman_dead' }],
     enemies: [
       ['wretch', 760], ['crow', 900], ['wretch', 1060], ['wretch', 1130], ['deserter', 1750], ['wretch', 2050, 'marta'], ['wretch', 2120, 'marta'],
-      ['deserter', 2560], ['hound', 2700], ['hound', 2760], ['wretch', 2950], ['pikeman', 3050], ['crow', 3300], ['brute', 3600], ['deserter', 3900], ['wretch', 4150], ['hound', 4250],
+      ['deserter', 2560], ['hound', 2700], ['hound', 2760], ['wretch', 2950], ['pikeman', 3050], ['crow', 3300], ['deserter', 4060], ['wretch', 4150], ['hound', 4250],
       ['pikeman', 5100], ['wretch', 5200], ['wretch', 5270], ['crow', 5380], ['deserter', 5520], ['bloat', 5680], ['hound', 5820], ['hound', 5880], ['deserter', 6020],
     ],
     npcs: [
@@ -279,6 +302,15 @@ G.LEVELS = [
       { x: 3300, title: 'Scratched Into a Shield', text: 'OSRIC IS DEAD\nTHE SUN IS DEAD\nGARRICK KEEPS THE DOOR' },
       { x: 4960, title: 'Rule of the Lily', text: 'First: it is a sickness, not a judgement.\n\nSecond: the infected are not dead. They do not sleep and cannot stop; the red in the eye is the last of them trying to get out.\n\nThird: it enters by the wound. Wash every wound in lily-water.\n\nFourth: when a Sister weeps, another Sister holds the knife. We do not turn.' },
     ],
+    boss: {
+      type: 'hangman', gate: 3420, x: 3760, end: 3990,
+      intro: [
+        ['Wist', 'Oh, him! Gaunt. He hanged forty in a day once — I counted. Then his eyes went, and he simply kept going.'],
+        ['Wist', 'He cannot speak any more. He does not need to. Do go and say hello.'],
+      ],
+      retry: [['Wist', 'Again! He does so enjoy you.']],
+      lastWords: [['Aldric', 'Kneel, headsman. The road is closed.']],
+    },
     exit: { x: 6200, label: "Enter Brannoc's Hold" },
     exitSlides: ["A wall. Torches. Voices that are only voices.\n\nBrannoc's Hold has kept its gates shut for three years, and its people clear-eyed with lily-water and the edge of a knife."],
   },
@@ -384,7 +416,7 @@ G.LEVELS = [
       ['wretch', 700], ['hound', 820], ['wretch', 900], ['crow', 1050], ['bloat', 1350], ['wretch', 1650, 'wenna'], ['wretch', 1720, 'wenna'], ['pikeman', 1950],
       ['hound', 2150], ['hound', 2210], ['crow', 2350], ['deserter', 2500], ['bloat', 2750], ['reaper', 2950],
       ['wretch', 3750], ['wretch', 3820], ['wretch', 3890], ['pikeman', 4050], ['crow', 4200], ['crow', 4260], ['bloat', 4450], ['hound', 4650], ['hound', 4720],
-      ['brute', 4950], ['deserter', 5150], ['pikeman', 5250], ['reaper', 5450], ['wretch', 5850], ['hound', 5950],
+      ['reaper', 5450], ['wretch', 5850], ['hound', 5950],
     ],
     npcs: [
       {
@@ -418,6 +450,15 @@ G.LEVELS = [
       { x: 3560, title: "Sister Corra's Tally", text: 'Washed at the drowned oak: 61.\nOf those, came back a second time: 40.\nA third: 22.\n\nIt is not a cure. It is a delay. I say this to every one of them and every one of them thanks me as if I had said the opposite.' },
       { x: 5350, title: 'A Green Hood, Empty', text: 'Caught on the reeds. Inside the lining, stitched small:\n\nILSE MADE THIS — COME HOME' },
     ],
+    boss: {
+      type: 'matron', gate: 4820, x: 5080, end: 5290,
+      intro: [
+        ['Wist', 'Mind your step. That one was the fen midwife. She still tries to hold things.'],
+        ['Wist', 'And she still calls her dogs. Such a full house!'],
+      ],
+      retry: [['Wist', 'She missed you. Go on, she is waiting.']],
+      lastWords: [['Aldric', 'Whoever you were — it is over now.']],
+    },
     exit: { x: 6100, label: 'Enter Hollowmere' },
     exitSlides: ['The road ends where it always ended: at the mill, the well, the crooked chapel.\n\nHollowmere. You were born here.\nNo lamp is lit.'],
   },
@@ -547,7 +588,7 @@ G.LEVELS = [
       { x: 5150, title: "Garrick's Vigil", text: 'Day 900-and-something.\n\nThe Headsmen came. I sent them back in pieces. The Bishop came after. She asked me not to, so I only broke his legs. The infected did the rest.\n\nMy eyes ran this morning. It does not hurt. I can still hold a sword.\n\nAldric, you bastard. If you come now, you come as a thief. I will not let you take her.' },
     ],
     boss: {
-      type: 'garrick', gate: 5550, x: 6050, end: 6290,
+      type: 'garrick', final: true, gate: 5550, x: 6050, end: 6290,
       intro: [
         ['Ser Garrick', 'Seven years, Aldric.'],
         ['Ser Garrick', 'She called for you until her voice ran red. I answered instead. Every night. I am the one who stayed.'],
