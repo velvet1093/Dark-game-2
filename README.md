@@ -20,6 +20,7 @@ python3 -m http.server 8000
 | Action | Keyboard / mouse |
 | --- | --- |
 | Move | `A` `D` or arrow keys |
+| Jump | `W` or up arrow |
 | Slash (3-hit combo) | `J` or left click |
 | Heavy attack | `K` or right click |
 | Roll (invulnerable) | `Space` |
@@ -43,6 +44,7 @@ On touch devices: two move keys on the left; Slash, Heavy, Block and Roll on the
   - a leg gone: it crawls
   - open stumps bleed until the enemy dies
 - **Executions** — an enemy at low health is *Broken* and kneels. Step close and press `E` to execute it: an instant kill that restores health and pays 50% more ichor. Leave it kneeling too long and it rises in a frenzy.
+- **Jumping** — a short hop that clears pouncing hounds and crawling enemies, and lets a swing reach crows in the air. It does not avoid a standing enemy's weapon.
 - **Stamina** — attacks, rolls and blocked hits cost stamina. An empty bar means a broken guard.
 - **Vigil candles** — rest to refill flasks, set your checkpoint and spend ichor on Vigor, Strength or Endurance. The infected never rest, so more will have wandered in while you did.
 - **Death** — you drop your ichor where you fall. Reach the stain to reclaim it; die first and it is gone.

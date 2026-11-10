@@ -163,7 +163,7 @@
       this.lvT += dt; this.card -= dt; this.shake = Math.max(0, this.shake - dt * 40);
 
       this.bounds = this.bossFight ? [L.boss.gate + 24, L.boss.end + 20] : [30, L.length - 30];
-      this.prompt = (p.state === 'idle' || p.state === 'block') ? this.findInteract() : null;
+      this.prompt = (p.state === 'idle' || p.state === 'block') && p.alt === 0 ? this.findInteract() : null;
       if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); if (G.ui.blocking) return; }
 
       p.update(dt, this);
@@ -312,7 +312,7 @@
       }
       if (this.levelIdx === 0 && this.lvT < 30 && !document.body.classList.contains('touch')) {
         ctx.globalAlpha = clamp(30 - this.lvT, 0, 1) * 0.8; ctx.textAlign = 'center'; ctx.font = '13px Georgia, serif'; ctx.fillStyle = '#9a8f84';
-        ctx.fillText('A/D move  ·  J slash  ·  K heavy  ·  SPACE roll  ·  L block  ·  Q flask  ·  E interact / execute', W / 2, H - 14); ctx.globalAlpha = 1;
+        ctx.fillText('A/D move  ·  W jump  ·  J slash  ·  K heavy  ·  SPACE roll  ·  L block  ·  Q flask  ·  E interact / execute', W / 2, H - 14); ctx.globalAlpha = 1;
       }
       // infection meter, tincture vials and the turning clock
       const sick = p.inf >= 75 || p.turnT != null;

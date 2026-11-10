@@ -110,3 +110,4 @@ body.can-use #t-use { display: block; }
 #touch .hud-tap { border-radius: 1cqw; border: 1px dashed rgba(207, 196, 184, .35); background: none; top: calc(68 * .10417cqw); height: calc(28 * .10417cqw); }
 #t-flask { left: calc(20 * .10417cqw); width: calc((var(--flasks, 3) * 20 + 4) * .10417cqw); }
 #t-cure { left: calc((var(--flasks, 3) * 20 + 27) * .10417cqw); width: calc(38 * .10417cqw); border-color: rgba(201, 179, 240, .4) !important; }
+#t-jump   { right: 23.4cqw; bottom: 11.6cqw; width: 9cqw; height: 9cqw; }
