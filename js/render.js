@@ -92,7 +92,21 @@ G.drawHumanoid = (ctx, o) => {
   if (L.trim) seg(hx + 1, hy + 4, sx + 1, sy + 6, 6, L.trim);
   if (L.belly) { ctx.fillStyle = C(L.body); ctx.beginPath(); ctx.arc((hx + sx) / 2 + 6, (hy + sy) / 2 + 5, 14, 0, 7); ctx.fill(); ctx.strokeStyle = C('#7a2a2a'); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc((hx + sx) / 2 + 8, (hy + sy) / 2 + 5, 9, -0.6, 1.2); ctx.stroke(); }
   seg(hx - 4, hy, hx + 4, hy, 4, '#1a1414');
-  if (L.skirt) {   // black dress with a white frilled hem and collar
+  if (L.skirt === 'long') {   // full-length habit, white scapular with a lily, rope belt
+    ctx.fillStyle = C(L.body); ctx.beginPath(); ctx.moveTo(hx - 7, hy - 4); ctx.lineTo(hx + 7, hy - 4); ctx.lineTo(hx + 12, -3); ctx.lineTo(hx - 11, -3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = C('#ece6de'); ctx.beginPath(); ctx.moveTo(sx - 3, sy + 3); ctx.lineTo(sx + 5, sy + 3); ctx.lineTo(hx + 6, -9); ctx.lineTo(hx - 2, -9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = C('#8a5fd0'); for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4; ctx.beginPath(); ctx.ellipse((hx + sx) / 2 + 2 + Math.cos(a) * 2.2, (hy + sy) / 2 + Math.sin(a) * 2.2, 2, 1.1, a, 0, 7); ctx.fill(); }
+    seg(hx - 7, hy - 3, hx + 7, hy - 3, 2, '#b79b6a'); seg(hx + 5, hy - 3, hx + 7, hy + 12, 1.6, '#b79b6a');
+  } else if (L.skirt === 'armor') {   // battle sister: breastplate, tassets and a red sash over a knee-length habit
+    ctx.fillStyle = C(L.body); ctx.beginPath(); ctx.moveTo(hx - 7, hy - 4); ctx.lineTo(hx + 7, hy - 4); ctx.lineTo(hx + 11, hy + 20); ctx.lineTo(hx + 2, hy + 20); ctx.lineTo(hx, hy + 6); ctx.lineTo(hx - 2, hy + 20); ctx.lineTo(hx - 10, hy + 20); ctx.closePath(); ctx.fill();
+    seg(hx - 9, hy + 20, hx - 3, hy + 20, 1.6, '#8a1a20'); seg(hx + 3, hy + 20, hx + 10, hy + 20, 1.6, '#8a1a20');
+    seg(hx + 1, hy - 5, sx + 1, sy + 6, 13, '#8a8e98'); seg(hx + 3, hy - 6, sx + 3, sy + 8, 3, '#b4b8c2');
+    ctx.fillStyle = C('#74787f'); ctx.beginPath(); ctx.moveTo(hx - 8, hy - 2); ctx.lineTo(hx - 1, hy - 2); ctx.lineTo(hx - 3, hy + 10); ctx.lineTo(hx - 10, hy + 8); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(hx + 1, hy - 2); ctx.lineTo(hx + 8, hy - 2); ctx.lineTo(hx + 10, hy + 8); ctx.lineTo(hx + 3, hy + 10); ctx.closePath(); ctx.fill();
+    seg(hx - 7, hy - 3, hx + 7, hy - 3, 3, '#8a1a20'); seg(hx - 5, hy - 2, hx - 8, hy + 13, 2.4, '#8a1a20');
+    seg(sx - 4, sy + 4, sx + 5, sy + 4, 3, '#ece6de');
+    ctx.fillStyle = C('#9a9ea8'); ctx.beginPath(); ctx.arc(sx - 1, sy + 3, 6.5, Math.PI, 0); ctx.fill();
+  } else if (L.skirt) {   // black dress with a white frilled hem and collar
     ctx.fillStyle = C(L.body); ctx.beginPath(); ctx.moveTo(hx - 7, hy - 4); ctx.lineTo(hx + 7, hy - 4); ctx.lineTo(hx + 12, hy + 15); ctx.lineTo(hx - 11, hy + 15); ctx.closePath(); ctx.fill();
     ctx.fillStyle = C('#ece6de'); for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(hx - 9.5 + i * 4.1, hy + 15, 2.3, 0, 7); ctx.fill(); }
     seg(sx - 5, sy + 4, sx + 5, sy + 4, 3.5, '#ece6de');
@@ -117,6 +131,21 @@ G.drawHumanoid = (ctx, o) => {
       ctx.lineTo(hdx - 14, hdy + 15); ctx.lineTo(hdx - 6, hdy + 10); ctx.lineTo(hdx - 5, hdy - 5); ctx.closePath(); ctx.fill();
       ctx.fillStyle = C('#ece6de'); for (let i = 0; i < 5; i++) { const a = Math.PI * (1.12 + i * 0.17); ctx.beginPath(); ctx.arc(hdx + Math.cos(a) * 9, hdy - 1 + Math.sin(a) * 9, 2.3, 0, 7); ctx.fill(); }
       for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4; ctx.beginPath(); ctx.ellipse(hdx - 6 + Math.cos(a) * 2.6, hdy - 8 + Math.sin(a) * 2.6, 2.4, 1.3, a, 0, 7); ctx.fill(); }
+      ctx.fillStyle = C('#8a5fd0'); ctx.beginPath(); ctx.arc(hdx + 4.5, hdy - 0.5, 1.2, 0, 7); ctx.fill();
+    } else if (L.helm === 'wimple') {
+      // white wimple framing the face under a long black veil
+      ctx.fillStyle = C('#ece6de'); ctx.beginPath(); ctx.arc(hdx - 1, hdy + 1, 9.6, 0, 7); ctx.fill(); ctx.fillRect(hdx - 7, hdy + 5, 12, 8);
+      ctx.fillStyle = C(L.skin); ctx.beginPath(); ctx.arc(hdx + 2, hdy + 0.5, 6.2, 0, 7); ctx.fill();
+      ctx.fillStyle = hc; ctx.beginPath(); ctx.moveTo(hdx + 7, hdy - 7); ctx.quadraticCurveTo(hdx - 1, hdy - 17, hdx - 11, hdy - 6);
+      ctx.quadraticCurveTo(hdx - 17, hdy + 16, hdx - 13, hdy + 36); ctx.lineTo(hdx - 5, hdy + 30); ctx.lineTo(hdx - 6, hdy - 3); ctx.lineTo(hdx + 3, hdy - 6); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = C('#8a5fd0'); ctx.beginPath(); ctx.arc(hdx + 5, hdy, 1.2, 0, 7); ctx.fill();
+    } else if (L.helm === 'coif') {
+      // short white coif and cropped veil, steel circlet, a braid over the shoulder
+      ctx.fillStyle = C(L.hair || '#333'); ctx.beginPath(); ctx.arc(hdx, hdy - 1, 8.4, Math.PI * 0.95, Math.PI * 1.95); ctx.lineTo(hdx + 5, hdy - 3); ctx.lineTo(hdx - 2, hdy - 3); ctx.fill();
+      for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(hdx - 5 + i * 0.9, hdy + 5 + i * 3.6, 2.5 - i * 0.2, 0, 7); ctx.fill(); }
+      ctx.fillStyle = hc; ctx.beginPath(); ctx.moveTo(hdx + 3, hdy - 9); ctx.quadraticCurveTo(hdx - 3, hdy - 15, hdx - 10, hdy - 6); ctx.lineTo(hdx - 11, hdy + 7); ctx.lineTo(hdx - 6, hdy + 3); ctx.lineTo(hdx - 4, hdy - 6); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = C('#ece6de'); ctx.lineWidth = 2.6; ctx.beginPath(); ctx.arc(hdx, hdy - 1, 8.6, Math.PI * 1.08, Math.PI * 1.8); ctx.stroke();
+      ctx.strokeStyle = C('#9a9ea8'); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(hdx, hdy - 1, 8.8, Math.PI * 1.02, Math.PI * 1.98); ctx.stroke();
       ctx.fillStyle = C('#8a5fd0'); ctx.beginPath(); ctx.arc(hdx + 4.5, hdy - 0.5, 1.2, 0, 7); ctx.fill();
     } else if (L.helm === 'sack') {
       ctx.fillStyle = hc; ctx.beginPath(); ctx.arc(hdx, hdy, 9.5, 0, 7); ctx.fill(); ctx.fillRect(hdx - 8, hdy + 3, 16, 9);
