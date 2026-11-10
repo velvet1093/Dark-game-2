@@ -36,6 +36,12 @@ G.FAIRY = {
   turning: ['Oh! Your eyes! They are going such a pretty red.', 'There it is. Now do not go looking for a Sister. They are all so far away.', 'Tick, tick, tick, ser knight.'],
   cleansed: ['Ugh. Lilies.', 'They cannot cure you, you know. Only make me wait longer.', 'Spoilsport nuns.', 'It will be back. It always comes back.'],
   npcturn: ['Oh, look. One of yours is one of theirs now.', 'You had a vial. You kept it. How sensible.', 'Hee! They do change quickly, do they not?'],
+  iconGot: ['Ugh, her again. They painted her everywhere.', 'Another one. You do like to hoard.', 'Put it back. ...No? Suit yourself.'],
+  // Hints at an icon still hidden in this area. She would rather not, but she cannot help noticing.
+  clueFar: ['I smell old paint and candle smoke. Somewhere {dir}. Probably nothing.', 'Something gilt is sulking {dir}. Do not go and look.', 'There is a little painted face {dir} that has not been found. Not that I care.'],
+  clueNear: ['Mm. Close. {how}', 'You are standing very near something. {how}', 'Warm. Warmer. {how}'],
+  clueHow: { high: 'Not down here, though. Look up.', bars: 'Someone shut it behind iron.', veil: 'It is sitting in that red mist. Lovely colour.', plain: 'It is not even hidden properly.' },
+  clueNone: ['Nothing left to steal here. You have been thorough. How dull.'],
   rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
     'Hee hee hee! Oh, that was a good one.',
@@ -49,7 +55,9 @@ G.FAIRY = {
 
 G.Fairy = class {
   constructor() { this.x = 0; this.y = 0; this.t = Math.random() * 9; this.say = null; this.sayT = 0; this.cd = 3; this.idleT = 16; this.facing = 1; this.glee = 0; this.lowSaid = false; this.motes = []; this.last = {}; }
-  place(p) { this.x = p.x - 60; this.y = G.GROUND - 120; this.say = null; this.cd = 3; this.idleT = 14; }
+  // Say one specific line in a speech bubble.
+  sayLine(s) { if (G.ui.blocking) return; this.say = s; this.sayT = 2.8 + s.length * 0.05; this.cd = this.sayT + 4; G.sfx('chime'); }
+  place(p) { this.x = p.x - 60; this.y = G.GROUND - 120; this.say = null; this.cd = 3; this.idleT = 14; this.clueT = 28; this.toldNone = false; }
 
   // Say a random line of the given kind in a speech bubble.
   bark(kind, force, chance = 1) {
@@ -79,6 +87,17 @@ G.Fairy = class {
     for (let i = this.motes.length - 1; i >= 0; i--) { const m = this.motes[i]; m.t += dt; m.y += 16 * dt; if (m.t > 1.1) this.motes.splice(i, 1); }
     if (p.dead) return;
     if (p.hp < p.maxHp * 0.35) { if (!this.lowSaid) { this.lowSaid = true; this.bark('low', true); } } else if (p.hp > p.maxHp * 0.5) this.lowSaid = false;
+    // every so often she lets slip that something is hidden nearby: vague from afar, plainer when close
+    const icons = g.iconsHere ? g.iconsHere() : []; this.near = false;
+    if (icons.length) {
+      let best = icons[0]; for (const it of icons) if (Math.abs(it.x - p.x) < Math.abs(best.x - p.x)) best = it;
+      const d = Math.abs(best.x - p.x); this.near = d < 320;
+      if (!fight && !this.say && this.cd <= 0 && (this.clueT -= dt) <= 0) {
+        this.clueT = G.rand(75, 120);
+        const how = G.FAIRY.clueHow[(best.alt || 0) > p.alt + 60 ? 'high' : best.gate || 'plain'], dir = best.x > p.x ? 'ahead of us' : 'back the way we came';
+        this.sayLine(G.pick(d < 360 ? G.FAIRY.clueNear : G.FAIRY.clueFar).replace('{dir}', dir).replace('{how}', how));
+      }
+    } else if (g.level.items && g.level.items.some(it => it.icon) && !this.toldNone && !fight && !this.say && this.cd <= 0 && (this.clueT -= dt) <= 0) { this.toldNone = true; this.sayLine(G.FAIRY.clueNone[0]); }
     if (!fight && !this.say && (this.idleT -= dt) <= 0) { this.idleT = G.rand(16, 28); this.bark('idle'); }
   }
 
@@ -86,7 +105,7 @@ G.Fairy = class {
     const t = this.t, glee = this.glee > 0 || g.player.dead;
     // motes
     for (const m of this.motes) { ctx.fillStyle = `rgba(214,190,255,${0.8 * (1 - m.t / 1.1)})`; ctx.fillRect(Math.round(m.x / 2) * 2, Math.round(m.y / 2) * 2, 2, 2); }
-    G.drawWist(ctx, this.x, this.y, this.facing, t, glee);
+    G.drawWist(ctx, this.x, this.y, this.facing, t, glee, this.near);
     // speech bubble
     if (this.say) {
       ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left';

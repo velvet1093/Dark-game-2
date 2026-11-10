@@ -94,7 +94,11 @@ G.Player = class {
         if (Math.floor(this.walk / Math.PI) !== before) G.sfx('step');
       }
       this.vx = dir * (blocking ? 62 : 158);
-      if (want('jump') && !this.air && this.st > 0) {
+      if (want('jump') && this.air && g.abilities.dj && !this.jumped2 && this.st > 0) {
+        // Wind-Step Greaves: a second jump from thin air
+        this.buf = null; this.jumped2 = true; this.st = Math.max(0, this.st - 8); this.vy = 470; G.sfx('roll'); G.sfx('chime');
+        for (let i = 0; i < 6; i++) G.fx.sparks.push({ x: this.x + G.rand(-12, 12), y: G.GROUND - this.alt, vx: G.rand(-60, 60), vy: G.rand(20, 120), t: 0.3 });
+      } else if (want('jump') && !this.air && this.st > 0) {
         // a short hop: clears hounds and crawlers, and lets the sword reach what flies
         this.buf = null; this.st = Math.max(0, this.st - 10); this.stDelay = 0.4; this.vy = 520; this.air = true; G.sfx('roll');
       } else if (want('roll') && !this.air && this.st > 0) {
@@ -164,7 +168,7 @@ G.Player = class {
         let land = -1;
         if (this.dropT <= 0) for (const pl of plats) if (this.x >= pl.x && this.x <= pl.x + pl.w && pl.h <= prev + 0.5 && pl.h >= this.alt && pl.h > land) land = pl.h;
         if (land < 0 && this.alt <= 0) land = 0;
-        if (land >= 0) { this.alt = land; this.vy = 0; this.air = false; G.sfx('step'); G.sfx('thud'); }
+        if (land >= 0) { this.alt = land; this.vy = 0; this.air = false; this.jumped2 = false; G.sfx('step'); G.sfx('thud'); }
       }
     }
   }

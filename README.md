@@ -73,6 +73,20 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
+## Collectables and tools
+
+**Weeping icons** — fifteen small gilt paintings of the Saint, three in every area. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 15 three points of Vigor. The journal and the HUD show the count.
+
+Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
+
+| Tool | Found | Opens |
+| --- | --- | --- |
+| Headsman's Greataxe | dropped by Gaunt on the Gallows Road | **barred niches**: break the bars |
+| Wind-Step Greaves | dropped by the Drowned Matron in the fen | a **second jump in mid-air**, enough to reach the lone high ledges |
+| Lily Lantern | on a ledge at the far end of Hollowmere | **red veils**: its light parts them |
+
+**Wist notices them.** If an icon is still hidden in the area, she lets something slip every minute or two: only a direction from far away, and what is in the way when you are close. The motes around her turn gold when one is near. She says so once when an area is cleared out.
+
 ## Quests
 
 Quests are lists of clear steps. The current step of each active quest is tracked in the top-right corner, and the journal (`Tab`) shows every step with what is done, what is next and what failed. A gold `!` marks someone with a quest to give; a gold `?` marks someone a step sends you to.

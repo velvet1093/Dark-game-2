@@ -167,6 +167,15 @@ G.ENEMIES = {
   },
 };
 
+// Tools that open what was shut. Each is found in one area and is needed in others.
+G.ABILITIES = {
+  dj: { name: 'Wind-Step Greaves', how: 'Jump again in mid-air. High ledges are now in reach.' },
+  lantern: { name: 'Lily Lantern', how: 'Its light parts the red veils that guard some icons.' },
+};
+G.ICON_NAMES = ['The Saint at the Well', 'The Saint Washing the Dead', 'The Saint and the Miller', 'The Saint Unveiled', 'The Saint Asleep',
+  'The First Tear', 'The Saint among Hounds', 'The Saint and the Knight', 'The Saint at the Door', 'The Saint in the Fen',
+  'The Bride of Avaric', 'The Saint Refusing the Knife', 'The Saint and Her Brother', 'The Saint Counting Ships', 'The Last Tear'];
+
 G.LOOKS = {
   player: { skin: '#999', body: '#8c9099', trim: '#2b3040', arm: '#737781', leg: '#4c4f58', helm: 'helm', helmCol: '#9a9ea8', plume: '#6b1218', cape: '#5a1016' },
   hanged: { skin: '#6f7a68', body: '#2e2824', arm: '#6f7a68', leg: '#241f1c', helm: 'none', eye: '#d8d2c0' },
@@ -232,8 +241,9 @@ G.LEVELS = [
   {
     name: 'The Gallows Road', chapter: 'Chapter I', theme: 'road', length: 6300, seed: 11,
     shrines: [1380, 4580], chapels: [{ x: 4760 }],
-    items: [{ x: 3780, weapon: 'greataxe', needs: 'boss_hangman_dead' }, { x: 2085, alt: 142, cache: 180 }, { x: 5510, alt: 72, cache: 120 }],
-    platforms: [{ x: 1880, w: 170, h: 72 }, { x: 2010, w: 140, h: 142 }, { x: 5420, w: 180, h: 72 }],
+    items: [{ x: 3780, weapon: 'greataxe', needs: 'boss_hangman_dead' }, { x: 2085, alt: 142, cache: 180 }, { x: 5510, alt: 72, cache: 120 },
+      { x: 1910, alt: 72, icon: 1 }, { x: 2890, icon: 1, gate: 'bars' }, { x: 4410, alt: 132, icon: 1 }],
+    platforms: [{ x: 1880, w: 170, h: 72 }, { x: 2010, w: 140, h: 142 }, { x: 5420, w: 180, h: 72 }, { x: 4350, w: 120, h: 132 }],
     enemies: [
       ['wretch', 760], ['crow', 900], ['wretch', 1060], ['wretch', 1130], ['deserter', 1750], ['wretch', 2050, 'marta'], ['wretch', 2120, 'marta'],
       ['deserter', 2560], ['hound', 2700], ['hound', 2760], ['wretch', 2950], ['pikeman', 3050], ['crow', 3300], ['deserter', 4060], ['wretch', 4150], ['hound', 4250],
@@ -318,8 +328,8 @@ G.LEVELS = [
   {
     name: "Brannoc's Hold", chapter: 'Chapter II', theme: 'town', length: 3900, seed: 51,
     shrines: [320], chapels: [{ x: 2330, big: true }],
-    items: [{ x: 1695, alt: 146, cache: 250 }],
-    platforms: [{ x: 1440, w: 190, h: 74 }, { x: 1590, w: 160, h: 146 }, { x: 3020, w: 170, h: 72 }],
+    items: [{ x: 1695, alt: 146, cache: 250 }, { x: 3110, alt: 72, icon: 1 }, { x: 640, icon: 1, gate: 'veil' }, { x: 3610, alt: 132, icon: 1 }],
+    platforms: [{ x: 1440, w: 190, h: 74 }, { x: 1590, w: 160, h: 146 }, { x: 3020, w: 170, h: 72 }, { x: 3550, w: 120, h: 132 }],
     enemies: [],
     npcs: [
       {
@@ -447,7 +457,8 @@ G.LEVELS = [
         repeat: [['Garrow', 'Hollowmere is past the stones. Go quiet.']],
       },
     ],
-    items: [{ x: 1200, id: 'lily' }, { x: 2650, id: 'lily' }, { x: 4350, id: 'lily' }, { x: 5080, id: 'lily' }, { x: 4030, weapon: 'spear' }, { x: 2485, alt: 138, cache: 220 }],
+    items: [{ x: 1200, id: 'lily' }, { x: 2650, id: 'lily' }, { x: 4350, id: 'lily' }, { x: 5080, id: 'lily' }, { x: 4030, weapon: 'spear' }, { x: 2485, alt: 138, cache: 220 },
+      { x: 4270, alt: 72, icon: 1 }, { x: 1040, icon: 1, gate: 'bars' }, { x: 5760, icon: 1, gate: 'veil' }],
     platforms: [{ x: 2260, w: 170, h: 70 }, { x: 2390, w: 150, h: 138 }, { x: 4180, w: 170, h: 72 }],
     lore: [
       { x: 1820, title: 'Scratched on a Boat Hull', text: 'day 1 they do not sleep\nday 4 they do not eat\nday 9 father looked at me and did not know me\nday 10 he knew me\nthat was worse' },
@@ -455,7 +466,7 @@ G.LEVELS = [
       { x: 5350, title: 'A Green Hood, Empty', text: 'Caught on the reeds. Inside the lining, stitched small:\n\nILSE MADE THIS — COME HOME' },
     ],
     boss: {
-      type: 'matron', gate: 4820, x: 5080, end: 5290,
+      type: 'matron', grants: 'dj', gate: 4820, x: 5080, end: 5290,
       intro: [
         ['Wist', 'Mind your step. That one was the fen midwife. She still tries to hold things.'],
         ['Wist', 'And she still calls her dogs. Such a full house!'],
@@ -469,8 +480,9 @@ G.LEVELS = [
   {
     name: 'Hollowmere', chapter: 'Chapter IV', theme: 'village', length: 6500, seed: 23,
     shrines: [220, 2680, 4960], chapels: [{ x: 5120 }],
-    items: [{ x: 3330, weapon: 'flail' }, { x: 1485, alt: 144, cache: 260 }, { x: 5905, alt: 72, cache: 140 }],
-    platforms: [{ x: 1250, w: 180, h: 74 }, { x: 1390, w: 150, h: 144 }, { x: 5820, w: 170, h: 72 }],
+    items: [{ x: 3330, weapon: 'flail' }, { x: 1485, alt: 144, cache: 260 }, { x: 5905, alt: 72, cache: 140 },
+      { x: 5850, alt: 72, ability: 'lantern' }, { x: 1290, alt: 74, icon: 1 }, { x: 3760, alt: 132, icon: 1 }, { x: 4640, icon: 1, gate: 'bars' }],
+    platforms: [{ x: 1250, w: 180, h: 74 }, { x: 1390, w: 150, h: 144 }, { x: 5820, w: 170, h: 72 }, { x: 3700, w: 120, h: 132 }],
     enemies: [
       ['wretch', 700], ['wretch', 780], ['flagellant', 1100], ['bloat', 1750], ['deserter', 1830], ['hound', 2000], ['flagellant', 2100],
       ['brute', 2380], ['crow', 2950], ['flagellant', 3180], ['flagellant', 3260], ['wretch', 3560], ['wretch', 3620], ['bloat', 3720],
@@ -544,8 +556,8 @@ G.LEVELS = [
   {
     name: 'Cathedral of Saint Avaric', chapter: 'Chapter V', theme: 'cathedral', length: 6600, seed: 37,
     shrines: [220, 5280], chapels: [],
-    items: [{ x: 1775, alt: 148, cache: 400 }, { x: 4390, alt: 74, cache: 200 }],
-    platforms: [{ x: 1500, w: 200, h: 76 }, { x: 1670, w: 170, h: 148 }, { x: 4300, w: 180, h: 74 }],
+    items: [{ x: 1775, alt: 148, cache: 400 }, { x: 4390, alt: 74, cache: 200 }, { x: 900, icon: 1, gate: 'veil' }, { x: 2960, alt: 132, icon: 1 }, { x: 3520, icon: 1, gate: 'bars' }],
+    platforms: [{ x: 1500, w: 200, h: 76 }, { x: 1670, w: 170, h: 148 }, { x: 4300, w: 180, h: 74 }, { x: 2900, w: 120, h: 132 }],
     enemies: [
       ['flagellant', 720], ['flagellant', 800], ['reaper', 1050], ['templar', 1300], ['crow', 1500], ['wretch', 1600], ['wretch', 1660], ['templar', 1800],
       ['reaper', 2050], ['brute', 2300], ['bloat', 2650], ['flagellant', 2750], ['templar', 2850], ['templar', 3300], ['reaper', 3420], ['pikeman', 3650], ['templar', 3760],

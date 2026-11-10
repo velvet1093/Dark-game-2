@@ -91,7 +91,9 @@
         }).join('');
         return `<div class="quest ${q.status}"><h3>${esc(d.title)} <small>${label[q.status]}</small></h3><ul>${steps}</ul></div>`;
       }).join('') || '<div class="sub">Nothing is asked of you yet.</div>';
-      this.show(`<div class="screen dim journal"><h2>Quests</h2><div class="quests">${html}</div><div class="hint">Tab / Esc to close</div></div>`, () => this.clear());
+      const g = G.game, ab = Object.keys(G.ABILITIES).filter(k => g.abilities[k]).map(k => G.ABILITIES[k].name).concat(g.weapons.includes('greataxe') ? ["Headsman's Greataxe (breaks bars)"] : []);
+      const found = `<div class="found">Weeping icons <b>${g.items.icon || 0} / ${g.iconTotal()}</b> &nbsp;·&nbsp; Tools: ${ab.length ? ab.map(esc).join(', ') : 'none yet'}</div>`;
+      this.show(`<div class="screen dim journal"><h2>Quests</h2>${found}<div class="quests">${html}</div><div class="hint">Tab / Esc to close</div></div>`, () => this.clear());
       this.escAdvance = true; G.sfx('page');
     },
     choice(prompt, opts) {

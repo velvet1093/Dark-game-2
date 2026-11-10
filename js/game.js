@@ -10,13 +10,13 @@
 
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
-    enemies: [], npcs: [], items: {}, npcInf: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
+    enemies: [], npcs: [], items: {}, npcInf: {}, abilities: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
     player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {} });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {} });
       G.questLog.reset();
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -32,9 +32,10 @@
       G.questLog.reset(s.quests);
       if (this.flags.bossDead) this.flags.boss_garrick_dead = 1; if (this.flags.metBoss) this.flags.boss_garrick_met = 1;   // saves from before there were three bosses
       this.npcInf = s.npcInf || {};
+      this.abilities = s.abilities || {}; if (this.flags.boss_matron_dead) this.abilities.dj = 1;   // saves that beat her before she carried the greaves
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
@@ -62,13 +63,8 @@
     // --------------------------- interactions ------------------------------
     findInteract() {
       const p = this.player, L = this.level, near = (x, r) => Math.abs(p.x - x) < r;
-      if (p.alt >= 30) {   // up on a ledge: only what is up here with you can be reached
-        for (const [i, it] of (L.items || []).entries()) {
-          const k = 'item_' + this.levelIdx + '_' + i;
-          if (it.cache && !this.flags[k] && near(it.x, 40) && Math.abs(p.alt - (it.alt || 0)) < 30) return { x: it.x, y: G.GROUND - it.alt - 54, label: 'Open the reliquary', fn: () => { this.flags[k] = 1; this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, G.GROUND - it.alt - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); this.save(); } };
-        }
-        return null;
-      }
+      const items = () => { for (const [i, it] of (L.items || []).entries()) { const pr = this.itemPrompt(it, i, p); if (pr) return pr; } return null; };
+      if (p.alt >= 30) return items();   // up on a ledge: only what is up here with you can be reached
       for (const e of this.enemies) {
         if (e.state === 'broken' && near(e.x, 90 * e.scale)) {
           return { x: e.x, y: G.GROUND - (e.crawling ? 50 : 105 * e.scale), label: 'Execute', hot: true, fn: () => {
@@ -89,13 +85,7 @@
       for (const [i, n] of L.lore.entries()) {
         if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.levelIdx + ':' + i] = 1; G.ui.note(n.title, n.text); } };
       }
-      for (const [i, it] of (L.items || []).entries()) {
-        const k = 'item_' + this.levelIdx + '_' + i;
-        if (this.flags[k] || !near(it.x, 40) || Math.abs(p.alt - (it.alt || 0)) > 30 || (it.needs && !this.flags[it.needs])) continue;
-        if (it.cache) return { x: it.x, y: G.GROUND - (it.alt || 0) - 54, label: 'Open the reliquary', fn: () => { this.flags[k] = 1; this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, G.GROUND - (it.alt || 0) - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); this.save(); } };
-        if (it.weapon) return { x: it.x, y: G.GROUND - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: () => { this.flags[k] = 1; this.gainWeapon(it.weapon); } };
-        return { x: it.x, y: G.GROUND - 40, label: 'Gather the white lily', fn: () => { this.flags[k] = 1; this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, G.GROUND - 50, 'White lily', '#efeaf2', 13); } };
-      }
+      const found = items(); if (found) return found;
       for (const sx of L.shrines) if (near(sx, 55)) return { x: sx, y: G.GROUND - 100, label: 'Rest at the vigil candle', fn: () => this.rest(sx) };
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
       if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
@@ -136,6 +126,41 @@
       G.text(p.x, G.GROUND - 110, had ? 'Cleansed' : 'Vial filled', '#d8c6ff', 16);
       if (had) { this.fairy.cd = 0; this.fairy.bark('cleansed', true); }
       this.save();
+    },
+    // What can be done with one thing lying in the world, if the knight is beside it and at its height.
+    itemPrompt(it, i, p) {
+      const k = 'item_' + this.levelIdx + '_' + i, alt = it.alt || 0, y = G.GROUND - alt;
+      if (this.flags[k] || Math.abs(p.x - it.x) > 40 || Math.abs(p.alt - alt) > 30 || (it.needs && !this.flags[it.needs])) return null;
+      const take = fn => () => { this.flags[k] = 1; fn(); this.save(); };
+      if (it.icon) {
+        // some icons are shut away until the right tool has been found elsewhere
+        const need = it.gate === 'bars' ? !this.weapons.includes('greataxe') : it.gate === 'veil' ? !this.abilities.lantern : false;
+        if (need) return { x: it.x, y: y - 64, label: it.gate === 'bars' ? "Barred. It would take a headsman's axe" : 'The red veil burns. It wants a blessed light', fn: () => { G.sfx('block'); this.shake = 4; } };
+        return { x: it.x, y: y - 64, label: it.gate === 'bars' ? 'Break the bars and take the icon' : it.gate === 'veil' ? 'Part the veil and take the icon' : 'Take the weeping icon', fn: take(() => {
+          if (it.gate === 'bars') { G.sfx('sever'); this.shake = 10; } if (it.gate === 'veil') G.sfx('cleanse');
+          this.gainIcon(it.x, y);
+        }) };
+      }
+      if (it.ability) return { x: it.x, y: y - 60, label: 'Take the ' + G.ABILITIES[it.ability].name, fn: take(() => this.gainAbility(it.ability)) };
+      if (it.cache) return { x: it.x, y: y - 54, label: 'Open the reliquary', fn: take(() => { this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); }) };
+      if (it.weapon) return { x: it.x, y: y - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: take(() => this.gainWeapon(it.weapon)) };
+      return { x: it.x, y: y - 40, label: 'Gather the white lily', fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, 'White lily', '#efeaf2', 13); }) };
+    },
+    iconTotal() { return G.LEVELS.reduce((n, l) => n + (l.items || []).filter(it => it.icon).length, 0); },
+    // Icons still to be found in the area the knight is in (Wist hints at these).
+    iconsHere() { return (this.level.items || []).map((it, i) => ({ it, i })).filter(o => o.it.icon && !this.flags['item_' + this.levelIdx + '_' + o.i]).map(o => o.it); },
+    gainIcon(x, y) {
+      const n = this.items.icon = (this.items.icon || 0) + 1, total = this.iconTotal(), p = this.player; let sub = n + ' of ' + total + ' found';
+      if (n === 5) { p.stats.flask = (p.stats.flask || 0) + 1; p.flasks++; sub += '  ·  +1 flask, for good'; }
+      if (n === 10) { p.stats.tinct = (p.stats.tinct || 0) + 1; p.tinct = p.tinctMax; sub += '  ·  +1 tincture vial, for good'; }
+      if (n === total) { p.stats.vig += 3; p.hp = p.maxHp; sub = 'The whole set. She smiles in every one.  ·  +3 Vigor'; }
+      G.sfx('questdone'); G.questLog.banners.push({ kind: 'Weeping icon', title: G.ICON_NAMES[(n - 1) % G.ICON_NAMES.length], sub, t: 4.6 });
+      this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.iconGot));
+    },
+    gainAbility(id) {
+      if (this.abilities[id]) return;
+      this.abilities[id] = 1; G.sfx('questdone'); G.sfx('bell'); this.save();
+      G.questLog.banners.push({ kind: 'New ability', title: G.ABILITIES[id].name, sub: G.ABILITIES[id].how, t: 6 });
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); },
@@ -189,6 +214,7 @@
       G.text(e.x, G.GROUND - 130 * e.scale, 'EXECUTED', '#e0222c', 20);
       if (e.def.boss) {
         const B = this.level.boss; this.flags['boss_' + B.type + '_dead'] = 1; if (B.final) this.flags.bossDead = 1;
+        if (B.grants) this.gainAbility(B.grants);
         this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : ({ fen: 'road' }[this.level.theme] || this.level.theme)); this.save();
       }
     },
@@ -327,6 +353,28 @@
       // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
         if (this.flags['item_' + this.levelIdx + '_' + i] || (it.needs && !this.flags[it.needs])) return;
+        if (it.icon) {
+          const x = it.x, y = gy - (it.alt || 0), bob = Math.round(Math.sin(t * 2 + i) * 2);
+          if (it.gate === 'bars') { ctx.fillStyle = '#17110f'; ctx.fillRect(x - 22, y - 58, 44, 58); ctx.fillStyle = '#060304'; ctx.fillRect(x - 16, y - 50, 32, 50); ctx.fillStyle = '#241a1c'; ctx.fillRect(x - 24, y - 62, 48, 6); }
+          glow(x, y - 26, 34 + Math.sin(t * 3 + i) * 4, 'rgba(240,205,120,0.38)');
+          ctx.fillStyle = '#c9a13b'; ctx.fillRect(x - 8, y - 38 + bob, 16, 20); ctx.fillStyle = '#3a2416'; ctx.fillRect(x - 6, y - 36 + bob, 12, 16);          // gilt frame
+          ctx.fillStyle = '#e6d6c8'; ctx.fillRect(x - 2, y - 34 + bob, 4, 4); ctx.fillStyle = '#16141c'; ctx.fillRect(x - 4, y - 30 + bob, 8, 8);                // a veiled face
+          ctx.fillStyle = '#a00a12'; ctx.fillRect(x - 2, y - 32 + bob, 2, 4); ctx.fillStyle = '#f0d680'; ctx.fillRect(x - 8, y - 38 + bob, 16, 2);               // and its red tear
+          if (it.gate === 'bars') { ctx.fillStyle = '#4a464e'; for (let q = -14; q <= 14; q += 7) ctx.fillRect(x + q - 1, y - 50, 3, 50); ctx.fillRect(x - 16, y - 30, 32, 3); }
+          if (it.gate === 'veil') for (let q = 0; q < 26; q++) {
+            const a = t * 0.9 + q * 0.7, r = 20 + (q % 5) * 5 + Math.sin(t * 2 + q) * 3; ctx.fillStyle = q % 3 ? 'rgba(190,20,40,0.55)' : 'rgba(120,10,30,0.7)';
+            ctx.fillRect(x + Math.cos(a) * r - 3, y - 28 + Math.sin(a * 1.3) * r * 0.9 - 3, 6 + (q % 3) * 2, 6);
+          }
+          return;
+        }
+        if (it.ability) {   // a tool left where someone last needed it
+          const x = it.x, y = gy - (it.alt || 0);
+          glow(x, y - 20, 50 + Math.sin(t * 3) * 6, 'rgba(214,196,255,0.45)');
+          ctx.fillStyle = '#3a342c'; ctx.fillRect(x - 2, y - 40, 4, 8); ctx.fillRect(x - 8, y - 32, 16, 4); ctx.fillRect(x - 8, y - 8, 16, 6);
+          ctx.fillStyle = `rgba(230,215,255,${0.85 + Math.sin(t * 6) * 0.1})`; ctx.fillRect(x - 6, y - 28, 12, 20); ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 2, y - 24, 4, 10);
+          ctx.fillStyle = '#3a342c'; ctx.fillRect(x - 8, y - 28, 2, 20); ctx.fillRect(x + 6, y - 28, 2, 20);
+          return;
+        }
         if (it.cache) {   // a reliquary left on a high ledge
           const x = it.x, y = gy - (it.alt || 0);
           glow(x, y - 12, 40 + Math.sin(t * 3 + i) * 5, 'rgba(240,200,110,0.4)');
@@ -401,6 +449,7 @@
       }
       ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#b9ada0';
       ctx.fillText(p.weapon.name + (this.weapons.length > 1 ? '  [C]' : ''), 26, 114);
+      if (this.items.icon) { ctx.fillStyle = '#c9a13b'; ctx.fillText('Icons  ' + this.items.icon + ' / ' + this.iconTotal(), 26, 132); }
       if (p.turnT != null && !p.dead) {
         const s = Math.ceil(p.turnT); ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 230, 150, 460, 58);

@@ -90,7 +90,7 @@
 
   // ------------------------------- Wist ------------------------------------
   const LV = { b: '#b79be8', s: '#8a6ad0', l: '#e3d6ff' }, HR = { b: '#f3f0fa', s: '#c6bedb', l: '#ffffff' }, DR = { b: '#2a1838', s: '#170c22', l: '#4a3260' }, SKN = { b: '#f4e8ec', s: '#d6bfca' };
-  G.drawWist = (ctx, x, y, facing, t, glee) => {
+  G.drawWist = (ctx, x, y, facing, t, glee, near) => {
     const { R, E, line } = G.spr.open(64, 60), up = Math.floor(t * 13) % 2 === 0, sway = Math.round(Math.sin(t * 2.6) * 1.2);
     // four long wings
     for (const s of [-1, 1]) {
@@ -131,7 +131,7 @@
     // a few motes of light around her instead of a soft glow
     for (let i = 0; i < 5; i++) {
       const a = t * 1.3 + i * 1.257, r = 30 + Math.sin(t * 2 + i) * 6;
-      ctx.fillStyle = glee ? 'rgba(255,120,150,0.8)' : 'rgba(214,190,255,0.8)';
+      ctx.fillStyle = glee ? 'rgba(255,120,150,0.8)' : near ? 'rgba(240,205,120,0.95)' : 'rgba(214,190,255,0.8)';   // her motes turn gold near something hidden
       if (Math.sin(t * 5 + i * 2.1) > -0.2) ctx.fillRect(Math.round((x + Math.cos(a) * r) / 2) * 2, Math.round((y + Math.sin(a) * r * 0.7) / 2) * 2, 2, 2);
     }
   };
