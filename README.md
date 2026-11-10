@@ -5,7 +5,7 @@ You are **Ser Aldric Vane**, a knight who comes home after seven years abroad ca
 
 No build step, no dependencies, no asset files — all art and sound are generated in code.
 
-Characters are chibi pixel sprites in the manner of 16-bit JRPG field sprites, placed pixel by pixel in code. Backdrops and effects are still smooth vector art and will follow.
+Characters are chibi pixel sprites in the manner of 16-bit JRPG field sprites, placed pixel by pixel in code. Backdrops, props and ground blood are drawn at half size, reduced to a limited palette with an ordered dither, and scaled up unsmoothed to match.
 
 ## Play
 
@@ -32,7 +32,7 @@ python3 -m http.server 8000
 | Full screen | button at the top centre of the screen |
 | Mute | `M` |
 
-On-screen buttons appear on touch devices.
+On touch devices: two move keys on the left; Slash, Heavy, Block and Roll on the right; a Use button that appears only when there is something to speak to, read, gather or execute. Tap the flask or tincture icons in the HUD to drink. Quests, full screen and pause sit at the top centre. The pad hides while a menu or dialogue is open.
 
 ## Mechanics
 

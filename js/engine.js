@@ -62,7 +62,7 @@ addEventListener('DOMContentLoaded', () => {
     const sync = () => { fs.classList.toggle('on', isFs()); fs.title = isFs() ? 'Leave full screen' : 'Full screen'; fs.setAttribute('aria-label', fs.title); };
     document.addEventListener('fullscreenchange', sync); document.addEventListener('webkitfullscreenchange', sync);
   }
-  document.querySelectorAll('#touch button').forEach(b => {
+  document.querySelectorAll('[data-act]').forEach(b => {
     const a = b.dataset.act;
     b.addEventListener('touchstart', e => { e.preventDefault(); G.audioInit(); G.input.press(a); }, { passive: false });
     const up = e => { e.preventDefault(); G.input.release(a); };

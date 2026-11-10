@@ -10,24 +10,22 @@
 <div id="wrap">
   <canvas id="c" width="960" height="540"></canvas>
   <div id="overlay"></div>
-  <button id="fs" type="button" title="Full screen" aria-label="Full screen" hidden>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path class="enter" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><path class="exit" d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>
-  </button>
+  <div id="topbar">
+    <button data-act="journal" class="tb touch-only" type="button" aria-label="Quests">☰</button>
+    <button id="fs" class="tb" type="button" title="Full screen" aria-label="Full screen" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="enter" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><path class="exit" d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>
+    </button>
+    <button data-act="pause" class="tb touch-only" type="button" aria-label="Pause">II</button>
+  </div>
   <div id="touch">
-    <div class="pad left">
-      <button data-act="left">◀</button>
-      <button data-act="right">▶</button>
-    </div>
-    <div class="pad right">
-      <button data-act="journal">Log</button>
-      <button data-act="cure">Cure</button>
-      <button data-act="flask">Flask</button>
-      <button data-act="use">Use</button>
-      <button data-act="block">Block</button>
-      <button data-act="roll">Roll</button>
-      <button data-act="heavy">Heavy</button>
-      <button data-act="attack">Slash</button>
-    </div>
+    <button data-act="flask" class="hud-tap" id="t-flask" type="button" aria-label="Drink flask"></button>
+    <button data-act="cure" class="hud-tap" id="t-cure" type="button" aria-label="Drink lily tincture"></button>
+    <div class="move"><button data-act="left" type="button" aria-label="Move left">◀</button><button data-act="right" type="button" aria-label="Move right">▶</button></div>
+    <button data-act="use" id="t-use" type="button">Use</button>
+    <button data-act="block" id="t-block" type="button">Block</button>
+    <button data-act="roll" id="t-roll" type="button">Roll</button>
+    <button data-act="heavy" id="t-heavy" type="button">Heavy</button>
+    <button data-act="attack" id="t-attack" type="button">Slash</button>
   </div>
 </div>
 <script src="js/engine.js"></script>

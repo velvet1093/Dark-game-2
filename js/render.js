@@ -385,11 +385,38 @@ const PROPS = {
 };
 
 let vignette = null;
+
+// The backdrop, world props and ground blood are drawn at half size into this buffer, reduced to
+// a limited palette with an ordered dither, then scaled up unsmoothed so they match the sprites.
+let bgBuf = null, bgCtx = null;
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+G.bgBegin = () => {
+  if (!bgBuf) { bgBuf = document.createElement('canvas'); bgBuf.width = G.W / 2; bgBuf.height = G.H / 2; bgCtx = bgBuf.getContext('2d', { willReadFrequently: true }); }
+  bgCtx.setTransform(0.5, 0, 0, 0.5, 0, 0); bgCtx.globalAlpha = 1; bgCtx.shadowBlur = 0;
+  return bgCtx;
+};
+G.bgEnd = (ctx, ox = 0, oy = 0) => {
+  const w = bgBuf.width, h = bgBuf.height, STEP = 10;
+  bgCtx.setTransform(1, 0, 0, 1, 0, 0);
+  const img = bgCtx.getImageData(0, 0, w, h), d = img.data;
+  for (let y = 0, i = 0; y < h; y++) for (let x = 0; x < w; x++, i += 4) {
+    const th = (BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.5) * STEP;
+    d[i] = Math.round((d[i] + th) / STEP) * STEP; d[i + 1] = Math.round((d[i + 1] + th) / STEP) * STEP; d[i + 2] = Math.round((d[i + 2] + th) / STEP) * STEP;
+  }
+  bgCtx.putImageData(img, 0, 0);
+  const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H);
+  ctx.drawImage(bgBuf, ox, oy, G.W, G.H); ctx.imageSmoothingEnabled = sm;
+};
 G.drawBackdrop = (ctx, level, cam, t) => {
   const T = level._theme, W = G.W, H = G.H, gy = G.GROUND;
   const g = ctx.createLinearGradient(0, 0, 0, gy);
   g.addColorStop(0, T.sky[0]); g.addColorStop(0.6, T.sky[1]); g.addColorStop(1, T.sky[2]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  if (!T.indoor) for (let i = 0; i < 46; i++) {   // a few stars
+    const x = Math.round((((i * 197.3 - cam * 0.02) % W) + W) % W / 2) * 2, y = Math.round((i * 61.7) % (gy - 150) / 2) * 2;
+    ctx.fillStyle = `rgba(230,215,215,${0.12 + (i % 4) * 0.07 + (i % 7 === 0 ? Math.sin(t * 2 + i) * 0.08 : 0)})`; ctx.fillRect(x, y, 2, 2);
+  }
   if (T.moon) {
     const mx = 700 - cam * 0.02, mg = ctx.createRadialGradient(mx, 110, 20, mx, 110, 200);
     mg.addColorStop(0, 'rgba(160,30,30,0.35)'); mg.addColorStop(1, 'rgba(160,30,30,0)');
@@ -403,15 +430,19 @@ G.drawBackdrop = (ctx, level, cam, t) => {
   }
   const par = T.indoor ? 0.6 : 0.5;
   ctx.fillStyle = ctx.strokeStyle = T.indoor ? '#0f0b0d' : '#0b0708'; ctx.lineCap = 'round';
-  for (const p of level._mid) { const x = p.x - cam * par; if (x > -300 && x < W + 300) PROPS[p.k](ctx, x, gy + 4, p.s, p.seed, t); }
+  for (const p of level._mid) { const x = Math.round((p.x - cam * par) / 2) * 2; if (x > -300 && x < W + 300) PROPS[p.k](ctx, x, gy + 4, p.s, p.seed, t); }
   // ground
   ctx.fillStyle = T.ground; ctx.fillRect(0, gy - 3, W, H - gy + 3);
   ctx.fillStyle = T.edge; ctx.fillRect(0, gy - 3, W, 2);
+  for (let wx = Math.floor(cam / 12) * 12; wx < cam + W; wx += 12) {   // pebbles and scuffs so the ground is not flat
+    const h = Math.imul(wx | 0, 2654435761) >>> 0, x = Math.round((wx - cam + h % 11) / 2) * 2, y = gy + 4 + Math.round((h >>> 5) % 84 / 2) * 2;
+    ctx.fillStyle = (h & 3) ? 'rgba(0,0,0,0.28)' : 'rgba(255,235,225,0.06)'; ctx.fillRect(x, y, 2 + ((h >>> 12) & 1) * 4, 2);
+  }
   if (T.water) { ctx.fillStyle = 'rgba(40,70,60,0.22)'; for (let x = -(cam % 190); x < W; x += 190) { ctx.beginPath(); ctx.ellipse(x + 60, gy + 34 + ((x + cam) % 3) * 9, 70, 5, 0, 0, 7); ctx.fill(); } }
   if (T.indoor) { ctx.strokeStyle = '#191316'; ctx.lineWidth = 1; for (let x = -(cam % 80); x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x - 30, H); ctx.stroke(); } }
   else { ctx.strokeStyle = T.edge; ctx.lineWidth = 1.5; for (let x = -(cam % 37); x < W; x += 37) { const h = 4 + ((x + cam) * 7 % 9); ctx.beginPath(); ctx.moveTo(x, gy - 2); ctx.lineTo(x + 3, gy - 2 - h); ctx.moveTo(x + 5, gy - 2); ctx.lineTo(x + 9, gy - h); ctx.stroke(); } }
   ctx.fillStyle = ctx.strokeStyle = '#060304';
-  for (const p of level._near) { const x = p.x - cam; if (x > -200 && x < W + 200) PROPS[p.k](ctx, x, gy + 2, p.s, p.seed, t); }
+  for (const p of level._near) { const x = Math.round((p.x - cam) / 2) * 2; if (x > -200 && x < W + 200) PROPS[p.k](ctx, x, gy + 2, p.s, p.seed, t); }
 };
 
 G.drawAtmosphere = (ctx, level, cam, t, hurt) => {
@@ -423,9 +454,11 @@ G.drawAtmosphere = (ctx, level, cam, t, hurt) => {
     ctx.fillStyle = fg; ctx.fillRect(fx - 280, G.GROUND - 160, 560, 260);
   }
   if (T.weather === 'rain') {
-    ctx.strokeStyle = 'rgba(150,150,170,0.22)'; ctx.lineWidth = 1; ctx.beginPath();
-    for (let i = 0; i < 70; i++) { const x = (i * 137.5 + t * 300 - cam * 0.5) % W, y = (i * 71.3 + t * 900) % H; ctx.moveTo((x + W) % W, y); ctx.lineTo((x + W) % W - 4, y + 16); }
-    ctx.stroke();
+    ctx.fillStyle = 'rgba(160,160,185,0.24)';
+    for (let i = 0; i < 70; i++) {   // stepped pixel streaks
+      const x = Math.round(((((i * 137.5 + t * 300 - cam * 0.5) % W) + W) % W) / 2) * 2, y = Math.round(((i * 71.3 + t * 900) % H) / 2) * 2;
+      ctx.fillRect(x, y, 2, 6); ctx.fillRect(x - 2, y + 6, 2, 6);
+    }
   } else {
     ctx.fillStyle = T.indoor ? 'rgba(200,170,150,0.25)' : 'rgba(255,120,60,0.4)';
     for (let i = 0; i < 40; i++) { const x = ((i * 97.3 + Math.sin(t * 0.7 + i) * 30 - cam * 0.3) % W + W) % W, y = H - ((i * 53.7 + t * (14 + i % 5 * 6)) % H); ctx.fillRect(x, y, 2, 2); }

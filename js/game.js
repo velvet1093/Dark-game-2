@@ -198,13 +198,16 @@
     draw() {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       const L = this.level, t = this.time, gy = G.GROUND;
-      if (this.mode !== 'play') { G.drawBackdrop(ctx, G.LEVELS[0], 300 + Math.sin(t * 0.05) * 300, t); G.drawAtmosphere(ctx, G.LEVELS[0], 0, t, 0); return; }
-      const p = this.player, cam = Math.round(this.cam);
+      if (this.mode !== 'play') { G.drawBackdrop(G.bgBegin(), G.LEVELS[0], Math.round(300 + Math.sin(t * 0.05) * 300), t); G.bgEnd(ctx); G.drawAtmosphere(ctx, G.LEVELS[0], 0, t, 0); return; }
+      const p = this.player, cam = Math.round(this.cam / 2) * 2;
+      const shx = Math.round(rand(-1, 1) * this.shake * 0.25) * 2, shy = Math.round(rand(-1, 1) * this.shake * 0.25) * 2;
+      // backdrop, props and ground blood go through the pixel buffer; characters are drawn over it
+      const main = ctx; ctx = G.bgBegin();
       G.drawBackdrop(ctx, L, cam, t);
+      ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.drawFx(ctx, 'ground'); ctx.restore();
+      ctx = main; G.bgEnd(ctx, shx, shy);
       ctx.save();
-      ctx.translate(-cam + rand(-1, 1) * this.shake * 0.5, rand(-1, 1) * this.shake * 0.5);
-      this.drawWorldProps(L, t);
-      G.drawFx(ctx, 'ground');
+      ctx.translate(-cam + shx, shy);
       const vis = x => x > cam - 160 && x < cam + W + 160;   // sprites are built per frame, so skip what is off screen
       for (const n of this.npcs) if (vis(n.x)) n.draw(ctx, this);
       for (const e of this.enemies) if (e.dead && vis(e.x)) e.draw(ctx, this);
@@ -351,10 +354,16 @@
     G.LEVELS.forEach(G.buildProps);
     game.player = new G.Player(); game.fairy = new G.Fairy();
     game.toTitle();
-    let last = 0;
+    let last = 0, lastFlasks = 0; const useBtn = document.getElementById('t-use');
     const frame = ts => {
       const dt = Math.min(0.033, (ts - last) / 1000 || 0); last = ts;
       game.tick(dt); game.draw(); G.input.clear();
+      // touch layout: hide the pad under menus, and show the Use button only when there is something to use
+      const cl = document.body.classList, open = G.ui.blocking || game.mode !== 'play', pr = open ? null : game.prompt;
+      if (cl.contains('ui-open') !== open) { cl.toggle('ui-open', open); if (open) G.input.held = {}; }
+      if (cl.contains('can-use') !== !!pr) cl.toggle('can-use', !!pr);
+      if (pr && useBtn) { const s = pr.hot ? 'Execute' : pr.label.split(' ')[0]; if (useBtn.textContent !== s) { useBtn.textContent = s; useBtn.classList.toggle('hot', !!pr.hot); } }
+      if (game.player.flaskMax !== lastFlasks) { lastFlasks = game.player.flaskMax; document.documentElement.style.setProperty('--flasks', lastFlasks); }
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);

@@ -56,18 +56,6 @@ h2 { font-size: 2em; letter-spacing: .2em; font-weight: normal; color: #b3141c; 
 .note h3 { font-style: normal; font-weight: normal; letter-spacing: .15em; color: #8b6f4e; margin: 0 0 .8em; text-align: center; }
 .ichor { color: #c9333b; margin-bottom: 1em; letter-spacing: .1em; }
 
-#touch { display: none; position: absolute; inset: 0; pointer-events: none; }
-body.touch #touch { display: block; }
-.pad { position: absolute; bottom: 3%; display: flex; gap: 1.2cqw; pointer-events: none; }
-.pad.left { left: 2%; }
-.pad.right { right: 2%; flex-wrap: wrap; justify-content: flex-end; width: 46cqw; }
-.pad button {
-  pointer-events: auto; width: 10cqw; height: 10cqw; border-radius: 50%;
-  background: rgba(40, 10, 12, .4); color: rgba(230, 210, 200, .75); border: 1px solid rgba(179, 20, 28, .5);
-  font: 1.7cqw Georgia, serif; touch-action: none;
-}
-.pad.left button { width: 13cqw; height: 13cqw; font-size: 3.4cqw; }
-.pad button:active { background: rgba(179, 20, 28, .5); }
 
 .dialogue.wist { border-color: #7a5fb0; }
 .dialogue.wist .who { color: #b79be8; }
@@ -84,12 +72,41 @@ body.touch #touch { display: block; }
 .quest.failed h3 { color: #c9333b; } .quest.done h3 { color: #8a9a70; }
 .screen.journal { background: rgba(0, 0, 0, .9); }
 
-#fs {
-  position: absolute; top: 1.2%; left: 50%; transform: translateX(-50%); z-index: 5;
-  width: 3.4cqw; height: 3.4cqw; min-width: 30px; min-height: 30px; padding: 0; cursor: pointer;
-  background: rgba(10, 5, 6, .55); border: 1px solid rgba(179, 20, 28, .45); opacity: .55;
-}
 #fs:hover, #fs:focus-visible { opacity: 1; border-color: #b3141c; outline: none; }
 #fs svg { width: 60%; height: 60%; fill: none; stroke: #cfc4b8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 #fs .exit, #fs.on .enter { display: none; }
 #fs.on .exit { display: inline; }
+
+/* ---- top bar: quests, full screen, pause ---- */
+#topbar { position: absolute; top: 1.2%; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; gap: 1cqw; }
+.tb {
+  width: 3.6cqw; height: 3.6cqw; min-width: 30px; min-height: 30px; padding: 0; cursor: pointer; touch-action: none;
+  font: 1.6cqw Georgia, serif; color: #cfc4b8; line-height: 1;
+  background: rgba(10, 5, 6, .55); border: 1px solid rgba(179, 20, 28, .45); opacity: .6;
+}
+.touch-only { display: none; }
+body.touch .touch-only { display: block; }
+
+/* ---- touch controls: two move keys, a four-button cluster, and a Use button that appears only when needed ---- */
+#touch { display: none; position: absolute; inset: 0; pointer-events: none; }
+body.touch #touch { display: block; }
+body.ui-open #touch { display: none; }
+#touch button {
+  position: absolute; pointer-events: auto; touch-action: none; padding: 0; border-radius: 50%;
+  background: rgba(30, 8, 10, .32); color: rgba(235, 220, 210, .8); border: 1px solid rgba(179, 20, 28, .45);
+  font: 1.55cqw Georgia, serif; letter-spacing: .04em;
+}
+#touch button:active { background: rgba(179, 20, 28, .5); }
+#touch .move { position: absolute; left: 2.2%; bottom: 4%; display: flex; gap: 1.6cqw; }
+#touch .move button { position: static; width: 11.5cqw; height: 11.5cqw; font-size: 3.2cqw; }
+#t-attack { right: 2.2cqw; bottom: 3cqw; width: 12.5cqw; height: 12.5cqw; font-size: 1.9cqw; }
+#t-roll   { right: 16.2cqw; bottom: 2cqw; width: 9cqw; height: 9cqw; }
+#t-block  { right: 13.4cqw; bottom: 12.4cqw; width: 9cqw; height: 9cqw; }
+#t-heavy  { right: 3cqw; bottom: 16.8cqw; width: 9cqw; height: 9cqw; }
+#t-use    { right: 26.5cqw; bottom: 2cqw; width: 9cqw; height: 9cqw; display: none; border-color: #c9a13b; color: #f0dca0; background: rgba(40, 30, 8, .45); }
+body.can-use #t-use { display: block; }
+#t-use.hot { border-color: #ff5a5a; color: #ffd0d0; background: rgba(120, 10, 16, .55); }
+/* the flask and tincture icons in the HUD are the buttons for them */
+#touch .hud-tap { border-radius: 1cqw; border: 1px dashed rgba(207, 196, 184, .35); background: none; top: calc(68 * .10417cqw); height: calc(28 * .10417cqw); }
+#t-flask { left: calc(20 * .10417cqw); width: calc((var(--flasks, 3) * 20 + 4) * .10417cqw); }
+#t-cure { left: calc((var(--flasks, 3) * 20 + 27) * .10417cqw); width: calc(38 * .10417cqw); border-color: rgba(201, 179, 240, .4) !important; }
