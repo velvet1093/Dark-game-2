@@ -31,6 +31,13 @@ G.drawWeapon = (ctx, x, y, w, type, len, bloody = 0, C = c => c) => {
   }
 };
 
+// Darken (f < 1) or lighten a #rgb / #rrggbb colour.
+G.shade = (hex, f) => {
+  let h = hex.slice(1); if (h.length === 3) h = h.replace(/./g, c => c + c);
+  const n = parseInt(h, 16), ch = s => Math.max(0, Math.min(255, Math.round((n >> s & 255) * f)));
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+};
+
 // Draws a jointed humanoid. Local space: feet at (0,0), facing +x, y up is negative.
 // o: {x,y,facing,scale,pose,look,limbs,weapon,wlen,shield,flash,bloody,alpha}
 G.drawHumanoid = (ctx, o) => {
@@ -56,14 +63,38 @@ G.drawHumanoid = (ctx, o) => {
     seg(hx, hy, kx, ky, 7.5, L.leg); seg(kx, ky, hx + dx, hy + dy, 6.5, L.leg);
     seg(hx + dx, hy + dy, hx + dx + 5, hy + dy, 5, '#151213');
   };
-  const arm = (a, e, isGone) => {
+  // A hand at the end of a forearm pointing along `ang`. grip: closed round a hilt or strap.
+  const feral = !!L.eye && L.helm !== 'veil' && L.helm !== 'beak';
+  const hand = (x, y, ang, grip) => {
+    const ux = Math.sin(ang), uy = Math.cos(ang), px = uy, py = -ux, skin = C(L.skin), dark = C(G.shade(L.skin, 0.62));
+    const claw = feral && !grip, len = claw ? 5.2 : 3.4;
+    ctx.lineCap = 'round';
+    if (grip) {
+      ctx.fillStyle = skin; ctx.strokeStyle = dark; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.ellipse(x, y, 3.3, 2.9, Math.atan2(uy, ux), 0, 7); ctx.fill(); ctx.stroke();
+      ctx.lineWidth = 0.55; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + ux * i * 1.5 - px * 2.2, y + uy * i * 1.5 - py * 2.2); ctx.lineTo(x + ux * i * 1.5 + px * 0.6, y + uy * i * 1.5 + py * 0.6); ctx.stroke(); }
+      ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(x - ux * 1.6 + px * 1.7, y - uy * 1.6 + py * 1.7, 1.9, 1.1, Math.atan2(uy, ux) + 0.5, 0, 7); ctx.fill(); ctx.stroke();
+      return;
+    }
+    // fingers first, then the palm over their roots, then the thumb
+    for (let i = 0; i < 4; i++) {
+      const k = (i - 1.5) * (claw ? 0.34 : 0.2), fx = Math.sin(ang + k), fy = Math.cos(ang + k), bx = x + ux * 1.6 + px * (i - 1.5) * 1.15, by = y + uy * 1.6 + py * (i - 1.5) * 1.15, l = len - Math.abs(i - 1.5) * 0.5;
+      ctx.strokeStyle = dark; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + fx * l, by + fy * l); ctx.stroke();
+      ctx.strokeStyle = skin; ctx.lineWidth = 1.0; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + fx * l, by + fy * l); ctx.stroke();
+      if (claw) { ctx.strokeStyle = C('#2a1a1a'); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(bx + fx * (l - 1.2), by + fy * (l - 1.2)); ctx.lineTo(bx + fx * (l + 0.8), by + fy * (l + 0.8)); ctx.stroke(); }
+    }
+    ctx.fillStyle = skin; ctx.strokeStyle = dark; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.ellipse(x + ux * 0.4, y + uy * 0.4, 3.0, 2.5, Math.atan2(uy, ux), 0, 7); ctx.fill(); ctx.stroke();
+    const tx = Math.sin(ang + 1.0), ty = Math.cos(ang + 1.0);
+    ctx.strokeStyle = dark; ctx.lineWidth = 1.7; ctx.beginPath(); ctx.moveTo(x + px * 1.6, y + py * 1.6); ctx.lineTo(x + px * 1.6 + tx * 2.6, y + py * 1.6 + ty * 2.6); ctx.stroke();
+    ctx.strokeStyle = skin; ctx.lineWidth = 1.15; ctx.beginPath(); ctx.moveTo(x + px * 1.6, y + py * 1.6); ctx.lineTo(x + px * 1.6 + tx * 2.6, y + py * 1.6 + ty * 2.6); ctx.stroke();
+  };
+  const arm = (a, e, isGone, grip, defer) => {
     if (isGone) { stump(sx, sy + 2); return null; }
     const ex = sx + Math.sin(a) * 13, ey = sy + Math.cos(a) * 13;
     const ax = ex + Math.sin(a + e) * 13, ay = ey + Math.cos(a + e) * 13;
     seg(sx, sy, ex, ey, 6.5, L.arm); seg(ex, ey, ax, ay, 5.5, L.arm);
     if (L.cuff) { ctx.fillStyle = C('#ece6de'); ctx.beginPath(); ctx.arc(ex + (ax - ex) * 0.78, ey + (ay - ey) * 0.78, 3.8, 0, 7); ctx.fill(); }
-    ctx.fillStyle = C(L.skin); ctx.beginPath(); ctx.arc(ax, ay, 3, 0, 7); ctx.fill();
-    return [ax, ay];
+    if (!defer) hand(ax, ay, a + e, grip);
+    return [ax, ay, a + e];
   };
   const shield = h => {
     if (!h) return;
@@ -74,7 +105,7 @@ G.drawHumanoid = (ctx, o) => {
   };
 
   // back arm (+shield), back leg, cape
-  const bh = arm(p.bA, p.bE, gone('armB'));
+  const bh = arm(p.bA, p.bE, gone('armB'), !!o.shield);
   if (o.shield && !p.shieldFront) shield(bh);
   leg(p.footB, p.liftB || 0, gone('legB'));
   if (L.cape) {
@@ -131,14 +162,12 @@ G.drawHumanoid = (ctx, o) => {
       ctx.lineTo(hdx - 14, hdy + 15); ctx.lineTo(hdx - 6, hdy + 10); ctx.lineTo(hdx - 5, hdy - 5); ctx.closePath(); ctx.fill();
       ctx.fillStyle = C('#ece6de'); for (let i = 0; i < 5; i++) { const a = Math.PI * (1.12 + i * 0.17); ctx.beginPath(); ctx.arc(hdx + Math.cos(a) * 9, hdy - 1 + Math.sin(a) * 9, 2.3, 0, 7); ctx.fill(); }
       for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4; ctx.beginPath(); ctx.ellipse(hdx - 6 + Math.cos(a) * 2.6, hdy - 8 + Math.sin(a) * 2.6, 2.4, 1.3, a, 0, 7); ctx.fill(); }
-      ctx.fillStyle = C('#8a5fd0'); ctx.beginPath(); ctx.arc(hdx + 4.5, hdy - 0.5, 1.2, 0, 7); ctx.fill();
     } else if (L.helm === 'wimple') {
       // white wimple framing the face under a long black veil
       ctx.fillStyle = C('#ece6de'); ctx.beginPath(); ctx.arc(hdx - 1, hdy + 1, 9.6, 0, 7); ctx.fill(); ctx.fillRect(hdx - 7, hdy + 5, 12, 8);
       ctx.fillStyle = C(L.skin); ctx.beginPath(); ctx.arc(hdx + 2, hdy + 0.5, 6.2, 0, 7); ctx.fill();
       ctx.fillStyle = hc; ctx.beginPath(); ctx.moveTo(hdx + 7, hdy - 7); ctx.quadraticCurveTo(hdx - 1, hdy - 17, hdx - 11, hdy - 6);
       ctx.quadraticCurveTo(hdx - 17, hdy + 16, hdx - 13, hdy + 36); ctx.lineTo(hdx - 5, hdy + 30); ctx.lineTo(hdx - 6, hdy - 3); ctx.lineTo(hdx + 3, hdy - 6); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = C('#8a5fd0'); ctx.beginPath(); ctx.arc(hdx + 5, hdy, 1.2, 0, 7); ctx.fill();
     } else if (L.helm === 'coif') {
       // short white coif and cropped veil, steel circlet, a braid over the shoulder
       ctx.fillStyle = C(L.hair || '#333'); ctx.beginPath(); ctx.arc(hdx, hdy - 1, 8.4, Math.PI * 0.95, Math.PI * 1.95); ctx.lineTo(hdx + 5, hdy - 3); ctx.lineTo(hdx - 2, hdy - 3); ctx.fill();
@@ -146,7 +175,6 @@ G.drawHumanoid = (ctx, o) => {
       ctx.fillStyle = hc; ctx.beginPath(); ctx.moveTo(hdx + 3, hdy - 9); ctx.quadraticCurveTo(hdx - 3, hdy - 15, hdx - 10, hdy - 6); ctx.lineTo(hdx - 11, hdy + 7); ctx.lineTo(hdx - 6, hdy + 3); ctx.lineTo(hdx - 4, hdy - 6); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = C('#ece6de'); ctx.lineWidth = 2.6; ctx.beginPath(); ctx.arc(hdx, hdy - 1, 8.6, Math.PI * 1.08, Math.PI * 1.8); ctx.stroke();
       ctx.strokeStyle = C('#9a9ea8'); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(hdx, hdy - 1, 8.8, Math.PI * 1.02, Math.PI * 1.98); ctx.stroke();
-      ctx.fillStyle = C('#8a5fd0'); ctx.beginPath(); ctx.arc(hdx + 4.5, hdy - 0.5, 1.2, 0, 7); ctx.fill();
     } else if (L.helm === 'sack') {
       ctx.fillStyle = hc; ctx.beginPath(); ctx.arc(hdx, hdy, 9.5, 0, 7); ctx.fill(); ctx.fillRect(hdx - 8, hdy + 3, 16, 9);
     } else if (L.helm === 'beak') {
@@ -154,19 +182,56 @@ G.drawHumanoid = (ctx, o) => {
       ctx.beginPath(); ctx.moveTo(hdx + 5, hdy - 3); ctx.lineTo(hdx + 24, hdy + 5); ctx.lineTo(hdx + 5, hdy + 5); ctx.fill();
       ctx.fillRect(hdx - 13, hdy - 10, 26, 3); ctx.fillRect(hdx - 7, hdy - 17, 14, 8);
     }
-    if (L.eye && !fl) {
+    const covered = L.helm === 'helm' || L.helm === 'sack' || L.helm === 'beak';
+    if (!covered) {
+      // ---- face: brows, two eyes, nose, mouth. The infected get sunken glowing eyes, a snarl and red tears.
+      const fx = hdx + (L.helm === 'wimple' ? 1 : 0), fy = hdy, skin = C(L.skin), dark = C(G.shade(L.skin, 0.6));
+      const dot = (x, y, r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); };
+      const ln2 = (x1, y1, x2, y2, w, col) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+      if (L.helm === 'none') {
+        ctx.fillStyle = dark; ctx.beginPath(); ctx.ellipse(fx - 3.6, fy + 0.6, 1.5, 2.3, 0, 0, 7); ctx.fill();
+        if (L.hair) { ctx.fillStyle = C(L.hair); ctx.beginPath(); ctx.arc(fx, fy - 0.5, 8.5, Math.PI * 0.85, Math.PI * 1.9); ctx.lineTo(fx + 3, fy - 4); ctx.lineTo(fx - 5, fy - 2); ctx.fill(); }
+        else if (feral) for (let i = 0; i < 4; i++) ln2(fx - 5 + i * 2.6, fy - 7.4, fx - 6.5 + i * 2.6, fy - 10 - (i % 2) * 1.5, 0.8, C('#2a2222'));
+      }
+      // nose: a small bump breaking the outline, with a shadow under it
+      ctx.fillStyle = skin; ctx.beginPath(); ctx.moveTo(fx + 7.2, fy - 0.2); ctx.lineTo(fx + 9.5, fy + 2.0); ctx.lineTo(fx + 7.2, fy + 2.8); ctx.fill();
+      ln2(fx + 7.4, fy + 2.7, fx + 9.2, fy + 2.1, 0.6, dark);
+      if (L.beard) { ctx.fillStyle = C(L.beard); ctx.beginPath(); ctx.arc(fx + 1, fy + 1.5, 7.6, 0.15, Math.PI * 0.95); ctx.lineTo(fx + 3, fy + 3.2); ctx.fill(); }
+      if (feral) {
+        ctx.fillStyle = C('rgba(24,2,4,0.6)'); ctx.beginPath(); ctx.ellipse(fx + 4.4, fy - 1, 2.7, 2.1, 0, 0, 7); ctx.ellipse(fx + 7.3, fy - 1, 1.2, 1.7, 0, 0, 7); ctx.fill();
+        ln2(fx + 1.8, fy - 4.2, fx + 6.6, fy - 2.6, 1.0, C('#1a1010'));
+        if (!fl) { ctx.shadowColor = L.eye; ctx.shadowBlur = 8; dot(fx + 4.6, fy - 1, 1.35, L.eye); dot(fx + 7.3, fy - 1, 0.8, L.eye); ctx.shadowBlur = 0; }
+        ln2(fx + 4.3, fy + 0.6, fx + 3.8, fy + 6, 0.9, C('#a00a12'));
+        ctx.fillStyle = C('#1a0508'); ctx.beginPath(); ctx.ellipse(fx + 5.6, fy + 4.5, 2.3, 1.7, -0.1, 0, 7); ctx.fill();
+        ctx.fillStyle = C('#d9cdb8'); for (let i = 0; i < 3; i++) ctx.fillRect(fx + 4.1 + i * 1.1, fy + 3.1, 0.7, 1.1);
+      } else {
+        const iris = C(L.iris || (L.helm === 'veil' ? L.eye : null) || '#4a3526'), browc = C(L.hair ? G.shade(L.hair.length > 4 ? L.hair : '#555555', 0.55) : '#3a2a22');
+        if (L.soft) { ctx.fillStyle = C('rgba(214,110,118,0.32)'); ctx.beginPath(); ctx.ellipse(fx + 3.2, fy + 2.4, 2, 1.1, 0, 0, 7); ctx.fill(); }
+        ctx.fillStyle = C('#f6f1ea'); ctx.beginPath(); ctx.ellipse(fx + 4.3, fy - 0.9, 1.8, 1.3, 0, 0, 7); ctx.ellipse(fx + 7.2, fy - 0.9, 0.85, 1.15, 0, 0, 7); ctx.fill();
+        dot(fx + 4.8, fy - 0.9, 1.05, iris); dot(fx + 7.4, fy - 0.9, 0.65, iris); dot(fx + 4.9, fy - 0.9, 0.45, C('#0a0608'));
+        dot(fx + 5.2, fy - 1.4, 0.3, C('#ffffff'));
+        ctx.strokeStyle = C('#1a1214'); ctx.lineWidth = L.soft ? 0.75 : 0.55; ctx.beginPath(); ctx.arc(fx + 4.3, fy - 0.6, 1.9, Math.PI * 1.1, Math.PI * 1.95); ctx.stroke();
+        if (L.soft) ln2(fx + 2.5, fy - 1.3, fx + 1.8, fy - 2.0, 0.5, C('#1a1214'));
+        ln2(fx + 2.6, fy - 3.4, fx + 6.2, fy - 3.3, L.soft ? 0.6 : 0.9, browc);
+        if (L.soft) { ctx.strokeStyle = C('#b0505a'); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(fx + 4.7, fy + 4.3); ctx.quadraticCurveTo(fx + 6, fy + 4.9, fx + 7.1, fy + 4.1); ctx.stroke(); }
+        else ln2(fx + 4.6, fy + 4.4, fx + 7, fy + 4.2, 0.8, C('#7a4444'));
+      }
+      if (L.helm === 'veil') { ln2(fx + 4.3, fy + 0.4, fx + 3.9, fy + 8, 1.0, C('#a00a12')); ln2(fx + 7.2, fy + 0.4, fx + 7, fy + 6, 0.8, C('#a00a12')); }
+    }
+    if (covered && L.eye && !fl) {
       ctx.fillStyle = L.eye; ctx.shadowColor = L.eye; ctx.shadowBlur = 8;
       ctx.beginPath(); ctx.arc(hdx + 4.5, hdy - 1, 1.6, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
-      if (L.helm === 'veil' || o.weeping) { ctx.strokeStyle = '#a00a12'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(hdx + 4.5, hdy); ctx.lineTo(hdx + 4, hdy + 9); ctx.stroke(); }
+      if (o.weeping) { ctx.strokeStyle = '#a00a12'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(hdx + 4.5, hdy); ctx.lineTo(hdx + 4, hdy + 9); ctx.stroke(); }
     }
   }
   // weapon arm
-  const fh = arm(p.armA, p.armE, gone('armF'));
+  const armed = !!o.weapon && o.weapon !== 'none', fh = arm(p.armA, p.armE, gone('armF'), armed, true);
   let tip = null;
   if (fh && o.weapon && o.weapon !== 'none') {
     G.drawWeapon(ctx, fh[0], fh[1], p.w, o.weapon, o.wlen, o.bloody, C);
     tip = [fh[0] + Math.sin(p.w) * o.wlen, fh[1] + Math.cos(p.w) * o.wlen];
   }
+  if (fh) hand(fh[0], fh[1], fh[2], armed);
   if (o.shield && p.shieldFront) shield([sx + 14, sy + 12]);
   ctx.restore();
   const lying = Math.abs(p.lying || 0) > 0.5;
