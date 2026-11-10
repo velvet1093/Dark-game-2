@@ -302,7 +302,7 @@ G.drawFx = (ctx, layer) => {
   for (const s of f.sparks) ctx.fillRect(s.x, s.y, 2, 2);
   ctx.textAlign = 'center';
   for (const t of f.texts) {
-    ctx.globalAlpha = G.clamp(1.3 - t.t, 0, 1); ctx.font = `${t.size}px Georgia, serif`;
+    ctx.globalAlpha = G.clamp(1.3 - t.t, 0, 1); ctx.font = `${Math.round(t.size * 1.35)}px "Jersey 15", "VT323", monospace`;
     ctx.fillStyle = '#000'; ctx.fillText(t.s, t.x + 1, t.y + 1); ctx.fillStyle = t.color; ctx.fillText(t.s, t.x, t.y);
   }
   ctx.globalAlpha = 1;
@@ -445,32 +445,42 @@ G.drawBackdrop = (ctx, level, cam, t) => {
   for (const p of level._near) { const x = Math.round((p.x - cam) / 2) * 2; if (x > -200 && x < W + 200) PROPS[p.k](ctx, x, gy + 2, p.s, p.seed, t); }
 };
 
-G.drawAtmosphere = (ctx, level, cam, t, hurt) => {
-  const T = level._theme, W = G.W, H = G.H;
+// Ground fog, drawn into the backdrop buffer so it is dithered with the scenery.
+G.drawFog = (ctx, level, cam, t) => {
+  const W = G.W;
   for (let i = 0; i < 3; i++) {
     const fx = ((i * 420 - cam * 0.8 + t * (12 + i * 7)) % (W + 600) + W + 600) % (W + 600) - 300;
     const fg = ctx.createRadialGradient(fx, G.GROUND - 10, 10, fx, G.GROUND - 10, 280);
-    fg.addColorStop(0, 'rgba(90,70,74,0.16)'); fg.addColorStop(1, 'rgba(90,70,74,0)');
+    fg.addColorStop(0, 'rgba(90,70,74,0.2)'); fg.addColorStop(1, 'rgba(90,70,74,0)');
     ctx.fillStyle = fg; ctx.fillRect(fx - 280, G.GROUND - 160, 560, 260);
   }
+};
+
+// Everything that lies over the scene — weather, the vignette, the hurt and fever tints — is drawn at
+// half size and its transparency dithered into steps, so it reads as pixels rather than a soft wash.
+let ovBuf = null, ovCtx = null;
+G.drawAtmosphere = (ctx, level, cam, t, hurt, fever = 0) => {
+  const T = level._theme, W = G.W, H = G.H;
+  if (!ovBuf) { ovBuf = document.createElement('canvas'); ovBuf.width = W / 2; ovBuf.height = H / 2; ovCtx = ovBuf.getContext('2d', { willReadFrequently: true }); }
+  const c = ovCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W / 2, H / 2); c.setTransform(0.5, 0, 0, 0.5, 0, 0);
   if (T.weather === 'rain') {
-    ctx.fillStyle = 'rgba(160,160,185,0.24)';
-    for (let i = 0; i < 70; i++) {   // stepped pixel streaks
+    c.fillStyle = 'rgba(170,170,195,0.5)';
+    for (let i = 0; i < 70; i++) {
       const x = Math.round(((((i * 137.5 + t * 300 - cam * 0.5) % W) + W) % W) / 2) * 2, y = Math.round(((i * 71.3 + t * 900) % H) / 2) * 2;
-      ctx.fillRect(x, y, 2, 6); ctx.fillRect(x - 2, y + 6, 2, 6);
+      c.fillRect(x, y, 2, 6); c.fillRect(x - 2, y + 6, 2, 6);
     }
   } else {
-    ctx.fillStyle = T.indoor ? 'rgba(200,170,150,0.25)' : 'rgba(255,120,60,0.4)';
-    for (let i = 0; i < 40; i++) { const x = ((i * 97.3 + Math.sin(t * 0.7 + i) * 30 - cam * 0.3) % W + W) % W, y = H - ((i * 53.7 + t * (14 + i % 5 * 6)) % H); ctx.fillRect(x, y, 2, 2); }
+    c.fillStyle = T.indoor ? 'rgba(200,170,150,0.5)' : 'rgba(255,120,60,0.7)';
+    for (let i = 0; i < 40; i++) { const x = ((i * 97.3 + Math.sin(t * 0.7 + i) * 30 - cam * 0.3) % W + W) % W, y = H - ((i * 53.7 + t * (14 + i % 5 * 6)) % H); c.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, 2, 2); }
   }
-  if (!vignette) {
-    vignette = document.createElement('canvas'); vignette.width = W; vignette.height = H;
-    const v = vignette.getContext('2d'), vg = v.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.8)'); v.fillStyle = vg; v.fillRect(0, 0, W, H);
+  const ring = (inner, outer, col, a) => { if (a <= 0) return; const g = c.createRadialGradient(W / 2, H / 2, H * inner, W / 2, H / 2, H * outer); g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${a})`); c.fillStyle = g; c.fillRect(0, 0, W, H); };
+  ring(0.35, 0.95, '0,0,0', 0.8); ring(0.3, 0.8, '140,0,6', hurt); ring(0.28, 0.8, '120,20,130', fever);
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  const img = c.getImageData(0, 0, W / 2, H / 2), d = img.data, STEP = 28;
+  for (let y = 0, i = 3; y < H / 2; y++) for (let x = 0; x < W / 2; x++, i += 4) {
+    const a = d[i]; if (a === 0 || a === 255) continue;
+    d[i] = Math.max(0, Math.min(255, Math.round((a + (BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.5) * STEP) / STEP) * STEP));
   }
-  ctx.drawImage(vignette, 0, 0);
-  if (hurt > 0) {
-    const hg = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.8);
-    hg.addColorStop(0, 'rgba(120,0,0,0)'); hg.addColorStop(1, `rgba(140,0,6,${hurt})`); ctx.fillStyle = hg; ctx.fillRect(0, 0, W, H);
-  }
+  c.putImageData(img, 0, 0);
+  const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(ovBuf, 0, 0, W, H); ctx.imageSmoothingEnabled = sm;
 };

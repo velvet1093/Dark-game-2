@@ -126,7 +126,7 @@ Progress saves at vigil candles (browser local storage).
 | `js/engine.js` | input, blood / gib particles |
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/fairy.js` | Wist: lines, behaviour and drawing |
-| `js/beasts.js` | hound and crow models |
+| `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Wist |
 | `js/chibi.js` | chibi pixel sprites for every humanoid, pixel gibs, and the vector-to-pixel helper |
 | `js/npc.js` | villagers: fighting, fleeing, dying |
 | `js/quests.js` | quest definitions and the quest log |

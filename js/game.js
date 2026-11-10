@@ -205,6 +205,7 @@
       const main = ctx; ctx = G.bgBegin();
       G.drawBackdrop(ctx, L, cam, t);
       ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.drawFx(ctx, 'ground'); ctx.restore();
+      G.drawFog(ctx, L, cam, t);
       ctx = main; G.bgEnd(ctx, shx, shy);
       ctx.save();
       ctx.translate(-cam + shx, shy);
@@ -217,20 +218,15 @@
       G.drawFx(ctx, 'air');
       if (this.prompt) {
         const pr = this.prompt, s = (document.body.classList.contains('touch') ? 'USE · ' : '[E] ') + pr.label;
-        ctx.font = '14px Georgia, serif'; ctx.textAlign = 'center';
+        ctx.font = '19px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'center';
         const w = ctx.measureText(s).width + 16, by = pr.y - 16 + Math.sin(t * 5) * 2;
         ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(pr.x - w / 2, by - 15, w, 22);
         ctx.strokeStyle = pr.hot ? '#e0222c' : '#5a4a44'; ctx.lineWidth = 1; ctx.strokeRect(pr.x - w / 2, by - 15, w, 22);
         ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, pr.x, by);
       }
       ctx.restore();
-      G.drawAtmosphere(ctx, L, cam, t, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0);
-      if (p.inf > 40 || p.turnT != null) {
-        // the fever closing in at the edges of sight
-        const a = p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : (p.inf - 40) / 60 * 0.3;
-        const ig = ctx.createRadialGradient(W / 2, H / 2, H * 0.28, W / 2, H / 2, H * 0.8);
-        ig.addColorStop(0, 'rgba(120,20,130,0)'); ig.addColorStop(1, `rgba(120,20,130,${a})`); ctx.fillStyle = ig; ctx.fillRect(0, 0, W, H);
-      }
+      G.drawAtmosphere(ctx, L, cam, t, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
+        p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       this.drawHud(p, L, t);
     },
 
@@ -297,44 +293,44 @@
       bar(24, 39, Math.min(400, p.maxSt * 1.3), 7, p.st / p.maxSt, '#6f8a4a', '#3a2a2a');
       for (let i = 0; i < p.flaskMax; i++) {
         const x = 30 + i * 20, y = 78; ctx.fillStyle = i < p.flasks ? '#c9c2b0' : '#2a2424';
-        ctx.beginPath(); ctx.arc(x, y + 8, 6, 0, 7); ctx.fill(); ctx.fillRect(x - 2, y - 3, 4, 6);
+        ctx.fillRect(x - 2, y - 4, 4, 6); ctx.fillRect(x - 4, y - 6, 8, 2); ctx.fillRect(x - 4, y + 2, 8, 12); ctx.fillRect(x - 6, y + 4, 12, 8);
       }
-      ctx.font = '16px Georgia, serif'; ctx.textAlign = 'right'; ctx.fillStyle = '#c9333b'; ctx.fillText('Ichor  ' + this.ichor, W - 26, 34);
+      ctx.font = '22px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#c9333b'; ctx.fillText('Ichor  ' + this.ichor, W - 26, 34);
       if (this.bossFight && this.boss) {
-        const b = this.boss; ctx.textAlign = 'center'; ctx.font = '15px Georgia, serif'; ctx.fillStyle = '#cfc4b8'; ctx.fillText(b.def.name, W / 2, H - 46);
+        const b = this.boss; ctx.textAlign = 'center'; ctx.font = '20px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#cfc4b8'; ctx.fillText(b.def.name, W / 2, H - 46);
         bar(W / 2 - 260, H - 38, 520, 9, b.hp / b.maxHp, '#9c0c14', '#3a2a2a');
       }
       if (this.card > 0) {
         ctx.globalAlpha = clamp(Math.min(this.card, 5 - this.card) * 1.2, 0, 1); ctx.textAlign = 'center';
-        ctx.font = 'italic 17px Georgia, serif'; ctx.fillStyle = '#8d8177'; ctx.fillText(L.chapter, W / 2, 168);
-        ctx.font = '40px Georgia, serif'; ctx.fillStyle = '#b3141c'; ctx.fillText(L.name.toUpperCase(), W / 2, 214);
+        ctx.font = '23px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#8d8177'; ctx.fillText(L.chapter, W / 2, 168);
+        ctx.font = '52px "Jacquard 12", "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#b3141c'; ctx.fillText(L.name, W / 2, 216);
         ctx.fillStyle = '#4a1418'; ctx.fillRect(W / 2 - 150, 230, 300, 1); ctx.globalAlpha = 1;
       }
       if (this.levelIdx === 0 && this.lvT < 30 && !document.body.classList.contains('touch')) {
-        ctx.globalAlpha = clamp(30 - this.lvT, 0, 1) * 0.8; ctx.textAlign = 'center'; ctx.font = '13px Georgia, serif'; ctx.fillStyle = '#9a8f84';
+        ctx.globalAlpha = clamp(30 - this.lvT, 0, 1) * 0.8; ctx.textAlign = 'center'; ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#9a8f84';
         ctx.fillText('A/D move  ·  W jump  ·  J slash  ·  K heavy  ·  SPACE roll  ·  L block  ·  Q flask  ·  E interact / execute', W / 2, H - 14); ctx.globalAlpha = 1;
       }
       // infection meter, tincture vials and the turning clock
       const sick = p.inf >= 75 || p.turnT != null;
       bar(24, 54, 170, 6, p.inf / 100, sick && Math.sin(t * 9) > 0 ? '#e060f0' : '#8a2a9a', '#3a2a3a');
-      ctx.font = '10px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = sick ? '#e060f0' : '#8a7a90'; ctx.fillText('INFECTION', 200, 61);
+      ctx.font = '14px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = sick ? '#e060f0' : '#8a7a90'; ctx.fillText('INFECTION', 200, 61);
       for (let i = 0; i < p.tinctMax; i++) {
         const x = 34 + p.flaskMax * 20 + i * 18, y = 85; ctx.fillStyle = i < p.tinct ? '#c9b3f0' : '#2a2430';
-        ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 9); ctx.lineTo(x - 5, y); ctx.fill();
+        ctx.fillRect(x - 1, y - 9, 2, 18); ctx.fillRect(x - 3, y - 5, 6, 10); ctx.fillRect(x - 5, y - 1, 10, 2);
       }
       if (p.turnT != null && !p.dead) {
         const s = Math.ceil(p.turnT); ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 230, 150, 460, 58);
-        ctx.font = '22px Georgia, serif'; ctx.fillStyle = Math.sin(t * 9) > 0 ? '#ff7aff' : '#c04ad0'; ctx.fillText('YOU ARE TURNING  —  0:' + String(s).padStart(2, '0'), W / 2, 176);
-        ctx.font = 'italic 13px Georgia, serif'; ctx.fillStyle = '#d8c6ff';
+        ctx.font = '30px "Jersey 15", "VT323", monospace'; ctx.fillStyle = Math.sin(t * 9) > 0 ? '#ff7aff' : '#c04ad0'; ctx.fillText('YOU ARE TURNING  —  0:' + String(s).padStart(2, '0'), W / 2, 176);
+        ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#d8c6ff';
         ctx.fillText(p.tinct > 0 ? 'Drink a lily tincture (R) or reach a Sister of the Lily' : 'Reach a Sister of the Lily before your eyes run red', W / 2, 198);
       }
       // quest tracker: the main quest and up to two others, with the current step of each
       const Q = G.questLog, act = Q.ids('active').sort((a, b) => (G.QUESTS[b].main ? 1 : 0) - (G.QUESTS[a].main ? 1 : 0)).slice(0, 3);
       ctx.textAlign = 'right'; let qy = 62;
       for (const id of act) {
-        ctx.font = '13px Georgia, serif'; ctx.fillStyle = '#e0b84a'; ctx.fillText(G.QUESTS[id].title, W - 26, qy);
-        ctx.font = '12px Georgia, serif'; ctx.fillStyle = '#b9ada0'; ctx.fillText('◇ ' + Q.text(id, Q.state[id].step), W - 26, qy + 15); qy += 38;
+        ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#e0b84a'; ctx.fillText(G.QUESTS[id].title, W - 26, qy);
+        ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#b9ada0'; ctx.fillText('◇ ' + Q.text(id, Q.state[id].step), W - 26, qy + 15); qy += 38;
       }
       const b = Q.banners[0];
       if (b) {
@@ -342,9 +338,9 @@
         ctx.globalAlpha = clamp(Math.min(b.t, 4.4 - b.t) * 2.5, 0, 1); ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 250, 84, 500, 62);
         ctx.fillStyle = col; ctx.fillRect(W / 2 - 250, 84, 500, 1); ctx.fillRect(W / 2 - 250, 145, 500, 1);
-        ctx.font = '11px Georgia, serif'; ctx.fillText(b.kind.toUpperCase().split('').join(' '), W / 2, 101);
-        ctx.font = '19px Georgia, serif'; ctx.fillStyle = '#e8ddd0'; ctx.fillText(b.title, W / 2, 122);
-        ctx.font = 'italic 12px Georgia, serif'; ctx.fillStyle = '#b9ada0'; ctx.fillText(b.sub || '', W / 2, 139); ctx.globalAlpha = 1;
+        ctx.font = '15px "Jersey 15", "VT323", monospace'; ctx.fillText(b.kind.toUpperCase().split('').join(' '), W / 2, 101);
+        ctx.font = '26px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#e8ddd0'; ctx.fillText(b.title, W / 2, 122);
+        ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#b9ada0'; ctx.fillText(b.sub || '', W / 2, 139); ctx.globalAlpha = 1;
       }
     },
   };

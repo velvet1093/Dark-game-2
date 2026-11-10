@@ -43,6 +43,30 @@
     ctx.imageSmoothingEnabled = sm;
   };
 
+  // ---- shared grid for hand-placed sprites (see sprites.js). Origin (ox, oy) in the buffer; y is negative upward.
+  G.spr = {
+    ox: 64, oy: 90,
+    open(ox = 64, oy = 90) {
+      ensure(); b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.clearRect(0, 0, BW, BH); this.ox = ox; this.oy = oy;
+      const R = (x, y, w, h, col) => { if (w > 0 && h > 0) { b.fillStyle = col; b.fillRect(ox + Math.round(x), oy + Math.round(y), w, h); } };
+      const E = (cx, cy, rx, ry, col) => { for (let y = -ry; y <= ry; y++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - y * y / (ry * ry + 0.6)))); R(cx - w, cy + y, w * 2 + 1, 1, col); } };
+      const line = (x0, y0, x1, y1, col, w = 1) => { const n = Math.max(1, Math.round(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)))), o2 = Math.floor(w / 2); for (let i = 0; i <= n; i++) R(x0 + (x1 - x0) * i / n - o2, y0 + (y1 - y0) * i / n - o2, w, w, col); };
+      return { R, E, line };
+    },
+    close(ctx, x, y, o = {}) {
+      finish(!!o.flash);
+      const sm = ctx.imageSmoothingEnabled; ctx.save(); ctx.imageSmoothingEnabled = false;
+      ctx.translate(Math.round(x), Math.round(y)); ctx.scale(o.facing || 1, 1); if (o.rot) ctx.rotate(o.rot);
+      ctx.drawImage(buf, -this.ox * PX, -this.oy * PX, BW * PX, BH * PX);
+      ctx.restore(); ctx.imageSmoothingEnabled = sm;
+    },
+  };
+  // A line of square blocks snapped to the sprite pixel grid, for trails and marks drawn straight on the screen.
+  G.pxLine = (ctx, x0, y0, x1, y1, size, col) => {
+    const n = Math.max(1, Math.round(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) / PX)); ctx.fillStyle = col;
+    for (let i = 0; i <= n; i++) ctx.fillRect(Math.round((x0 + (x1 - x0) * i / n - size / 2) / PX) * PX, Math.round((y0 + (y1 - y0) * i / n - size / 2) / PX) * PX, size, size);
+  };
+
   // o: the same object the vector rig took — {x,y,facing,scale,pose,look,limbs,weapon,wlen,shield,flash,bloody,alpha,time,weeping}
   function chibi(ctx, o) {
     ensure(); b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, BW, BH);
@@ -251,12 +275,6 @@
     const flat = Math.abs(ly) > 0.5;
     const W = (x, y) => (flat ? [o.x + f * (-(y - 40) * PX * Math.sign(ly) - 30 * ly), o.y - 14] : [o.x + f * x * PX, o.y + (y - 40) * PX]);
     o.out = { sh: W(shF, shY), hip: W(tx, legTop + u), head: W(fx, fy), tip: tip && W(tip[0], tip[1]) };
-    // a soft glow over infected eyes
-    if (L.eye && !gone('head') && o.flash <= 0 && L.helm !== 'veil' && L.helm !== 'sack' && o.alpha == null) {
-      const e = W(fx + 2, fy), g = ctx.createRadialGradient(e[0], e[1], 0, e[0], e[1], 13);
-      g.addColorStop(0, G.shade(L.eye, 1).replace('rgb', 'rgba').replace(')', ',0.38)')); g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g; ctx.fillRect(e[0] - 13, e[1] - 13, 26, 26);
-    }
   }
 
   G.drawRig = G.drawHumanoid;

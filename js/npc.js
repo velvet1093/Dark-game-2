@@ -112,8 +112,8 @@
       const m = G.questLog.marker(d.id);
       if (m && this.canTalk) {
         const my = (d.pose === 'hang' ? gy - 176 : gy - 112) + Math.sin(t * 4) * 3;
-        ctx.font = 'bold 20px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText(m, this.x + 1, my + 1);
-        ctx.fillStyle = '#e0b84a'; ctx.shadowColor = '#e0b84a'; ctx.shadowBlur = 10; ctx.fillText(m, this.x, my); ctx.shadowBlur = 0;
+        ctx.font = '27px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText(m, this.x + 1, my + 1);
+        ctx.fillStyle = '#e0b84a'; ctx.fillText(m, this.x, my);
       }
     }
   };

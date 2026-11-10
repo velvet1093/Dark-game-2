@@ -1,7 +1,7 @@
 * { box-sizing: border-box; }
 html, body {
   margin: 0; height: 100%; background: #000; color: #cfc4b8; overflow: hidden;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: "Jersey 15", "VT323", monospace;
   -webkit-user-select: none; user-select: none; touch-action: none;
 }
 #wrap {
@@ -81,7 +81,7 @@ h2 { font-size: 2em; letter-spacing: .2em; font-weight: normal; color: #b3141c; 
 #topbar { position: absolute; top: 1.2%; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; gap: 1cqw; }
 .tb {
   width: 3.6cqw; height: 3.6cqw; min-width: 30px; min-height: 30px; padding: 0; cursor: pointer; touch-action: none;
-  font: 1.6cqw Georgia, serif; color: #cfc4b8; line-height: 1;
+  font: 1.6cqw "Jersey 15", "VT323", monospace; color: #cfc4b8; line-height: 1;
   background: rgba(10, 5, 6, .55); border: 1px solid rgba(179, 20, 28, .45); opacity: .6;
 }
 .touch-only { display: none; }
@@ -94,7 +94,7 @@ body.ui-open #touch { display: none; }
 #touch button {
   position: absolute; pointer-events: auto; touch-action: none; padding: 0; border-radius: 50%;
   background: rgba(30, 8, 10, .32); color: rgba(235, 220, 210, .8); border: 1px solid rgba(179, 20, 28, .45);
-  font: 1.55cqw Georgia, serif; letter-spacing: .04em;
+  font: 1.55cqw "Jersey 15", "VT323", monospace; letter-spacing: .04em;
 }
 #touch button:active { background: rgba(179, 20, 28, .5); }
 #touch .move { position: absolute; left: 2.2%; bottom: 4%; display: flex; gap: 1.6cqw; }
@@ -111,3 +111,20 @@ body.can-use #t-use { display: block; }
 #t-flask { left: calc(20 * .10417cqw); width: calc((var(--flasks, 3) * 20 + 4) * .10417cqw); }
 #t-cure { left: calc((var(--flasks, 3) * 20 + 27) * .10417cqw); width: calc(38 * .10417cqw); border-color: rgba(201, 179, 240, .4) !important; }
 #t-jump   { right: 23.4cqw; bottom: 11.6cqw; width: 9cqw; height: 9cqw; }
+
+/* ---- pixel type and flat panels ---- */
+body { -webkit-font-smoothing: none; font-smooth: never; }
+#overlay { font-size: 2.45cqw; }
+h1, h2, .note h3 { font-family: "Jacquard 12", "Jersey 15", monospace; }
+h1 { font-size: 5.2em; letter-spacing: .12em; margin-left: .12em; text-shadow: .05em .05em 0 #2a0206; }
+h2 { font-size: 2.5em; letter-spacing: .08em; }
+.sub, .note, .dialogue.wist .txt, .wistq, .quest h3 small { font-style: normal; }
+.screen { background: rgba(10, 4, 6, .94); }
+.screen.dim { background: rgba(4, 2, 3, .8); }
+.screen.journal { background: rgba(4, 2, 3, .93); }
+.btn, .dialogue, .note { border-width: 2px; box-shadow: none; }
+.dialogue { box-shadow: 0 0 0 2px #000; }
+.keys b { border-width: 2px; }
+.tb, #touch button { font-family: "Jersey 15", "VT323", monospace; font-size: 2cqw; }
+#touch .move button { font-size: 3.2cqw; }
+#t-attack { font-size: 2.4cqw; }

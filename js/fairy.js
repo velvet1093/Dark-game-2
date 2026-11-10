@@ -84,62 +84,11 @@ G.Fairy = class {
   draw(ctx, g) {
     const t = this.t, glee = this.glee > 0 || g.player.dead;
     // motes
-    for (const m of this.motes) { ctx.fillStyle = `rgba(214,190,255,${0.8 * (1 - m.t / 1.1)})`; ctx.fillRect(m.x, m.y, 1.6, 1.6); }
-    ctx.save(); ctx.translate(this.x, this.y);
-    const gl = ctx.createRadialGradient(0, 0, 2, 0, 0, 46);
-    gl.addColorStop(0, glee ? 'rgba(210,120,220,0.34)' : 'rgba(180,150,240,0.3)'); gl.addColorStop(1, 'rgba(180,150,240,0)');
-    ctx.fillStyle = gl; ctx.fillRect(-46, -46, 92, 92);
-    ctx.restore();
-    // the fairy herself is drawn as vectors into a half-size buffer and shown as an outlined pixel sprite
-    const main = ctx; ctx = G.pixBegin(0, 0); ctx.save();
-    ctx.scale(this.facing * 1.4, 1.4); ctx.rotate(0.12); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // wings: two long pairs, fluttering
-    const flap = Math.sin(t * 34) * 0.22;
-    const wing = (ang, len, wid) => {
-      ctx.save(); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(0, 0);
-      ctx.quadraticCurveTo(len * 0.35, -wid, len, -wid * 0.15); ctx.quadraticCurveTo(len * 0.5, wid * 0.9, 0, 0);
-      ctx.fillStyle = 'rgba(176,144,232,0.5)'; ctx.fill(); ctx.strokeStyle = 'rgba(236,224,255,0.85)'; ctx.lineWidth = 0.8; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(2, 0); ctx.lineTo(len * 0.85, -wid * 0.1); ctx.stroke(); ctx.restore();
-    };
-    ctx.save(); ctx.translate(-2, -6);
-    wing(Math.PI + 0.55 + flap, 34, 9); wing(Math.PI - 0.35 - flap, 26, 8); wing(-0.6 - flap, 34, 9); wing(0.4 + flap, 26, 8);
-    ctx.restore();
-    // long white hair, trailing behind
-    const sway = Math.sin(t * 2.6) * 2.5;
-    ctx.fillStyle = '#f3f0fa'; ctx.beginPath(); ctx.moveTo(-6, -17); ctx.quadraticCurveTo(-14 + sway, -2, -11 + sway * 1.4, 20);
-    ctx.lineTo(-7 + sway, 13); ctx.lineTo(-5 + sway * 1.2, 23); ctx.lineTo(-2, 10); ctx.quadraticCurveTo(-1, -6, 4, -16); ctx.closePath(); ctx.fill();
-    // legs: pale, one tucked up, little dark boots
-    ctx.strokeStyle = '#e9dfe6'; ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.moveTo(-1, 8); ctx.lineTo(-2, 17); ctx.moveTo(2, 8); ctx.lineTo(5, 13); ctx.lineTo(1, 16); ctx.stroke();
-    ctx.strokeStyle = '#1c1026'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(-2, 17); ctx.lineTo(-1, 19.5); ctx.moveTo(1, 16); ctx.lineTo(-0.5, 17.5); ctx.stroke();
-    // arms in long dark sleeves, spread wide
-    ctx.strokeStyle = '#2a1838'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(-10, -5 + flap * 6); ctx.moveTo(0, -7); ctx.lineTo(10, -9 - flap * 6); ctx.stroke();
-    ctx.fillStyle = '#efe6ec'; ctx.beginPath(); ctx.arc(-10.5, -5 + flap * 6, 1.4, 0, 7); ctx.arc(10.5, -9 - flap * 6, 1.4, 0, 7); ctx.fill();
-    // dress: dark plum gown with a lavender hem and sash
-    ctx.fillStyle = '#2a1838'; ctx.beginPath(); ctx.moveTo(-3, -9); ctx.lineTo(3, -9); ctx.lineTo(4, -1); ctx.lineTo(9, 10); ctx.quadraticCurveTo(0, 13, -8, 10); ctx.lineTo(-4, -1); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = '#b79be8'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-8, 10); ctx.quadraticCurveTo(0, 13, 9, 10); ctx.moveTo(-4, -1.5); ctx.lineTo(4, -1.5); ctx.stroke();
-    ctx.fillStyle = '#b79be8'; ctx.beginPath(); ctx.moveTo(0, -8.5); ctx.lineTo(-2, -6); ctx.lineTo(2, -6); ctx.fill();
-    // head, pointed ear, fringe
-    ctx.fillStyle = '#efe6ec'; ctx.beginPath(); ctx.arc(0, -15, 6.2, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(-5, -15); ctx.lineTo(-11, -18); ctx.lineTo(-5, -12); ctx.fill();
-    ctx.fillStyle = '#f3f0fa'; ctx.beginPath(); ctx.arc(0, -16, 6.6, Math.PI * 0.95, Math.PI * 2.05); ctx.lineTo(4, -15); ctx.lineTo(2, -17); ctx.lineTo(0, -14.5); ctx.lineTo(-2, -17); ctx.lineTo(-5, -14); ctx.closePath(); ctx.fill();
-    // two long stray strands
-    ctx.strokeStyle = '#f3f0fa'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-2, -22); ctx.quadraticCurveTo(-9, -31, -13 + sway, -25); ctx.moveTo(2, -22); ctx.quadraticCurveTo(9, -32, 14 + sway, -27); ctx.stroke();
-    // black lace headdress with lavender ribbons
-    ctx.strokeStyle = '#1c1026'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(0, -16, 6.8, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
-    ctx.fillStyle = '#b79be8'; ctx.fillRect(-7.5, -18.5, 2.6, 2.6); ctx.fillRect(5, -18.5, 2.6, 2.6);
-    // face: sweet until something bleeds
-    ctx.fillStyle = glee ? '#d0122a' : '#8a5fd0';
-    if (glee) { ctx.shadowColor = '#ff2a3a'; ctx.shadowBlur = 6; }
-    ctx.fillRect(-0.4, -16, 1.7, 3); ctx.fillRect(3.4, -16, 1.7, 3); ctx.shadowBlur = 0;
-    ctx.strokeStyle = '#5a1030'; ctx.lineWidth = 0.9; ctx.beginPath();
-    if (glee) ctx.arc(2.7, -12.6, 2.3, 0.1, Math.PI - 0.1); else ctx.arc(2.7, -12.4, 1.1, 0.2, Math.PI - 0.2);
-    ctx.stroke();
-    ctx.restore();
-    G.pixEnd(main, this.x, this.y); ctx = main;
+    for (const m of this.motes) { ctx.fillStyle = `rgba(214,190,255,${0.8 * (1 - m.t / 1.1)})`; ctx.fillRect(Math.round(m.x / 2) * 2, Math.round(m.y / 2) * 2, 2, 2); }
+    G.drawWist(ctx, this.x, this.y, this.facing, t, glee);
     // speech bubble
     if (this.say) {
-      ctx.font = 'italic 13px Georgia, serif'; ctx.textAlign = 'left';
+      ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left';
       const words = this.say.split(' '), lines = [''];
       for (const w of words) { const l = lines[lines.length - 1]; if (ctx.measureText(l + ' ' + w).width > 200 && l) lines.push(w); else lines[lines.length - 1] = l ? l + ' ' + w : w; }
       const w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 18, h = lines.length * 16 + 10;

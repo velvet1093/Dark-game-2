@@ -195,12 +195,9 @@ G.Player = class {
     const swinging = (this.state === 'attack' && this.t >= this.atk.wind - 0.03 && this.t < this.atk.wind + this.atk.active + 0.06) || (this.state === 'execute' && this.t > 0.48 && this.t < 0.64);
     if (swinging && o.out.tip) this.trail.push(o.out.tip); else this.trail.shift();
     if (this.trail.length > 7) this.trail.shift();
-    if (this.trail.length > 1) {
-      ctx.lineCap = 'round';
-      for (let i = 1; i < this.trail.length; i++) {
-        ctx.strokeStyle = `rgba(235,225,220,${i / this.trail.length * 0.55})`; ctx.lineWidth = 2 + i * 1.6;
-        ctx.beginPath(); ctx.moveTo(this.trail[i - 1][0], this.trail[i - 1][1]); ctx.lineTo(this.trail[i][0], this.trail[i][1]); ctx.stroke();
-      }
+    for (let i = 1; i < this.trail.length; i++) {   // the blade's wake, in blocks
+      const k = i / this.trail.length;
+      G.pxLine(ctx, this.trail[i - 1][0], this.trail[i - 1][1], this.trail[i][0], this.trail[i][1], k > 0.6 ? 4 : 2, k > 0.75 ? '#f4ece6' : k > 0.4 ? '#a89aa2' : '#5a4e58');
     }
   }
 };
@@ -433,7 +430,12 @@ G.Enemy = class {
   draw(ctx, g) {
     const d = this.def, o = { x: this.x, y: G.GROUND, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
     // attack telegraph
-    if (this.state === 'windup') { ctx.fillStyle = `rgba(255,60,40,${0.15 + 0.25 * Math.min(1, this.t / this.atk.wind)})`; ctx.beginPath(); ctx.arc(this.x, G.GROUND - this.alt - (d.height ? d.height * 0.6 : 72 * this.scale), d.height ? 16 : 20 * this.scale, 0, 7); ctx.fill(); }
+    if (this.state === 'windup') {   // a blinking pixel warning over the attacker
+      const u = Math.min(1, this.t / this.atk.wind), on = Math.sin(this.t * (14 + u * 30)) > -0.3, x = Math.round(this.x / 2) * 2;
+      const y = Math.round((G.GROUND - this.alt - (d.height ? d.height + 16 : 100 * this.scale + 8)) / 2) * 2;
+      ctx.fillStyle = '#1a0608'; ctx.fillRect(x - 4, y - 2, 8, 22);
+      ctx.fillStyle = on ? (u > 0.7 ? '#fff0e0' : '#ff3a2a') : '#7a1210'; ctx.fillRect(x - 2, y, 4, 10); ctx.fillRect(x - 2, y + 14, 4, 4);
+    }
     if (d.model) G.drawBeast(ctx, this, g.time); else { G.drawHumanoid(ctx, o); this.out = o.out; }
     if (!this.dead && !d.boss && this.hp < this.maxHp && this.state !== 'executed') {
       const w = 40 * this.scale, y = G.GROUND - this.alt - (d.height || (this.crawling ? 34 : 96 * this.scale));
