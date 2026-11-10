@@ -193,9 +193,9 @@ G.drawHumanoid = (ctx, o) => {
         if (L.hair) { ctx.fillStyle = C(L.hair); ctx.beginPath(); ctx.arc(fx, fy - 0.5, 8.5, Math.PI * 0.85, Math.PI * 1.9); ctx.lineTo(fx + 3, fy - 4); ctx.lineTo(fx - 5, fy - 2); ctx.fill(); }
         else if (feral) for (let i = 0; i < 4; i++) ln2(fx - 5 + i * 2.6, fy - 7.4, fx - 6.5 + i * 2.6, fy - 10 - (i % 2) * 1.5, 0.8, C('#2a2222'));
       }
-      // nose: a small bump breaking the outline, with a shadow under it
-      ctx.fillStyle = skin; ctx.beginPath(); ctx.moveTo(fx + 7.2, fy - 0.2); ctx.lineTo(fx + 9.5, fy + 2.0); ctx.lineTo(fx + 7.2, fy + 2.8); ctx.fill();
-      ln2(fx + 7.4, fy + 2.7, fx + 9.2, fy + 2.1, 0.6, dark);
+      // nose: only the infected get a hard profile; people keep a soft, sprite-like face
+      if (feral) { ctx.fillStyle = skin; ctx.beginPath(); ctx.moveTo(fx + 7.2, fy - 0.2); ctx.lineTo(fx + 9.5, fy + 2.0); ctx.lineTo(fx + 7.2, fy + 2.8); ctx.fill();
+      ln2(fx + 7.4, fy + 2.7, fx + 9.2, fy + 2.1, 0.6, dark); }
       if (L.beard) { ctx.fillStyle = C(L.beard); ctx.beginPath(); ctx.arc(fx + 1, fy + 1.5, 7.6, 0.15, Math.PI * 0.95); ctx.lineTo(fx + 3, fy + 3.2); ctx.fill(); }
       if (feral) {
         ctx.fillStyle = C('rgba(24,2,4,0.6)'); ctx.beginPath(); ctx.ellipse(fx + 4.4, fy - 1, 2.7, 2.1, 0, 0, 7); ctx.ellipse(fx + 7.3, fy - 1, 1.2, 1.7, 0, 0, 7); ctx.fill();
@@ -205,16 +205,12 @@ G.drawHumanoid = (ctx, o) => {
         ctx.fillStyle = C('#1a0508'); ctx.beginPath(); ctx.ellipse(fx + 5.6, fy + 4.5, 2.3, 1.7, -0.1, 0, 7); ctx.fill();
         ctx.fillStyle = C('#d9cdb8'); for (let i = 0; i < 3; i++) ctx.fillRect(fx + 4.1 + i * 1.1, fy + 3.1, 0.7, 1.1);
       } else {
-        const iris = C(L.iris || (L.helm === 'veil' ? L.eye : null) || '#4a3526'), browc = C(L.hair ? G.shade(L.hair.length > 4 ? L.hair : '#555555', 0.55) : '#3a2a22');
-        if (L.soft) { ctx.fillStyle = C('rgba(214,110,118,0.32)'); ctx.beginPath(); ctx.ellipse(fx + 3.2, fy + 2.4, 2, 1.1, 0, 0, 7); ctx.fill(); }
-        ctx.fillStyle = C('#f6f1ea'); ctx.beginPath(); ctx.ellipse(fx + 4.3, fy - 0.9, 1.8, 1.3, 0, 0, 7); ctx.ellipse(fx + 7.2, fy - 0.9, 0.85, 1.15, 0, 0, 7); ctx.fill();
-        dot(fx + 4.8, fy - 0.9, 1.05, iris); dot(fx + 7.4, fy - 0.9, 0.65, iris); dot(fx + 4.9, fy - 0.9, 0.45, C('#0a0608'));
-        dot(fx + 5.2, fy - 1.4, 0.3, C('#ffffff'));
-        ctx.strokeStyle = C('#1a1214'); ctx.lineWidth = L.soft ? 0.75 : 0.55; ctx.beginPath(); ctx.arc(fx + 4.3, fy - 0.6, 1.9, Math.PI * 1.1, Math.PI * 1.95); ctx.stroke();
-        if (L.soft) ln2(fx + 2.5, fy - 1.3, fx + 1.8, fy - 2.0, 0.5, C('#1a1214'));
-        ln2(fx + 2.6, fy - 3.4, fx + 6.2, fy - 3.3, L.soft ? 0.6 : 0.9, browc);
-        if (L.soft) { ctx.strokeStyle = C('#b0505a'); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(fx + 4.7, fy + 4.3); ctx.quadraticCurveTo(fx + 6, fy + 4.9, fx + 7.1, fy + 4.1); ctx.stroke(); }
-        else ln2(fx + 4.6, fy + 4.4, fx + 7, fy + 4.2, 0.8, C('#7a4444'));
+        // people: a simple sprite-style face. Two dark eyes with a glint, a hint of blush, no hard nose or lips.
+        const eye = C(G.shade(L.iris || (L.helm === 'veil' ? L.eye : null) || '#3a2a22', L.iris ? 0.62 : 0.8));
+        if (L.soft) { ctx.fillStyle = C('rgba(224,120,128,0.3)'); ctx.beginPath(); ctx.ellipse(fx + 5.4, fy + 2.3, 1.7, 0.9, 0, 0, 7); ctx.fill(); }
+        ctx.fillStyle = eye; ctx.beginPath(); ctx.ellipse(fx + 4.2, fy - 0.2, 0.95, L.soft ? 1.6 : 1.3, 0, 0, 7); ctx.ellipse(fx + 7.0, fy - 0.2, 0.7, L.soft ? 1.4 : 1.15, 0, 0, 7); ctx.fill();
+        dot(fx + 4.45, fy - 0.9, 0.38, C('#ffffff')); dot(fx + 7.15, fy - 0.85, 0.28, C('#ffffff'));
+        if (!L.soft) { ln2(fx + 3, fy - 2.6, fx + 5.3, fy - 2.5, 0.7, C(L.beard || '#3a2a22')); ln2(fx + 4.9, fy + 4.2, fx + 6.4, fy + 4.2, 0.6, dark); }
       }
       if (L.helm === 'veil') { ln2(fx + 4.3, fy + 0.4, fx + 3.9, fy + 8, 1.0, C('#a00a12')); ln2(fx + 7.2, fy + 0.4, fx + 7, fy + 6, 0.8, C('#a00a12')); }
     }
