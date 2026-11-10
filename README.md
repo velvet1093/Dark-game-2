@@ -85,6 +85,12 @@ Not all of them can be reached when you first see them. Three tools open the way
 | Wind-Step Greaves | dropped by the Drowned Matron in the fen | a **second jump in mid-air**, enough to reach the lone high ledges |
 | Lily Lantern | on a ledge at the far end of Hollowmere | **red veils**: its light parts them |
 
+Each tool is also needed once on the main path, so none of them can be skipped:
+
+- **The Fen Gate** out of Brannoc's Hold is chained; it takes the greataxe. If you left the axe lying where Gaunt fell, go back for it.
+- **A collapsed wall** blocks the lane through Hollowmere; it takes the double jump.
+- **A red veil** chokes the hill path at the end of Hollowmere; it takes the lantern, found on a ledge just before it.
+
 **Wist notices them.** If an icon is still hidden in the area, she lets something slip every minute or two: only a direction from far away, and what is in the way when you are close. The motes around her turn gold when one is near. She says so once when an area is cleared out.
 
 ## Quests

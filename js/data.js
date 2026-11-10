@@ -408,10 +408,10 @@ G.LEVELS = [
       {
         id: 'bess', x: 3480, name: 'Old Bess', look: 'refugee', pose: 'stand', essential: true,
         lines: [
-          ['Old Bess', 'Fen Gate. I work the bar. Out is easy. In is the Captain and a lantern in your face.'],
+          ['Old Bess', 'Fen Gate. I work the bar — or did, until the Captain chained it shut. Lost the key out in the fen, he says. Anything heavy enough to cut chain will do, ser.'],
           ['Old Bess', 'There is a Sister keeps a chapel halfway across, by the drowned oak. If you start to weep out there, that is your one door.'],
         ],
-        repeat: [['Old Bess', 'Halfway across. By the drowned oak. Do not forget it.']],
+        repeat: [['Old Bess', 'Cut the chain if you can. Halfway across, by the drowned oak, there is a Sister. Do not forget it.']],
       },
     ],
     lore: [
@@ -419,6 +419,8 @@ G.LEVELS = [
       { x: 2560, title: 'Chapel Ledger', text: 'Washed this month: 212.\nCleared: 197.\nPut out the gate: 14.\nSister Amabel: 1. I held the knife. — O.\n\nNote: the lilies are nearly gone. They grow only in the fen now.' },
       { x: 3200, title: 'Pinned to the Gate', text: 'TOMAS — we waited two days. We have gone in. If your eyes are clear, knock three times and say my name.\n\nIf they are not, please do not knock.' },
     ],
+    gates: [{ x: 3740, kind: 'bars', need: 'axe', shut: "Chained shut. It would take a headsman's axe", open: 'Cut the chain with the greataxe',
+      wist: 'Chained! Oh dear. That big man on the road had such a lovely axe. Shame you left it lying there.' }],
     exit: { x: 3800, label: 'Leave by the Fen Gate' },
     exitSlides: ['The bar drops behind you.\n\nAhead, black water and white flowers, and things that have not slept in three years turning their heads at the sound.'],
   },
@@ -549,6 +551,12 @@ G.LEVELS = [
       { x: 960, title: "A Child's Slate", text: 'A chalk drawing: a tall lady with red lines running from her eyes, holding hands with a row of smaller figures.\n\nUnderneath, in careful letters:\n\nYSOLDE MAKES THEM NICE' },
       { x: 2480, title: 'Unsent Letter', text: "Aldric,\n\nSix winters now. I have stopped counting ships.\n\nGarrick says you are dead. I told him even the weeping come home, these days, so it makes no difference. He did not laugh.\n\nIf you find this, I am not angry. I only wanted you to know I kept the mill running as long as there was anyone to eat.\n\n— Y." },
       { x: 3780, title: "The Doctor's Ledger", text: 'Subject 388 wept nine days before turning.\nSubject 391: eleven.\n\nThe Vane girl: four hundred and six days. Still lucid. Still weeping.\n\nShe is not immune. She is the well it is drawn from. God forgive me — I told the Bishop.' },
+    ],
+    gates: [
+      { x: 2580, kind: 'wall', h: 128, need: 'dj', shut: 'Fallen masonry. Too high to climb', hint: 'Jump, then jump again in mid-air',
+        wist: 'A wall. You cannot fly, can you? I can. It is wonderful.' },
+      { x: 6250, kind: 'veil', need: 'lantern', shut: 'A red veil. It wants a blessed light', open: 'Part the veil with the Lily Lantern',
+        wist: 'Pretty, is it not? It eats people. Somebody left a lamp up on those boards behind us, but I would not bother.' },
     ],
     exit: { x: 6400, label: 'Climb to Saint Avaric' },
     exitSlides: ['The cathedral of Saint Avaric crowns the hill like a black tooth.\n\nIts bells have not stopped in three years.\nNo one is pulling the ropes.'],

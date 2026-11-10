@@ -10,7 +10,7 @@
 
   const game = G.game = {
     mode: 'title', time: 0, hitstop: 0, shake: 0, slow: 0, cam: 0, ichor: 0, stain: null, flags: {}, read: {},
-    enemies: [], npcs: [], items: {}, npcInf: {}, abilities: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
+    enemies: [], npcs: [], items: {}, npcInf: {}, abilities: {}, surf: [], toldGate: {}, bounds: [30, 1000], card: 0, deathT: 0, lvT: 0, levelIdx: 0, level: G.LEVELS[0], cp: { lv: 0, x: 120 },
     player: null, fairy: null, heartT: 0, boss: null, bossFight: false, prompt: null,
 
     // ------------------------------ flow -----------------------------------
@@ -33,13 +33,16 @@
       if (this.flags.bossDead) this.flags.boss_garrick_dead = 1; if (this.flags.metBoss) this.flags.boss_garrick_met = 1;   // saves from before there were three bosses
       this.npcInf = s.npcInf || {};
       this.abilities = s.abilities || {}; if (this.flags.boss_matron_dead) this.abilities.dj = 1;   // saves that beat her before she carried the greaves
+      G.LEVELS.forEach((L, lv) => (L.gates || []).forEach((k, i) => { if (s.cp.lv > lv || (s.cp.lv === lv && s.cp.x > k.x)) this.flags[this.gateKey(i, lv)] = 1; }));   // saves already past a gate added later
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
     save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
-      this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.fairy.place(this.player);
+      this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.toldGate = {};
+      // everything that can be stood on: ledges, and the tops of rubble walls
+      this.surf = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h }))); this.fairy.place(this.player);
       G.music({ fen: 'road' }[L.theme] || L.theme); G.ambience({ road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall' }[L.theme]);
       this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
@@ -87,6 +90,12 @@
       }
       const found = items(); if (found) return found;
       for (const sx of L.shrines) if (near(sx, 55)) return { x: sx, y: G.GROUND - 100, label: 'Rest at the vigil candle', fn: () => this.rest(sx) };
+      for (const [i, k] of (L.gates || []).entries()) {
+        if (this.gateOpen(i) || !near(k.x, 64)) continue;
+        const tool = this.hasTool(k.need);
+        if (k.kind === 'wall') return { x: k.x, y: G.GROUND - k.h - 30, label: tool ? k.hint : k.shut, fn: () => { if (!tool) this.gateRefused(k); } };
+        return { x: k.x, y: G.GROUND - 200, label: tool ? k.open : k.shut, fn: () => (tool ? this.openGate(i) : this.gateRefused(k)) };
+      }
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
       if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
       return null;
@@ -162,6 +171,29 @@
       this.abilities[id] = 1; G.sfx('questdone'); G.sfx('bell'); this.save();
       G.questLog.banners.push({ kind: 'New ability', title: G.ABILITIES[id].name, sub: G.ABILITIES[id].how, t: 6 });
     },
+    // ---- gates on the main path: chained bars, rubble walls, red veils
+    gateKey(i, lv = this.levelIdx) { return 'gate_' + lv + '_' + i; },
+    gateOpen(i) { const k = (this.level.gates || [])[i]; return k && k.kind !== 'wall' && !!this.flags[this.gateKey(i)]; },
+    hasTool(need) { return need === 'axe' ? this.weapons.includes('greataxe') : !!this.abilities[need]; },
+    // Stop a body moving from px to x if a closed gate stands between. Rubble walls only stop what is below their top.
+    gateClamp(px, x, alt, fly) {
+      const gs = this.level.gates; if (!gs) return x;
+      for (let i = 0; i < gs.length; i++) {
+        const k = gs[i]; if (this.gateOpen(i)) continue;
+        if (k.kind === 'wall' && (fly || alt >= k.h - 2)) continue;
+        const half = k.kind === 'wall' ? 26 : 22;
+        if (px <= k.x && x > k.x - half) x = k.x - half; else if (px > k.x && x < k.x + half) x = k.x + half;
+      }
+      return x;
+    },
+    openGate(i) {
+      const k = this.level.gates[i]; this.flags[this.gateKey(i)] = 1; this.shake = 10;
+      if (k.kind === 'bars') { G.sfx('sever'); G.sfx('thud'); G.spark(k.x, G.GROUND - 90, 18); G.text(k.x, G.GROUND - 150, 'THE CHAIN PARTS', '#e0b84a', 16); }
+      else { G.sfx('cleanse'); G.sfx('chime'); G.text(k.x, G.GROUND - 150, 'THE VEIL PARTS', '#d8c6ff', 16); }
+      this.fairy.cd = 0; this.fairy.sayLine(G.pick(['Oh. You found a way. How tiresome.', 'Well. Through you go, then. Mind what waits on the other side.']));
+      this.save();
+    },
+    gateRefused(k) { G.sfx('block'); this.shake = 3; this.fairy.cd = 0; this.fairy.sayLine(k.wist); },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); },
     onNpcTurn(n) {
@@ -251,6 +283,9 @@
       if (!p.dead && p.hp < p.maxHp * 0.35 && (this.heartT -= dt) <= 0) { this.heartT = 0.85; G.sfx('heart'); }
 
       // the Oathkeeper's door
+      for (const [i, k] of (L.gates || []).entries()) {   // Wist cannot resist remarking on a way you cannot take
+        if (!this.toldGate[i] && !this.gateOpen(i) && !this.hasTool(k.need) && Math.abs(p.x - k.x) < 170) { this.toldGate[i] = 1; this.fairy.cd = 0; this.fairy.sayLine(k.wist); }
+      }
       if (this.boss && this.boss.dormant && !p.dead && p.x > L.boss.gate + 70) {
         p.vx = 0; p.set('idle');
         const met = 'boss_' + L.boss.type + '_met';
@@ -291,10 +326,10 @@
       if (this.prompt) {
         const pr = this.prompt, s = (document.body.classList.contains('touch') ? 'USE · ' : '[E] ') + pr.label;
         ctx.font = '19px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'center';
-        const w = ctx.measureText(s).width + 16, by = pr.y - 16 + Math.sin(t * 5) * 2;
-        ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(pr.x - w / 2, by - 15, w, 22);
-        ctx.strokeStyle = pr.hot ? '#e0222c' : '#5a4a44'; ctx.lineWidth = 1; ctx.strokeRect(pr.x - w / 2, by - 15, w, 22);
-        ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, pr.x, by);
+        const w = ctx.measureText(s).width + 16, by = pr.y - 16 + Math.sin(t * 5) * 2, px = clamp(pr.x, cam + w / 2 + 8, cam + W - w / 2 - 8);   // keep it on screen
+        ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(px - w / 2, by - 15, w, 22);
+        ctx.strokeStyle = pr.hot ? '#e0222c' : '#5a4a44'; ctx.lineWidth = 1; ctx.strokeRect(px - w / 2, by - 15, w, 22);
+        ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, px, by);
       }
       ctx.restore();
       G.drawAtmosphere(ctx, L, cam, t, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
@@ -315,6 +350,37 @@
         ctx.fillStyle = mid; ctx.fillRect(x, y, w, 10); ctx.fillStyle = lite; ctx.fillRect(x, y, w, 2);
         ctx.fillStyle = dark; for (let a = x + (stone ? 22 : 26); a < x + w - 6; a += stone ? 22 : 26) ctx.fillRect(a, y + 2, 2, 8);
         if (stone) { ctx.fillStyle = mid; for (let a = x + 4; a < x + w - 4; a += 12) ctx.fillRect(a, y - 14, 4, 14); ctx.fillStyle = lite; ctx.fillRect(x, y - 16, w, 4); }
+      }
+      // gates: chained portcullis, rubble wall, red veil
+      for (const [i, k] of (L.gates || []).entries()) {
+        const x = k.x, open = this.gateOpen(i);
+        if (k.kind === 'bars') {
+          ctx.fillStyle = '#17110f'; ctx.fillRect(x - 34, gy - 210, 12, 210); ctx.fillRect(x + 22, gy - 210, 12, 210); ctx.fillRect(x - 40, gy - 222, 80, 14);
+          ctx.fillStyle = '#2a2024'; ctx.fillRect(x - 34, gy - 210, 3, 210); ctx.fillRect(x + 22, gy - 210, 3, 210); ctx.fillRect(x - 40, gy - 222, 80, 3);
+          const drop = open ? 168 : 0;
+          ctx.fillStyle = '#3a363e'; for (let q = -20; q <= 20; q += 8) ctx.fillRect(x + q - 1, gy - 208, 3, 208 - drop);
+          for (const hy of [60, 120, 180]) if (hy > drop) ctx.fillRect(x - 22, gy - hy, 44, 3);
+          ctx.fillStyle = '#5a5660'; for (let q = -20; q <= 20; q += 8) ctx.fillRect(x + q - 1, gy - 208, 1, 208 - drop);
+          if (!open) {   // chain and padlock
+            ctx.fillStyle = '#8a8690'; for (let q = 0; q < 8; q++) ctx.fillRect(x - 24 + q * 6, gy - 98 + (q & 1) * 2, 5, 3);
+            ctx.fillStyle = '#c9a13b'; ctx.fillRect(x - 5, gy - 96, 10, 12); ctx.fillStyle = '#3a2416'; ctx.fillRect(x - 1, gy - 92, 2, 4);
+          } else { ctx.fillStyle = '#8a8690'; for (let q = 0; q < 5; q++) ctx.fillRect(x - 30 + q * 7, gy - 4 + (q & 1), 5, 3); }
+        } else if (k.kind === 'wall') {
+          const top = gy - k.h;
+          ctx.fillStyle = '#1c1618'; ctx.fillRect(x - 18, top, 36, k.h);
+          ctx.beginPath(); ctx.moveTo(x - 18, top + 30); ctx.lineTo(x - 46, gy); ctx.lineTo(x - 18, gy); ctx.fill(); ctx.beginPath(); ctx.moveTo(x + 18, top + 40); ctx.lineTo(x + 44, gy); ctx.lineTo(x + 18, gy); ctx.fill();
+          ctx.fillStyle = '#2e262a'; for (let r2 = 0; r2 < k.h; r2 += 12) { ctx.fillRect(x - 18, top + r2, 36, 2); for (let q = ((r2 / 12) & 1) * 9; q < 36; q += 18) ctx.fillRect(x - 18 + q, top + r2, 2, 12); }
+          ctx.fillStyle = '#4a4046'; ctx.fillRect(x - 20, top, 40, 3); ctx.fillRect(x - 16, top - 6, 10, 6); ctx.fillRect(x + 4, top - 4, 12, 4);
+          ctx.fillStyle = '#2a2224'; for (const [ox, oy] of [[-38, 8], [-30, 16], [30, 10], [36, 4], [-24, 4]]) ctx.fillRect(x + ox, gy - oy - 6, 8, 6);
+        } else {
+          const n = open ? 6 : 46;
+          for (let q = 0; q < n; q++) {
+            const yy = ((q * 37 + t * (open ? 20 : 34) * (1 + (q % 3) * 0.3)) % (gy + 20)), xx = x + Math.sin(t * 1.1 + q * 1.7) * 22;
+            ctx.fillStyle = q % 4 ? `rgba(190,20,40,${open ? 0.25 : 0.6})` : `rgba(255,70,80,${open ? 0.2 : 0.7})`;
+            ctx.fillRect(Math.round(xx / 2) * 2 - 4, gy - Math.round(yy / 2) * 2, 8 + (q % 3) * 2, 8);
+          }
+          if (!open) glow(x, gy - 90, 110, 'rgba(200,20,40,0.22)');
+        }
       }
       // archways: onward at the far end, and back the way you came at the near end
       const arch = (x, col) => {

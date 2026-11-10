@@ -145,7 +145,7 @@ G.Player = class {
     if (this.stDelay <= 0 && this.state !== 'attack' && this.state !== 'roll') this.st = Math.min(this.maxSt, this.st + (this.state === 'block' ? 14 : 48) * (this.inf >= 75 ? 0.6 : this.inf >= 50 ? 0.8 : 1) * dt);
 
     // movement: enemies are solid unless we are rolling through them
-    this.x += this.vx * dt;
+    const px0 = this.x; this.x += this.vx * dt;
     if (this.state !== 'idle' && this.state !== 'block') this.vx *= Math.pow(friction, dt);
     if (this.state !== 'roll' && this.state !== 'execute') {
       for (const e of g.enemies) {
@@ -155,8 +155,9 @@ G.Player = class {
       }
     }
     this.x = clamp(this.x, g.bounds[0], g.bounds[1]);
+    this.x = g.gateClamp(px0, this.x, this.alt);
     // gravity, ledges and the ground. Ledges are solid from above only; hold down to drop through one.
-    const plats = g.level.platforms || [];
+    const plats = g.surf;
     this.dropT -= dt;
     if (!this.air && this.alt > 0) {
       if (I.down('down')) { this.air = true; this.dropT = 0.25; this.vy = 0; }
@@ -418,10 +419,11 @@ G.Enemy = class {
       const want = low ? 0 : s === 'strike' ? 46 : s === 'windup' ? 138 : s === 'stagger' ? 70 : 122;
       this.alt += (want - this.alt) * Math.min(1, dt * (s === 'strike' ? 14 : low ? 6 : 3));
     }
-    this.x += this.vx * dt;
+    const px0 = this.x; this.x += this.vx * dt;
     if (this.state !== 'chase') this.vx *= Math.pow(0.002, dt);
     this.x = clamp(this.x, 30, g.level.length - 30);
     if (boss && !this.dormant) this.x = clamp(this.x, g.level.boss.gate + 30, g.level.boss.end);
+    this.x = g.gateClamp(px0, this.x, this.alt, this.def.fly);
   }
 
   pose() {
