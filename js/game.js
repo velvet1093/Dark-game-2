@@ -5,6 +5,7 @@
 (() => {
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
+  const BACK_X = 52;   // where the way back to the previous area stands
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
@@ -15,7 +16,7 @@
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 } });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword' });
       G.questLog.reset();
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -27,10 +28,11 @@
       this.player = new G.Player(); this.fairy = new G.Fairy(); Object.assign(this.player.stats, s.stats);
       Object.assign(this, { ichor: s.ichor || 0, flags: s.flags || {}, read: s.read || {}, items: s.items || {}, stain: s.stain || null, cp: s.cp });
       this.player.inf = s.inf || 0; this.player.tinct = s.tinct == null ? 1 : s.tinct;
+      this.weapons = (s.weapons || ['longsword']).filter(id => G.WEAPONS[id]); this.equip(this.weapons.includes(s.weapon) ? s.weapon : 'longsword');
       G.questLog.reset(s.quests);
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx;
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
@@ -74,10 +76,13 @@
       }
       for (const [i, it] of (L.items || []).entries()) {
         const k = 'item_' + this.levelIdx + '_' + i;
-        if (!this.flags[k] && near(it.x, 40)) return { x: it.x, y: G.GROUND - 40, label: 'Gather the white lily', fn: () => { this.flags[k] = 1; this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, G.GROUND - 50, 'White lily', '#efeaf2', 13); } };
+        if (this.flags[k] || !near(it.x, 40)) continue;
+        if (it.weapon) return { x: it.x, y: G.GROUND - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: () => { this.flags[k] = 1; this.gainWeapon(it.weapon); } };
+        return { x: it.x, y: G.GROUND - 40, label: 'Gather the white lily', fn: () => { this.flags[k] = 1; this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, G.GROUND - 50, 'White lily', '#efeaf2', 13); } };
       }
       for (const sx of L.shrines) if (near(sx, 55)) return { x: sx, y: G.GROUND - 100, label: 'Rest at the vigil candle', fn: () => this.rest(sx) };
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
+      if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
       return null;
     },
     talk(n) {
@@ -127,6 +132,22 @@
       this.cp = { lv: this.levelIdx, x }; this.save();
       G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); G.ui.shrine();
     },
+    // Return to the far end of the previous area. Its enemies will have wandered back in.
+    travelBack() {
+      const prev = this.levelIdx - 1, x = G.LEVELS[prev].exit.x - 100;
+      this.cp = { lv: prev, x }; this.loadLevel(prev, x); this.player.facing = -1; this.save();
+    },
+    equip(id) { this.weaponId = id; this.player.weapon = G.WEAPONS[id]; this.player.combo = 0; },
+    gainWeapon(id) {
+      if (!this.weapons.includes(id)) this.weapons.push(id);
+      this.equip(id); G.sfx('questdone'); this.save();
+      G.questLog.banners.push({ kind: 'Weapon found', title: G.WEAPONS[id].name, sub: this.weapons.length > 1 ? 'Press C, or tap the weapon name, to change weapon' : '', t: 4.4 });
+    },
+    swapWeapon() {
+      if (this.weapons.length < 2) return;
+      this.equip(this.weapons[(this.weapons.indexOf(this.weaponId) + 1) % this.weapons.length]);
+      G.sfx('ui'); G.text(this.player.x, G.GROUND - 110, this.player.weapon.name, '#e0b84a', 14); this.save();
+    },
     travel() {
       const next = this.levelIdx + 1;
       G.ui.slides(this.level.exitSlides, () => { this.cp = { lv: next, x: 120 }; this.loadLevel(next, 120); this.save(); });
@@ -157,6 +178,7 @@
       if (this.mode !== 'play') return;
       if (G.input.hit('pause')) { G.ui.pause(); return; }
       if (G.input.hit('journal')) { G.ui.journal(); return; }
+      if (G.input.hit('swap') && (this.player.state === 'idle' || this.player.state === 'block')) this.swapWeapon();
       if (this.hitstop > 0) { this.hitstop -= dt; return; }
       if (this.slow > 0) { this.slow -= dt; dt *= 0.3; }
       const p = this.player, L = this.level;
@@ -164,7 +186,7 @@
 
       this.bounds = this.bossFight ? [L.boss.gate + 24, L.boss.end + 20] : [30, L.length - 30];
       this.prompt = (p.state === 'idle' || p.state === 'block') && p.alt === 0 ? this.findInteract() : null;
-      if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); if (G.ui.blocking) return; }
+      if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); return; }   // the world may have changed under us; pick up next frame
 
       p.update(dt, this);
       for (const e of this.enemies) e.update(dt, this);
@@ -232,12 +254,14 @@
 
     drawWorldProps(L, t) {
       const gy = G.GROUND, glow = (x, y, r, col) => { const g = ctx.createRadialGradient(x, y, 1, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); };
-      // exit archway
-      if (L.exit) {
-        const x = L.exit.x; glow(x, gy - 70, 130, 'rgba(150,40,30,0.28)');
+      // archways: onward at the far end, and back the way you came at the near end
+      const arch = (x, col) => {
+        glow(x, gy - 70, 130, col);
         ctx.fillStyle = '#050304'; ctx.fillRect(x - 46, gy - 150, 14, 150); ctx.fillRect(x + 32, gy - 150, 14, 150);
         ctx.beginPath(); ctx.moveTo(x - 46, gy - 150); ctx.quadraticCurveTo(x, gy - 215, x + 46, gy - 150); ctx.lineTo(x + 32, gy - 150); ctx.quadraticCurveTo(x, gy - 190, x - 32, gy - 150); ctx.fill();
-      }
+      };
+      if (L.exit) arch(L.exit.x, 'rgba(150,40,30,0.28)');
+      if (this.levelIdx > 0) arch(BACK_X, 'rgba(90,90,120,0.22)');
       // boss altar & fog door
       if (L.boss) {
         const ax = L.boss.end + 130; glow(ax, gy - 90, 170, 'rgba(170,20,30,0.3)');
@@ -260,9 +284,19 @@
         ctx.stroke();
         ctx.fillStyle = 'rgba(255,190,110,0.5)'; ctx.beginPath(); ctx.moveTo(x - 20 * k, gy); ctx.lineTo(x - 20 * k, gy - 52 * k); ctx.quadraticCurveTo(x, gy - 84 * k, x + 20 * k, gy - 52 * k); ctx.lineTo(x + 20 * k, gy); ctx.fill();
       }
-      // white lilies
+      // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
         if (this.flags['item_' + this.levelIdx + '_' + i]) return;
+        if (it.weapon) {
+          const x = it.x, kind = G.WEAPONS[it.weapon].draw;
+          glow(x, gy - 34, 46 + Math.sin(t * 3 + i) * 5, 'rgba(240,210,150,0.34)');
+          ctx.fillStyle = '#4a3426'; ctx.fillRect(x - 2, gy - 62, 4, 62);                              // shaft, driven into the ground
+          ctx.fillStyle = '#b9bcc6';
+          if (kind === 'axe') { ctx.fillRect(x + 2, gy - 62, 16, 22); ctx.fillRect(x + 14, gy - 66, 6, 30); ctx.fillStyle = '#eef0f5'; ctx.fillRect(x + 18, gy - 64, 2, 26); }
+          else if (kind === 'spear') { ctx.fillRect(x - 4, gy - 74, 8, 12); ctx.fillRect(x - 2, gy - 82, 4, 8); }
+          else { ctx.fillStyle = '#7d808c'; ctx.fillRect(x + 2, gy - 60, 2, 2); ctx.fillRect(x + 6, gy - 56, 2, 2); ctx.fillRect(x + 10, gy - 50, 2, 2); ctx.fillStyle = '#b9bcc6'; ctx.fillRect(x + 8, gy - 46, 12, 12); ctx.fillRect(x + 12, gy - 50, 4, 20); ctx.fillRect(x + 4, gy - 42, 20, 4); }
+          return;
+        }
         glow(it.x, gy - 12, 30 + Math.sin(t * 3 + i) * 4, 'rgba(235,225,255,0.4)');
         ctx.strokeStyle = '#3a5a3a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(it.x, gy); ctx.lineTo(it.x + 1, gy - 14); ctx.stroke();
         ctx.fillStyle = '#f4f0fa'; for (let k = 0; k < 5; k++) { const a = k * 1.257 + 0.3; ctx.beginPath(); ctx.ellipse(it.x + 1 + Math.cos(a) * 4, gy - 16 + Math.sin(a) * 3, 3.2, 1.8, a, 0, 7); ctx.fill(); }
@@ -318,6 +352,8 @@
         const x = 34 + p.flaskMax * 20 + i * 18, y = 85; ctx.fillStyle = i < p.tinct ? '#c9b3f0' : '#2a2430';
         ctx.fillRect(x - 1, y - 9, 2, 18); ctx.fillRect(x - 3, y - 5, 6, 10); ctx.fillRect(x - 5, y - 1, 10, 2);
       }
+      ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#b9ada0';
+      ctx.fillText(p.weapon.name + (this.weapons.length > 1 ? '  [C]' : ''), 26, 114);
       if (p.turnT != null && !p.dead) {
         const s = Math.ceil(p.turnT); ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 230, 150, 460, 58);

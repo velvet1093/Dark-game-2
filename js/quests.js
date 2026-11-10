@@ -99,7 +99,7 @@ G.QUESTS = {
     title: 'Lilies for the Sisters', start: { talk: 'verena' }, giver: 'verena', failIfDead: 'liese', reward: { tinct: 1 },
     offer: [
       ['Sister Verena', 'Our lily-water is nearly gone, and the lilies grow only in the fen now. White ones, low on the water. Gather three.'],
-      ['Sister Verena', 'You will not be let back in this gate, so carry them on to Sister Liese, at the far end of Hollowmere. She is worse off than we are. She will see you right.'],
+      ['Sister Verena', 'It is a long way back through the fen, so carry them on to Sister Liese, at the far end of Hollowmere. She is worse off than we are. She will see you right.'],
     ],
     waiting: [['Sister Verena', 'Three white lilies. From the fen. To Sister Liese, in Hollowmere.']],
     steps: [

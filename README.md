@@ -28,6 +28,7 @@ python3 -m http.server 8000
 | Drink flask | `Q` |
 | Drink lily tincture (fights infection) | `R` or `F` |
 | Interact / **Execute** | `E` |
+| Change weapon | `C` or `X` |
 | Quest journal | `Tab` or `T` |
 | Pause | `Esc` |
 | Full screen | button at the top centre of the screen |
@@ -136,8 +137,15 @@ Progress saves at vigil candles (browser local storage).
 | `js/ui.js` | title, dialogue, notes, menus |
 | `js/game.js` | game state, level flow, HUD, main loop |
 
-## Adding weapons
+## Weapons
 
-The sword is the only weapon for now. Weapons are plain data in `G.WEAPONS` (`js/data.js`): a light combo, a heavy attack, reach, bleed build-up and a sever multiplier per move. Add an entry and set `player.weapon` — combat, animation and drawing all read from that table.
+You start with the longsword. Three more are lying in the world, each driven into the ground with a glow around it. Take one and it is yours for good; press `C` (or tap the weapon name on touch) to change between those you own.
 
-Planned: greataxe (slow, huge sever), flail (fast bleed build-up), spear (reach).
+| Weapon | Where | Character |
+| --- | --- | --- |
+| Knight's Longsword | start | balanced three-hit combo |
+| Headsman's Greataxe | the Gallows Road, just past the Headsman | slow, heavy, every blow breaks poise and severs limbs easily |
+| Fen-Warden Spear | the Weeping Fen | long reach, thrusts only, weak at severing |
+| Penitent's Flail | Hollowmere | fast, light, builds bleeding quickly, rarely severs |
+
+Weapons are plain data in `G.WEAPONS` (`js/data.js`): a light combo, a heavy attack, reach, bleed build-up and a sever multiplier per move. To add one, add an entry there, a pixel drawing for it in `js/chibi.js`, and an item with `weapon: '<id>'` in a level.

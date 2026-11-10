@@ -250,12 +250,27 @@
       } else if (t === 'club') {
         line(x0, y0, x1, y1, WOOD.b, 2); line(x1 - ux * 4, y1 - uy * 4, x1, y1, WOOD.s, 4);
         R(x1 + px * 2, y1 + py * 2, 1, 1, '#1a1212'); R(x1 - px * 2, y1 - py * 2, 1, 1, '#1a1212'); R(x1 - ux * 3 + px * 2, y1 - uy * 3 + py * 2, 1, 1, '#1a1212');
+      } else if (t === 'axe') {
+        line(x0 - ux * len * 0.25, y0 - uy * len * 0.25, x1, y1, WOOD.s, 2); line(x0 - ux * len * 0.25, y0 - uy * len * 0.25, x1, y1, WOOD.b, 1);
+        for (let k = 1; k <= 8; k++) {   // a crescent blade on the leading side
+          const in0 = len - 12 + (k > 5 ? (k - 5) * 1.5 : 0) - (k < 3 ? 0 : 1), in1 = len - (k > 5 ? (k - 5) * 1.5 : 0) + (k < 3 ? -2 : 1);
+          line(x0 + ux * in0 + px * k, y0 + uy * in0 + py * k, x0 + ux * in1 + px * k, y0 + uy * in1 + py * k, k >= 7 ? (red ? BLOOD : STEEL.l) : k < 3 ? STEEL.s : STEEL.b, 2);
+        }
+        line(x0 + ux * (len - 7) - px, y0 + uy * (len - 7) - py, x0 + ux * (len - 5) - px * 4, y0 + uy * (len - 5) - py * 4, STEEL.s, 2);
+      } else if (t === 'flail') {
+        const hl = len * 0.5, cx = x0 + ux * hl, cy = y0 + uy * hl, ex = cx + ux * len * 0.4, ey = cy + uy * len * 0.4 + len * 0.16;
+        line(x0 - ux, y0 - uy, cx, cy, WOOD.b, 2);
+        for (let i = 1; i <= 5; i++) R(cx + (ex - cx) * i / 6, cy + (ey - cy) * i / 6, 1, 1, i % 2 ? STEEL.s : STEEL.l);
+        R(ex - 2, ey - 2, 5, 5, STEEL.s); R(ex - 1, ey - 1, 3, 3, STEEL.b); R(ex, ey - 1, 1, 1, STEEL.l);
+        R(ex, ey - 4, 1, 2, STEEL.l); R(ex, ey + 3, 1, 2, STEEL.b); R(ex - 4, ey, 2, 1, STEEL.b); R(ex + 3, ey, 2, 1, STEEL.l);
+        if (red) R(ex - 1, ey + 1, 3, 2, BLOOD);
+        tip = [ex, ey];
       } else {   // spear, scythe
         line(x0 - ux * len * 0.35, y0 - uy * len * 0.35, x1, y1, WOOD.s, 2); line(x0 - ux * len * 0.35, y0 - uy * len * 0.35, x1, y1, WOOD.b, 1);
         if (t === 'spear') { line(x1, y1, x1 + ux * 6, y1 + uy * 6, STEEL.b, 2); line(x1 + ux * 2, y1 + uy * 2, x1 + ux * 7, y1 + uy * 7, STEEL.l, 1); line(x1 - px * 2, y1 - py * 2, x1 + px * 2, y1 + py * 2, STEEL.s, 1); }
         else for (let k = 0; k <= 16; k++) { const bx = x1 + px * k - ux * k * k * 0.035, by = y1 + py * k - uy * k * k * 0.035, wk = k < 11 ? 3 : k < 14 ? 2 : 1; R(bx - 1, by - 1, wk, wk, k < 3 ? STEEL.s : STEEL.b); if (k > 2 && k < 12) R(bx, by, 1, 1, STEEL.l); }
       }
-      tip = [x1, y1];
+      if (!tip) tip = [x1, y1];
     }
     if (fh) hand(fh, true, armed);
     if (o.shield && p.shieldFront) shield(tx + 8, ty + 4);

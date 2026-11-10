@@ -26,7 +26,35 @@ G.WEAPONS = {
     ],
     heavy: { wind: 0.42, active: 0.12, rec: 0.4, dmg: 48, st: 30, reach: 88, lunge: 220, sever: 2.6, poiseBreak: true, anim: ANIM.slam },
   },
-  // Planned: greataxe (slow, huge sever), flail (bleed build-up), spear (reach) ...
+  // Slow and brutal: every blow breaks poise and takes limbs off.
+  greataxe: {
+    name: "Headsman's Greataxe", draw: 'axe', len: 46, bleed: 18,
+    light: [
+      { wind: 0.28, active: 0.11, rec: 0.36, dmg: 34, st: 22, reach: 84, lunge: 150, sever: 2.2, poiseBreak: true, anim: ANIM.chop },
+      { wind: 0.26, active: 0.11, rec: 0.42, dmg: 38, st: 24, reach: 84, lunge: 160, sever: 2.4, poiseBreak: true, anim: ANIM.rise },
+    ],
+    heavy: { wind: 0.6, active: 0.14, rec: 0.55, dmg: 72, st: 42, reach: 92, lunge: 200, sever: 3.6, poiseBreak: true, anim: ANIM.slam },
+  },
+  // Quick, light blows that open wounds fast; poor at severing.
+  flail: {
+    name: "Penitent's Flail", draw: 'flail', len: 34, bleed: 46,
+    light: [
+      { wind: 0.14, active: 0.1, rec: 0.2, dmg: 12, st: 11, reach: 82, lunge: 130, sever: 0.5, anim: ANIM.chop },
+      { wind: 0.12, active: 0.1, rec: 0.2, dmg: 12, st: 11, reach: 82, lunge: 130, sever: 0.5, anim: ANIM.rise },
+      { wind: 0.16, active: 0.1, rec: 0.3, dmg: 17, st: 14, reach: 86, lunge: 170, sever: 0.7, anim: ANIM.chop },
+    ],
+    heavy: { wind: 0.36, active: 0.14, rec: 0.42, dmg: 32, st: 28, reach: 90, lunge: 190, sever: 0.9, poiseBreak: true, anim: ANIM.slam },
+  },
+  // Reach above all: strikes from outside most enemies' range.
+  spear: {
+    name: 'Fen-Warden Spear', draw: 'spear', len: 60, bleed: 20,
+    light: [
+      { wind: 0.16, active: 0.1, rec: 0.22, dmg: 16, st: 12, reach: 112, lunge: 120, sever: 0.7, anim: ANIM.thrust },
+      { wind: 0.14, active: 0.1, rec: 0.24, dmg: 16, st: 12, reach: 112, lunge: 120, sever: 0.7, anim: ANIM.thrust },
+      { wind: 0.2, active: 0.11, rec: 0.34, dmg: 23, st: 16, reach: 124, lunge: 220, sever: 1.0, anim: ANIM.thrust },
+    ],
+    heavy: { wind: 0.4, active: 0.14, rec: 0.45, dmg: 42, st: 30, reach: 136, lunge: 380, sever: 1.3, poiseBreak: true, anim: ANIM.thrust },
+  },
 };
 
 G.ENEMIES = {
@@ -181,6 +209,7 @@ G.LEVELS = [
   {
     name: 'The Gallows Road', chapter: 'Chapter I', theme: 'road', length: 6300, seed: 11,
     shrines: [1380, 4580], chapels: [{ x: 4760 }],
+    items: [{ x: 3780, weapon: 'greataxe' }],
     enemies: [
       ['wretch', 760], ['crow', 900], ['wretch', 1060], ['wretch', 1130], ['deserter', 1750], ['wretch', 2050, 'marta'], ['wretch', 2120, 'marta'],
       ['deserter', 2560], ['hound', 2700], ['hound', 2760], ['wretch', 2950], ['pikeman', 3050], ['crow', 3300], ['brute', 3600], ['deserter', 3900], ['wretch', 4150], ['hound', 4250],
@@ -383,7 +412,7 @@ G.LEVELS = [
         repeat: [['Garrow', 'Hollowmere is past the stones. Go quiet.']],
       },
     ],
-    items: [{ x: 1200, id: 'lily' }, { x: 2650, id: 'lily' }, { x: 4350, id: 'lily' }, { x: 5080, id: 'lily' }],
+    items: [{ x: 1200, id: 'lily' }, { x: 2650, id: 'lily' }, { x: 4350, id: 'lily' }, { x: 5080, id: 'lily' }, { x: 4030, weapon: 'spear' }],
     lore: [
       { x: 1820, title: 'Scratched on a Boat Hull', text: 'day 1 they do not sleep\nday 4 they do not eat\nday 9 father looked at me and did not know me\nday 10 he knew me\nthat was worse' },
       { x: 3560, title: "Sister Corra's Tally", text: 'Washed at the drowned oak: 61.\nOf those, came back a second time: 40.\nA third: 22.\n\nIt is not a cure. It is a delay. I say this to every one of them and every one of them thanks me as if I had said the opposite.' },
@@ -395,6 +424,7 @@ G.LEVELS = [
   {
     name: 'Hollowmere', chapter: 'Chapter IV', theme: 'village', length: 6500, seed: 23,
     shrines: [220, 2680, 4960], chapels: [{ x: 5120 }],
+    items: [{ x: 3330, weapon: 'flail' }],
     enemies: [
       ['wretch', 700], ['wretch', 780], ['flagellant', 1100], ['bloat', 1750], ['deserter', 1830], ['hound', 2000], ['flagellant', 2100],
       ['brute', 2380], ['crow', 2950], ['flagellant', 3180], ['flagellant', 3260], ['wretch', 3560], ['wretch', 3620], ['bloat', 3720],

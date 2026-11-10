@@ -128,3 +128,4 @@ h2 { font-size: 2.5em; letter-spacing: .08em; }
 .tb, #touch button { font-family: "Jersey 15", "VT323", monospace; font-size: 2cqw; }
 #touch .move button { font-size: 3.2cqw; }
 #t-attack { font-size: 2.4cqw; }
+#t-swap { left: calc(20 * .10417cqw); width: calc(190 * .10417cqw); top: calc(100 * .10417cqw) !important; height: calc(20 * .10417cqw) !important; border: none !important; }

@@ -6,7 +6,7 @@
   const el = () => document.getElementById('overlay');
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(/\n/g, '<br>');
   const KEYS = `<div class="keys"><b>A</b> <b>D</b> move &nbsp; <b>W</b> jump &nbsp; <b>J</b> / click slash &nbsp; <b>K</b> / right-click heavy &nbsp; <b>Space</b> roll<br>
-    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>R</b> lily tincture &nbsp; <b>E</b> interact · execute &nbsp; <b>Tab</b> quests &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
+    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>R</b> lily tincture &nbsp; <b>C</b> change weapon &nbsp; <b>E</b> interact · execute &nbsp; <b>Tab</b> quests &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
 
   const ui = G.ui = {
     blocking: false, advance: null, options: null,
