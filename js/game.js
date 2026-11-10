@@ -223,7 +223,7 @@
     gainWeapon(id) {
       if (!this.weapons.includes(id)) this.weapons.push(id);
       this.equip(id); G.sfx('questdone'); this.save();
-      G.questLog.banners.push({ kind: 'Weapon found', title: G.WEAPONS[id].name, sub: this.weapons.length > 1 ? 'Press C, or tap the weapon name, to change weapon' : '', t: 4.4 });
+      G.questLog.banners.push({ kind: 'Weapon found', title: G.WEAPONS[id].name, sub: this.weapons.length > 1 ? 'Press ' + G.keyName('swap') + ', or tap the weapon name, to change weapon' : '', t: 4.4 });
     },
     swapWeapon() {
       if (this.weapons.length < 2) return;
@@ -329,7 +329,7 @@
       this.fairy.draw(ctx, this);
       G.drawFx(ctx, 'air');
       if (this.prompt) {
-        const pr = this.prompt, s = (document.body.classList.contains('touch') ? 'USE · ' : '[E] ') + pr.label;
+        const pr = this.prompt, s = (G.inputMode === 'touch' ? 'USE · ' : '[' + G.keyName('use') + '] ') + pr.label;
         ctx.font = '19px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'center';
         const w = ctx.measureText(s).width + 16, by = pr.y - 16 + Math.sin(t * 5) * 2, px = clamp(pr.x, cam + w / 2 + 8, cam + W - w / 2 - 8);   // keep it on screen
         ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(px - w / 2, by - 15, w, 22);
@@ -508,7 +508,7 @@
       }
       if (this.levelIdx === 0 && this.lvT < 30 && !document.body.classList.contains('touch')) {
         ctx.globalAlpha = clamp(30 - this.lvT, 0, 1) * 0.8; ctx.textAlign = 'center'; ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#9a8f84';
-        ctx.fillText('A/D move  ·  W jump  ·  J slash  ·  K heavy  ·  SPACE roll  ·  L block  ·  Q flask  ·  E interact / execute', W / 2, H - 14); ctx.globalAlpha = 1;
+        const k = G.keyName; ctx.fillText(`${k('left')}/${k('right')} move  ·  ${k('jump')} jump  ·  ${k('attack')} slash  ·  ${k('heavy')} heavy  ·  ${k('roll')} roll  ·  ${k('block')} block  ·  ${k('flask')} flask  ·  ${k('use')} interact`, W / 2, H - 14); ctx.globalAlpha = 1;
       }
       // infection meter, tincture vials and the turning clock
       const sick = p.inf >= 75 || p.turnT != null;
@@ -520,14 +520,14 @@
       }
       ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#b9ada0';
       const wl = this.weaponLv[this.weaponId] || 0;
-      ctx.fillText(p.weapon.name + (wl ? ' +' + wl : '') + (this.weapons.length > 1 ? '  [C]' : ''), 26, 114);
+      ctx.fillText(p.weapon.name + (wl ? ' +' + wl : '') + (this.weapons.length > 1 ? '  [' + G.keyName('swap') + ']' : ''), 26, 114);
       if (this.items.icon) { ctx.fillStyle = '#c9a13b'; ctx.fillText('Icons  ' + this.items.icon + ' / ' + this.iconTotal(), 26, 132); }
       if (p.turnT != null && !p.dead) {
         const s = Math.ceil(p.turnT); ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 230, 150, 460, 58);
         ctx.font = '30px "Jersey 15", "VT323", monospace'; ctx.fillStyle = Math.sin(t * 9) > 0 ? '#ff7aff' : '#c04ad0'; ctx.fillText('YOU ARE TURNING  —  0:' + String(s).padStart(2, '0'), W / 2, 176);
         ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#d8c6ff';
-        ctx.fillText(p.tinct > 0 ? 'Drink a lily tincture (R) or reach a Sister of the Lily' : 'Reach a Sister of the Lily before your eyes run red', W / 2, 198);
+        ctx.fillText(p.tinct > 0 ? 'Drink a lily tincture (' + G.keyName('cure') + ') or reach a Sister of the Lily' : 'Reach a Sister of the Lily before your eyes run red', W / 2, 198);
       }
       // quest tracker: the main quest and up to two others, with the current step of each
       const Q = G.questLog, act = Q.ids('active').sort((a, b) => (G.QUESTS[b].main ? 1 : 0) - (G.QUESTS[a].main ? 1 : 0)).slice(0, 3);
@@ -557,11 +557,12 @@
     let last = 0, lastFlasks = 0; const useBtn = document.getElementById('t-use');
     const frame = ts => {
       const dt = Math.min(0.033, (ts - last) / 1000 || 0); last = ts;
-      game.tick(dt); game.draw(); G.input.clear();
+      G.pollPad(); game.tick(dt); game.draw(); G.input.clear();
       // touch layout: hide the pad under menus, and show the Use button only when there is something to use
       const cl = document.body.classList, open = G.ui.blocking || game.mode !== 'play', pr = open ? null : game.prompt;
       if (cl.contains('ui-open') !== open) { cl.toggle('ui-open', open); if (open) G.input.held = {}; }
       if (cl.contains('can-use') !== !!pr) cl.toggle('can-use', !!pr);
+      const ledge = !open && !game.player.air && game.player.alt > 0; if (cl.contains('on-ledge') !== ledge) cl.toggle('on-ledge', ledge);
       if (pr && useBtn) { const s = pr.hot ? 'Execute' : pr.label.split(' ')[0]; if (useBtn.textContent !== s) { useBtn.textContent = s; useBtn.classList.toggle('hot', !!pr.hot); } }
       if (game.player.flaskMax !== lastFlasks) { lastFlasks = game.player.flaskMax; document.documentElement.style.setProperty('--flasks', lastFlasks); }
       requestAnimationFrame(frame);

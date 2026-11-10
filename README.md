@@ -35,7 +35,11 @@ python3 -m http.server 8000
 | Full screen | button at the top centre of the screen |
 | Mute | `M` |
 
-On touch devices: two move keys on the left; Slash, Heavy, Block and Roll on the right; a Use button that appears only when there is something to speak to, read, gather or execute. Tap the flask or tincture icons in the HUD to drink. Quests, full screen and pause sit at the top centre. The pad hides while a menu or dialogue is open.
+**Keys can be rebound** from Pause → Controls; the bindings are saved in your browser. Menus can be driven with the arrow keys and Enter.
+
+**Controllers** work with the standard layout: A jump, B roll, X slash, Y heavy, LB interact, RB block, LT flask, RT tincture, D-pad up change weapon, D-pad down drop, Select quests, Start pause, left stick or D-pad to move. Prompts show controller buttons once you use one.
+
+On touch devices: two move keys on the left; Slash, Heavy, Block and Roll on the right; a Use button that appears only when there is something to speak to, read, gather or execute. Tap the flask or tincture icons in the HUD to drink. A Drop button appears while you stand on a ledge. Quests, full screen and pause sit at the top centre. The pad hides while a menu or dialogue is open.
 
 ## Mechanics
 

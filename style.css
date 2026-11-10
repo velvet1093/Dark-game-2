@@ -130,3 +130,13 @@ h2 { font-size: 2.5em; letter-spacing: .08em; }
 #t-attack { font-size: 2.4cqw; }
 #t-swap { left: calc(20 * .10417cqw); width: calc(190 * .10417cqw); top: calc(100 * .10417cqw) !important; height: calc(20 * .10417cqw) !important; border: none !important; }
 .found { color: #c9a13b; margin: -0.4em 0 .8em; font-size: .85em; } .found b { color: #f0d680; font-weight: normal; }
+
+/* ---- menu selection, grid lists, the controls screen, and the drop button ---- */
+.opts { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.btn.sel { background: #3a0b0f; border-color: #b3141c; color: #fff; }
+.btn.sel::before { content: "› "; color: #e0b84a; }
+.opts.grid { display: grid; grid-template-columns: 1fr 1fr; gap: .25em .9em; width: 92%; max-width: 46em; }
+.opts.grid .btn { width: auto; max-width: none; margin: 0; padding: .32em .7em; font-size: .7em; text-align: left; }
+.controls .keys { font-size: .62em; }
+#t-down { left: 3.4cqw; bottom: 17.5cqw; width: 9cqw; height: 9cqw; display: none; }
+body.on-ledge #t-down { display: block; }

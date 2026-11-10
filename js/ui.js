@@ -5,46 +5,79 @@
 (() => {
   const el = () => document.getElementById('overlay');
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(/\n/g, '<br>');
-  const KEYS = `<div class="keys"><b>A</b> <b>D</b> move &nbsp; <b>W</b> jump &nbsp; <b>J</b> / click slash &nbsp; <b>K</b> / right-click heavy &nbsp; <b>Space</b> roll<br>
-    <b>L</b> / <b>Shift</b> block &nbsp; <b>Q</b> flask &nbsp; <b>R</b> lily tincture &nbsp; <b>C</b> change weapon &nbsp; <b>E</b> interact · execute &nbsp; <b>Tab</b> quests &nbsp; <b>Esc</b> pause &nbsp; <b>M</b> mute</div>`;
+  // The controls line under the title and pause menus, built from the current bindings.
+  const K = a => `<b>${esc(G.keyName(a))}</b>`;
+  const keysHtml = () => (G.inputMode === 'pad'
+    ? `<div class="keys">${K('left')} ${K('right')} / stick move &nbsp; ${K('jump')} jump &nbsp; ${K('attack')} slash &nbsp; ${K('heavy')} heavy &nbsp; ${K('roll')} roll &nbsp; ${K('block')} block<br>
+      ${K('use')} interact &nbsp; ${K('flask')} flask &nbsp; ${K('cure')} tincture &nbsp; ${K('swap')} change weapon &nbsp; ${K('down')} drop &nbsp; ${K('journal')} quests &nbsp; ${K('pause')} pause</div>`
+    : `<div class="keys">${K('left')} ${K('right')} move &nbsp; ${K('jump')} jump &nbsp; ${K('attack')} / click slash &nbsp; ${K('heavy')} / right-click heavy &nbsp; ${K('roll')} roll &nbsp; ${K('block')} block<br>
+      ${K('flask')} flask &nbsp; ${K('cure')} tincture &nbsp; ${K('swap')} change weapon &nbsp; ${K('use')} interact · execute &nbsp; ${K('down')} drop &nbsp; ${K('journal')} quests &nbsp; <b>Esc</b> pause &nbsp; ${K('mute')} mute</div>`);
 
   const ui = G.ui = {
-    blocking: false, advance: null, options: null,
+    blocking: false, advance: null, options: null, sel: 0, openT: 0, grace: 0.45,
     clear() { el().innerHTML = ''; this.blocking = false; this.advance = null; this.options = null; },
     // Called once per frame while an overlay is up.
     handle() {
       const I = G.input;
-      if (this.options) { for (let i = 0; i < this.options.length; i++) if (I.hit('opt' + (i + 1))) { this.options[i](); return; } }
-      if (this.advance && (I.hit('confirm') || I.hit('use') || I.hit('roll') || (this.escAdvance && (I.hit('pause') || I.hit('journal'))))) this.advance();
+      if (G.input.capture) return;
+      if (this.options) {
+        for (let i = 0; i < this.options.length; i++) if (I.hit('opt' + (i + 1))) { this.options[i](); return; }
+        // Enter or A picks the highlighted option, but not in the first moments, so mashing through dialogue cannot choose for you
+        if (I.hit('confirm') && G.game.time - this.openT > this.grace) { const bt = this.btns()[this.sel]; if (bt && !bt.disabled) this.options[+bt.dataset.opt](); return; }
+        if (this.escAdvance && this.advance && (I.hit('pause') || I.hit('journal') || I.hit('back'))) { this.advance(); return; }
+        const up = I.hit('menuUp') || I.hit('jump') || I.hit('left'), dn = I.hit('menuDown') || I.hit('down') || I.hit('right');
+        if (up || dn) { this.select(this.sel + (dn ? 1 : -1), dn ? 1 : -1); G.sfx('ui'); }
+        return;
+      }
+      if (this.advance && (I.hit('confirm') || I.hit('use') || I.hit('roll') || I.hit('back') || (this.escAdvance && (I.hit('pause') || I.hit('journal'))))) this.advance();
+    },
+    btns() { return [...el().querySelectorAll('[data-opt]')]; },
+    // Highlight option i, stepping past disabled ones in direction d.
+    select(i, d = 1) {
+      const bs = this.btns(), n = bs.length; if (!n) return;
+      for (let k = 0; k < n; k++) { const j = ((i + k * d) % n + n) % n; if (!bs[j].disabled) { this.sel = j; break; } }
+      bs.forEach((bt, j) => bt.classList.toggle('sel', j === this.sel));
     },
     show(html, advance, options) {
       el().innerHTML = html; this.blocking = true; this.advance = advance || null; this.options = options || null; this.escAdvance = false;
-      el().querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); G.audioInit(); options[+b.dataset.opt](); }));
+      el().querySelectorAll('[data-opt]').forEach((b, j) => { b.addEventListener('click', e => { e.stopPropagation(); G.audioInit(); options[+b.dataset.opt](); }); b.addEventListener('mouseenter', () => this.select(j)); });
+      if (options) { this.openT = G.game ? G.game.time : 0; this.grace = 0.45; this.select(Math.min(this.keepSel || 0, this.btns().length - 1)); this.keepSel = 0; }
       if (advance) el().firstElementChild.addEventListener('click', () => { G.audioInit(); if (this.advance) this.advance(); });
     },
-    menu(cls, head, items, foot = '') {
-      const btns = items.map((it, i) => `<button class="btn" data-opt="${i}" ${it.off ? 'disabled' : ''}>${i + 1}. ${it.label}</button>`).join('');
-      this.show(`<div class="screen ${cls}">${head}${btns}${foot}</div>`, null, items.map(it => () => { if (!it.off) { G.sfx('ui'); it.fn(); } }));
+    menu(cls, head, items, foot = '', listCls = '') {
+      const btns = items.map((it, i) => `<button class="btn" data-opt="${i}" ${it.off ? 'disabled' : ''}>${i < 6 && !listCls ? i + 1 + '. ' : ''}${it.label}</button>`).join('');
+      this.show(`<div class="screen ${cls}">${head}<div class="opts ${listCls}">${btns}</div>${foot}</div>`, null, items.map(it => () => { if (!it.off) { G.sfx('ui'); it.fn(); } }));
     },
 
     title(hasSave) {
       const items = [{ label: 'Take the Vow <small>(new game)</small>', fn: () => G.game.newGame() }];
       if (hasSave) items.unshift({ label: 'Resume the Vigil <small>(continue)</small>', fn: () => G.game.continueGame() });
-      this.menu('', '<h1>ASHEN VOW</h1><div class="sub">a tale of the Weeping Year</div>', items, KEYS);
+      this.menu('', '<h1>ASHEN VOW</h1><div class="sub">a tale of the Weeping Year</div>', items, keysHtml());
     },
     pause() {
       this.menu('dim', '<h2>Paused</h2>', [
         { label: 'Return to the road', fn: () => this.clear() },
+        { label: 'Controls', fn: () => this.controls() },
         { label: 'Abandon to title', fn: () => G.game.toTitle() },
-      ], KEYS);
+      ], keysHtml());
       this.advance = () => this.clear(); this.escAdvance = true;
+    },
+    // Rebind keys. Pick an action, then press the key you want for it.
+    controls(waiting) {
+      const items = G.BINDABLE.map(([a, name]) => ({ label: waiting === a ? `${name} <small>— press a key (Esc to cancel)</small>` : `${name} <small>— ${G.keys[a].map(G.codeName).join(' / ') || 'unbound'}</small>`,
+        fn: () => { const idx = G.BINDABLE.findIndex(b => b[0] === a); this.keepSel = idx; this.controls(a); G.input.capture = code => { if (code !== 'Escape') G.bindKey(a, code); this.keepSel = idx; this.controls(); }; } }));
+      items.push({ label: 'Reset to defaults', fn: () => { G.resetKeys(); this.keepSel = G.BINDABLE.length; this.controls(); } }, { label: 'Back', fn: () => this.pause() });
+      this.menu('dim controls', '<h2>Controls</h2>', items,
+        '<div class="keys">Controller: A jump · B roll · X slash · Y heavy · LB interact · RB block · LT flask · RT tincture · D-pad up change weapon · D-pad down drop · Select quests · Start pause</div>', 'grid');
+      if (waiting) { const bs = this.btns(); bs.forEach(b => (b.disabled = true)); const w = bs[G.BINDABLE.findIndex(b => b[0] === waiting)]; if (w) { w.disabled = false; w.classList.add('sel'); } }
+      this.advance = () => this.pause(); this.escAdvance = !waiting;
     },
     slides(pages, done, title) {
       let i = 0;
       const next = () => {
         if (i >= pages.length) { this.clear(); done(); return; }
         G.sfx('page');
-        this.show(`<div class="screen black">${title ? `<h2>${esc(title)}</h2>` : ''}<div class="slide">${esc(pages[i++])}</div><div class="hint">press E / Enter / tap</div></div>`, next);
+        this.show(`<div class="screen black">${title ? `<h2>${esc(title)}</h2>` : ''}<div class="slide">${esc(pages[i++])}</div><div class="hint">press ${esc(G.keyName('use'))} / Enter / tap</div></div>`, next);
       };
       next();
     },
@@ -57,7 +90,7 @@
         const [who, text] = lines[i++]; full = text; shown = 0;
         const wist = who === 'Wist'; let n = 0;
         if (wist) G.sfx('chime');
-        this.show(`<div class="dialogue${wist ? ' wist' : ''}"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ E</div></div>`, next);
+        this.show(`<div class="dialogue${wist ? ' wist' : ''}"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ ${esc(G.keyName('use'))}</div></div>`, next);
         const t = el().querySelector('.txt');
         timer = setInterval(() => { shown = Math.min(full.length, shown + 2); if (n++ % 2 === 0 && shown < full.length) G.sfx('blip', wist ? 1100 : who === 'Aldric' ? 150 : 200); if (t.isConnected) t.textContent = full.slice(0, shown); if (shown >= full.length || !t.isConnected) clearInterval(timer); }, 22);
       };
@@ -65,7 +98,7 @@
     },
     note(title, text, done) {
       G.sfx('page');
-      this.show(`<div class="screen dim"><div class="note"><h3>${esc(title)}</h3>${esc(text)}</div><div class="hint">press E / Enter / tap</div></div>`, () => { this.clear(); if (done) done(); });
+      this.show(`<div class="screen dim"><div class="note"><h3>${esc(title)}</h3>${esc(text)}</div><div class="hint">press ${esc(G.keyName('use'))} / Enter / tap</div></div>`, () => { this.clear(); if (done) done(); });
     },
     shrine() {
       const g = G.game, p = g.player, s = p.stats, cost = g.levelCost();
@@ -128,10 +161,11 @@
     },
     choice(prompt, opts) {
       this.menu('dim', `<h2>${esc(prompt)}</h2>`, opts.map(o => ({ label: o.label, fn: () => { this.clear(); o.fn(); } })));
+      this.grace = 1.2;
     },
     death(lost, done, quote, n, turned) {
       const wist = quote ? `<div class="wistq">“${esc(quote)}”<br><small>— Wist has watched you die ${n === 1 ? 'once' : n + ' times'}.</small></div>` : '';
-      this.show(`<div class="screen dim"><h1 style="font-size:3em${turned ? ';color:#c04ad0' : ''}">${turned ? 'TURNED' : 'UNMADE'}</h1><div class="sub">${turned ? 'The infection took you. ' : ''}${lost ? `${lost} ichor lies where you fell.` : 'The vow remains.'}</div>${wist}<div class="hint">press E / Enter / tap</div></div>`, () => { this.clear(); done(); });
+      this.show(`<div class="screen dim"><h1 style="font-size:3em${turned ? ';color:#c04ad0' : ''}">${turned ? 'TURNED' : 'UNMADE'}</h1><div class="sub">${turned ? 'The infection took you. ' : ''}${lost ? `${lost} ichor lies where you fell.` : 'The vow remains.'}</div>${wist}<div class="hint">press ${esc(G.keyName('use'))} / Enter / tap</div></div>`, () => { this.clear(); done(); });
     },
   };
 })();

@@ -17,11 +17,50 @@ G.rng = seed => () => {
 };
 
 // ------------------------------- input -------------------------------------
-const KEYMAP = {
-  KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
-  KeyW: 'jump', ArrowUp: 'jump', KeyS: 'down', ArrowDown: 'down', KeyJ: 'attack', KeyK: 'heavy', Space: 'roll', KeyL: 'block', ShiftLeft: 'block',
-  KeyE: 'use', KeyQ: 'flask', KeyM: 'mute', KeyR: 'cure', KeyC: 'swap', KeyX: 'swap', KeyF: 'cure', Tab: 'journal', KeyT: 'journal', Enter: 'confirm', Escape: 'pause',
-  Digit1: 'opt1', Digit2: 'opt2', Digit3: 'opt3', Digit4: 'opt4', Digit5: 'opt5', Digit6: 'opt6',
+// Keys that cannot be rebound: menus and pause depend on them.
+const FIXED = { Enter: 'confirm', Escape: 'pause', Digit1: 'opt1', Digit2: 'opt2', Digit3: 'opt3', Digit4: 'opt4', Digit5: 'opt5', Digit6: 'opt6' };
+const DEFAULT_KEYS = {
+  left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'], jump: ['KeyW', 'ArrowUp'], down: ['KeyS', 'ArrowDown'],
+  attack: ['KeyJ'], heavy: ['KeyK'], roll: ['Space'], block: ['KeyL', 'ShiftLeft'], use: ['KeyE'], flask: ['KeyQ'],
+  cure: ['KeyR', 'KeyF'], swap: ['KeyC', 'KeyX'], journal: ['Tab', 'KeyT'], mute: ['KeyM'],
+};
+G.BINDABLE = [['left', 'Move left'], ['right', 'Move right'], ['jump', 'Jump'], ['down', 'Drop through a ledge'], ['attack', 'Slash'], ['heavy', 'Heavy attack'],
+  ['roll', 'Roll'], ['block', 'Block'], ['use', 'Interact · execute'], ['flask', 'Drink flask'], ['cure', 'Drink tincture'], ['swap', 'Change weapon'], ['journal', 'Quests'], ['mute', 'Mute']];
+const KEYSTORE = 'ashenvow_keys';
+let KEYMAP = {};
+const rebuildKeys = () => { KEYMAP = Object.assign({}, FIXED); for (const a in G.keys) for (const c of G.keys[a]) KEYMAP[c] = a; };
+G.keys = JSON.parse(JSON.stringify(DEFAULT_KEYS));
+try { const k = JSON.parse(localStorage.getItem(KEYSTORE)); if (k) for (const a in DEFAULT_KEYS) if (Array.isArray(k[a])) G.keys[a] = k[a]; } catch (e) { /* defaults */ }
+rebuildKeys();
+const saveKeys = () => { try { localStorage.setItem(KEYSTORE, JSON.stringify(G.keys)); } catch (e) { /* storage is optional */ } };
+// Give an action one key, taking that key from whatever had it.
+G.bindKey = (action, code) => { if (FIXED[code]) return false; for (const a in G.keys) G.keys[a] = G.keys[a].filter(c => c !== code); G.keys[action] = [code]; rebuildKeys(); saveKeys(); return true; };
+G.resetKeys = () => { G.keys = JSON.parse(JSON.stringify(DEFAULT_KEYS)); rebuildKeys(); saveKeys(); };
+const PRETTY = { Space: 'Space', ShiftLeft: 'Shift', ShiftRight: 'R-Shift', ControlLeft: 'Ctrl', ControlRight: 'R-Ctrl', AltLeft: 'Alt', AltRight: 'R-Alt', Tab: 'Tab',
+  ArrowLeft: 'Left', ArrowRight: 'Right', ArrowUp: 'Up', ArrowDown: 'Down', Backspace: 'Bksp', Comma: ',', Period: '.', Slash: '/', Semicolon: ';', Quote: "'", BracketLeft: '[', BracketRight: ']', Minus: '-', Equal: '=', Backquote: '`' };
+G.codeName = c => PRETTY[c] || c.replace(/^Key|^Digit|^Numpad/, '');
+const PAD_NAMES = { jump: 'A', roll: 'B', attack: 'X', heavy: 'Y', use: 'LB', block: 'RB', flask: 'LT', cure: 'RT', journal: 'Select', pause: 'Start', swap: 'D-pad up', down: 'D-pad down', left: 'Left', right: 'Right', confirm: 'A', mute: '—' };
+// What to show for an action: a controller button if the controller was used last, otherwise the first bound key.
+G.inputMode = 'keys';
+G.keyName = a => (G.inputMode === 'pad' ? PAD_NAMES[a] : G.keys[a] && G.keys[a].length ? G.codeName(G.keys[a][0]) : a === 'confirm' ? 'Enter' : a === 'pause' ? 'Esc' : '—');
+
+// Standard controller layout. Polled once a frame.
+const PAD = { 0: ['jump', 'confirm'], 1: ['roll', 'back'], 2: ['attack'], 3: ['heavy'], 4: ['use'], 5: ['block'], 6: ['flask'], 7: ['cure'], 8: ['journal'], 9: ['pause'],
+  12: ['swap', 'menuUp'], 13: ['down', 'menuDown'], 14: ['left'], 15: ['right'] };
+const STICK = { sl: ['left'], sr: ['right'], sd: ['down', 'menuDown'], su: ['menuUp'] };
+let padPrev = {};
+G.pollPad = () => {
+  const list = navigator.getGamepads ? navigator.getGamepads() : []; let gp = null;
+  for (const p of list) if (p && p.connected) { gp = p; break; }
+  if (!gp) { padPrev = {}; return; }
+  const now = {};
+  gp.buttons.forEach((bt, i) => { if (bt.pressed || bt.value > 0.5) now['b' + i] = 1; });
+  const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
+  if (ax < -0.45) now.sl = 1; if (ax > 0.45) now.sr = 1; if (ay > 0.6) now.sd = 1; if (ay < -0.6) now.su = 1;
+  const acts = k => (k[0] === 'b' ? PAD[+k.slice(1)] : STICK[k]) || [];
+  for (const k in now) if (!padPrev[k]) { G.inputMode = 'pad'; G.audioInit(); acts(k).forEach(a => G.input.press(a)); }
+  for (const k in padPrev) if (!now[k]) acts(k).forEach(a => G.input.release(a));
+  padPrev = now;
 };
 G.input = {
   held: {}, just: {},
@@ -32,10 +71,11 @@ G.input = {
   clear() { this.just = {}; },
 };
 addEventListener('keydown', e => {
+  if (G.input.capture) { e.preventDefault(); const f = G.input.capture; G.input.capture = null; f(e.code); return; }   // rebinding a key
   const a = KEYMAP[e.code];
   if (!a) return;
   e.preventDefault();
-  G.audioInit();
+  G.audioInit(); G.inputMode = 'keys';
   if (!e.repeat) G.input.press(a);
 });
 addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (a) G.input.release(a); });
@@ -64,7 +104,7 @@ addEventListener('DOMContentLoaded', () => {
   }
   document.querySelectorAll('[data-act]').forEach(b => {
     const a = b.dataset.act;
-    b.addEventListener('touchstart', e => { e.preventDefault(); G.audioInit(); G.input.press(a); }, { passive: false });
+    b.addEventListener('touchstart', e => { e.preventDefault(); G.audioInit(); G.inputMode = 'touch'; G.input.press(a); }, { passive: false });
     const up = e => { e.preventDefault(); G.input.release(a); };
     b.addEventListener('touchend', up, { passive: false });
     b.addEventListener('touchcancel', up, { passive: false });
