@@ -208,8 +208,12 @@ G.drawHumanoid = (ctx, o) => {
         // people: a simple sprite-style face. Two dark eyes with a glint, a hint of blush, no hard nose or lips.
         const eye = C(G.shade(L.iris || (L.helm === 'veil' ? L.eye : null) || '#3a2a22', L.iris ? 0.62 : 0.8));
         if (L.soft) { ctx.fillStyle = C('rgba(224,120,128,0.3)'); ctx.beginPath(); ctx.ellipse(fx + 5.4, fy + 2.3, 1.7, 0.9, 0, 0, 7); ctx.fill(); }
-        ctx.fillStyle = eye; ctx.beginPath(); ctx.ellipse(fx + 4.2, fy - 0.2, 0.95, L.soft ? 1.6 : 1.3, 0, 0, 7); ctx.ellipse(fx + 7.0, fy - 0.2, 0.7, L.soft ? 1.4 : 1.15, 0, 0, 7); ctx.fill();
-        dot(fx + 4.45, fy - 0.9, 0.38, C('#ffffff')); dot(fx + 7.15, fy - 0.85, 0.28, C('#ffffff'));
+        ctx.fillStyle = eye;
+        if (o.pixel) { ctx.fillRect(fx + 2.6, fy - 2.4, 2.2, 4.4); ctx.fillRect(fx + 6.2, fy - 2.4, 1.8, 4.4); }   // eyes that survive the downscale
+        else {
+          ctx.beginPath(); ctx.ellipse(fx + 4.2, fy - 0.2, 0.95, L.soft ? 1.6 : 1.3, 0, 0, 7); ctx.ellipse(fx + 7.0, fy - 0.2, 0.7, L.soft ? 1.4 : 1.15, 0, 0, 7); ctx.fill();
+          dot(fx + 4.45, fy - 0.9, 0.38, C('#ffffff')); dot(fx + 7.15, fy - 0.85, 0.28, C('#ffffff'));
+        }
         if (!L.soft) { ln2(fx + 3, fy - 2.6, fx + 5.3, fy - 2.5, 0.7, C(L.beard || '#3a2a22')); ln2(fx + 4.9, fy + 4.2, fx + 6.4, fy + 4.2, 0.6, dark); }
       }
       if (L.helm === 'veil') { ln2(fx + 4.3, fy + 0.4, fx + 3.9, fy + 8, 1.0, C('#a00a12')); ln2(fx + 7.2, fy + 0.4, fx + 7, fy + 6, 0.8, C('#a00a12')); }
@@ -234,6 +238,28 @@ G.drawHumanoid = (ctx, o) => {
   const W = pt => (lying ? [o.x + o.facing * o.scale * (-pt[1] * Math.sign(p.lying) - 28 * p.lying), o.y - 8 * o.scale]
     : [o.x + o.facing * o.scale * pt[0], o.y + o.scale * pt[1]]);
   o.out = { sh: W([sx, sy]), hip: W([hx, hy]), head: W([hdx, hdy]), tip: tip && W(tip) };
+};
+
+// Pixel-art variant: draws the same rig into a small buffer at 1/px size, snaps every
+// pixel to solid or empty, adds a one-pixel dark outline, then scales it up unsmoothed.
+let pixBuf = null;
+G.drawPixelHumanoid = (ctx, o, px = 2) => {
+  const BW = 112, BH = 80, OX = 48, OY = 72;
+  if (!pixBuf) { pixBuf = document.createElement('canvas'); pixBuf.width = BW; pixBuf.height = BH; }
+  const b = pixBuf.getContext('2d', { willReadFrequently: true });
+  b.clearRect(0, 0, BW, BH);
+  G.drawHumanoid(b, Object.assign({}, o, { x: OX, y: OY, scale: o.scale / px, facing: 1, pixel: true }));
+  const img = b.getImageData(0, 0, BW, BH), d = img.data, solid = new Uint8Array(BW * BH);
+  for (let i = 0; i < BW * BH; i++) { const on = d[i * 4 + 3] > 110; solid[i] = on ? 1 : 0; d[i * 4 + 3] = on ? 255 : 0; }
+  for (let y = 1; y < BH - 1; y++) for (let x = 1; x < BW - 1; x++) {
+    const i = y * BW + x;
+    if (!solid[i] && (solid[i - 1] || solid[i + 1] || solid[i - BW] || solid[i + BW])) { d[i * 4] = 12; d[i * 4 + 1] = 7; d[i * 4 + 2] = 10; d[i * 4 + 3] = 255; }
+  }
+  b.putImageData(img, 0, 0);
+  const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+  ctx.save(); ctx.translate(Math.round(o.x), Math.round(o.y)); ctx.scale(o.facing, 1);
+  ctx.drawImage(pixBuf, -OX * px, -OY * px, BW * px, BH * px);
+  ctx.restore(); ctx.imageSmoothingEnabled = sm;
 };
 
 // Apply a swing animation to a pose. ph: 0 wind-up, 1 active, 2 recovery; u: 0..1

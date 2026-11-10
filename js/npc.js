@@ -104,7 +104,7 @@
         }
       }
       if (d.id === 'ysolde') { const gl = ctx.createRadialGradient(this.x, gy - 50, 1, this.x, gy - 50, 90); gl.addColorStop(0, 'rgba(230,220,210,0.16)'); gl.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gl; ctx.fillRect(this.x - 90, gy - 140, 180, 180); }
-      G.drawHumanoid(ctx, { x: this.x, y, facing, scale: 1, pose: P, look: this.look, weapon: this.fighter ? d.weapon : 'none', wlen: d.wlen, flash: this.flash, time: t, vx: this.vx });
+      (this.look.pixel ? G.drawPixelHumanoid : G.drawHumanoid)(ctx, { x: this.x, y, facing, scale: 1, pose: P, look: this.look, weapon: this.fighter ? d.weapon : 'none', wlen: d.wlen, flash: this.flash, time: t, vx: this.vx });
       if (this.dead || this.atRest) return;
       if (this.hp < this.maxHp) {
         ctx.fillStyle = '#000'; ctx.fillRect(this.x - 21, gy - 97, 42, 5); ctx.fillStyle = '#6f8a4a'; ctx.fillRect(this.x - 20, gy - 96, 40 * this.hp / this.maxHp, 3);
