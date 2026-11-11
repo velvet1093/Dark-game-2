@@ -6,8 +6,8 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
-  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall' };
-  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral' }[L.theme] || L.theme);
+  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind' };
+  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
@@ -18,7 +18,7 @@
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {} });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false });
       G.questLog.reset();
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -34,11 +34,13 @@
       G.questLog.reset(s.quests);
       if (this.flags.bossDead) this.flags.boss_garrick_dead = 1; if (this.flags.metBoss) this.flags.boss_garrick_met = 1;   // saves from before there were three bosses
       this.npcInf = s.npcInf || {}; this.weaponLv = s.weaponLv || {}; this.bought = s.bought || {};
+      // saves from before Misery took gifts: a thorn for each boss already put down
+      this.misery = s.misery || { thorns: Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length * 3, got: {} }; this.watchUsed = !!s.watchUsed;
       this.abilities = s.abilities || {}; if (this.flags.boss_matron_dead) this.abilities.dj = 1;   // saves that beat her before she carried the greaves
       G.LEVELS.forEach((L, lv) => (L.gates || []).forEach((k, i) => { if (s.cp.lv > lv || (s.cp.lv === lv && s.cp.x > k.x)) this.flags[this.gateKey(i, lv)] = 1; }));   // saves already past a gate added later
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx; this.inside = null; this.outside = null; this.cleared = {};
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
@@ -55,6 +57,7 @@
     },
     respawn() {
       if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.inside ? this.inside.door.x : this.player.x, n: this.ichor }; this.ichor = 0; }   // dying indoors leaves the stain at the door
+      this.watchUsed = false;
       const p = this.player; p.turnT = null; p.inf = Math.min(p.inf, 50);   // you wake with the fever broken, not gone
       this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save();
     },
@@ -194,6 +197,11 @@
     gateKey(i, lv = this.levelIdx) { return 'gate_' + lv + '_' + i; },
     gateOpen(i) { const k = (this.level.gates || [])[i]; return k && k.kind !== 'wall' && !!this.flags[this.gateKey(i)]; },
     // Main-road areas count as reached once you have been there (side areas do not move the story on).
+    mis(id) { return !!(this.misery && this.misery.got[id]); },
+    buyGift(n) {
+      const m = this.misery; if (m.got[n.id] || m.thorns < n.cost) return false;
+      m.thorns -= n.cost; m.got[n.id] = 1; G.sfx('questdone'); this.fairy.cd = 0; this.save(); return true;
+    },
     reachedLv(lv) { return !!this.flags['reached_' + lv] || (this.levelIdx >= lv && this.levelIdx <= 4); },
     hasTool(need) { return need === 'axe' ? this.weapons.includes('greataxe') : !!this.abilities[need]; },
     // Stop a body moving from px to x if a closed gate stands between. Rubble walls only stop what is below their top.
@@ -264,7 +272,7 @@
     },
     rest(x) {
       this.player.reset(); this.spawnEnemies(); this.cleared = {}; for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
-      this.cp = { lv: this.levelIdx, x }; this.save();
+      this.cp = { lv: this.levelIdx, x }; this.watchUsed = false; this.save();
       G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); G.ui.shrine();
     },
     // Return to the far end of the previous area. Its enemies will have wandered back in.
@@ -305,6 +313,7 @@
       e.vx = dir * 60; e.die({ exec: true, decap, dir });
       if (!decap) { e.fountain = 0; G.decal(e.x, 12, 40); }
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.12);
+      const th = e.def.boss ? 4 : 1; this.misery.thorns += th; G.text(e.x, G.GROUND - 160 * e.scale, '+' + th + ' thorn' + (th > 1 ? 's' : ''), '#b89ae0', 14);
       this.hitstop = 0.14; this.shake = 14; this.slow = 0.55; G.sfx('exec');
       G.text(e.x, G.GROUND - 130 * e.scale, 'EXECUTED', '#e0222c', 20);
       if (e.def.boss) {
@@ -411,7 +420,7 @@
         ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, px, by);
       }
       ctx.restore();
-      G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: this.inside ? (this.inside.id === 'court' ? 280 : 150) : 115 }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
+      G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: (this.inside ? (this.inside.id === 'court' ? 280 : 150) : 115) * (this.mis('glow') ? 1.45 : 1) }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
@@ -614,6 +623,7 @@
         ctx.fillRect(x - 2, y - 4, 4, 6); ctx.fillRect(x - 4, y - 6, 8, 2); ctx.fillRect(x - 4, y + 2, 8, 12); ctx.fillRect(x - 6, y + 4, 12, 8);
       }
       ctx.font = '22px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#c9333b'; ctx.fillText('Ichor  ' + this.ichor, W - 26, 34);
+      if (this.misery.thorns > 0) { ctx.font = '17px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#a88ad0'; ctx.fillText('Thorns ' + this.misery.thorns, 26, 134); ctx.textAlign = 'right'; }
       if (this.bossFight && this.boss) {
         const b = this.boss; ctx.textAlign = 'center'; ctx.font = '20px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#cfc4b8'; ctx.fillText(b.def.name + (G.unfair() ? '  ·  unfair' : ''), W / 2, H - 46);
         bar(W / 2 - 260, H - 38, 520, 9, b.hp / b.maxHp, '#9c0c14', '#3a2a2a');

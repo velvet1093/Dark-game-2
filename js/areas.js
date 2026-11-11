@@ -161,4 +161,87 @@
       lastWords: [['Malvern', 'She asked them to stop. Did they tell you that? She asked. I never could.'], ['Knight', 'Then stop.']],
     },
   });
+
+  // ---------------------------------------------------------------------------
+  // The Lily Convent — the mother house of the Sisters, out past the fen. The
+  // Abbess stayed to wash the last of the sick, and drank what she washed out.
+  // Its gate is chained: it needs the headsman's axe.
+  // ---------------------------------------------------------------------------
+  const rot = { chibi: 1, soft: 1, iris: '#ff3b2f', eye: '#ff3b2f', skin: '#a8b0a0', body: '#1c1418', trim: '#8a6a6a', arm: '#1c1418', leg: '#2a1a1e', helm: 'sister', helmCol: '#1c1418', hair: '#c8c0c8', skirt: 1, cuff: 1 };
+  Object.assign(G.LOOKS, { petra: Object.assign({}, G.LOOKS.sisterB, { hair: '#b07a3a', iris: '#6a8a5a' }) });
+  Object.assign(G.ENEMIES, {
+    novice: {
+      name: 'Weeping Novice', hp: 70, limbHp: 28, speed: 92, ichor: 45, aggro: 380, weapon: 'sword', wlen: 22, hunch: 0.2,
+      look: Object.assign({}, rot, { trim: '#6a5050' }),
+      attacks: [
+        { wind: 0.3, active: 0.08, rec: 0.4, dmg: 12, reach: 52, lunge: 200, anim: A.thrust },
+        { wind: 0.5, active: 0.3, rec: 0.6, dmg: 6, reach: 120, trigger: 140, min: 40, lunge: 0, spew: 14, anim: A.claw },
+      ],
+    },
+    abbess: {
+      name: 'Abbess Severine, the Lily Rotted', boss: true, hp: 580, limbHp: 150, speed: 84, ichor: 1300, aggro: 9999,
+      weapon: 'scythe', wlen: 70, scale: 1.45, poise: true, noSever: ['armF', 'legF', 'legB'], shout: 'BE WASHED!',
+      summon: { type: 'novice', at: [0.7, 0.35], n: 2, text: 'SHE CALLS HER NOVICES' },
+      look: Object.assign({}, rot, { trim: '#efe8e0', helmCol: '#efe8e0', body: '#efe8e0', arm: '#d8d0c8', leg: '#8a1018' }),
+      attacks: [
+        { wind: 0.52, active: 0.14, rec: 0.6, dmg: 28, reach: 130, lunge: 170, anim: A.chop },
+        { wind: 0.44, active: 0.14, rec: 0.55, dmg: 26, reach: 130, lunge: 160, anim: A.rise },
+        { wind: 0.68, active: 0.14, rec: 0.75, dmg: 32, reach: 150, trigger: 280, min: 120, lunge: 600, anim: A.thrust },
+        // she weeps over you: the tears are the plague
+        { wind: 0.8, active: 0.4, rec: 0.9, dmg: 10, reach: 210, trigger: 250, min: 80, lunge: 0, spew: 26, anim: A.claw },
+      ],
+    },
+  });
+  G.WEAPONS.scythe = {
+    name: "The Abbess's Scythe", draw: 'scythe', len: 62, bleed: 34,
+    light: [
+      { wind: 0.22, active: 0.14, rec: 0.36, dmg: 24, st: 17, reach: 118, lunge: 130, sever: 1.6, anim: A.chop },
+      { wind: 0.22, active: 0.14, rec: 0.4, dmg: 26, st: 18, reach: 118, lunge: 130, sever: 1.6, anim: A.rise },
+    ],
+    heavy: { wind: 0.5, active: 0.18, rec: 0.5, dmg: 50, st: 34, reach: 140, lunge: 200, sever: 2.6, poiseBreak: true, anim: A.chop },
+  };
+  G.ICON_NAMES.push('The Saint at Matins', 'The Saint and the Abbess', 'The Saint Washing Feet');
+
+  G.LEVELS[2].passages = [{ x: 3250, to: 7, at: 120, needs: 'axe', label: 'Break the chain on the convent road',
+    shut: 'A convent road, chained shut. It would take a headsman\'s axe', wist: 'The nuns\' road. Chained, see? They did not want visitors. Or they did not want to be visited BY something.',
+    slides: ['The chain parts. Beyond it, a causeway of white stones runs out over the water to an island of lilies.\n\nOn the island stands the mother house of the Sisters. Its bell has not rung in a year.\n\nSomeone inside is still singing the office. Alone. Every hour.'] }];
+
+  G.LEVELS.push({
+    name: 'The Lily Convent', chapter: 'Beyond the Weeping Fen', theme: 'convent', length: 4600, seed: 107,
+    back: { to: 2, at: 3310 }, backLabel: 'Go back across the causeway to the fen',
+    shrines: [240, 2400],
+    enemies: [['novice', 620], ['novice', 700], ['crow', 950], ['wretch', 1200], ['flagellant', 1450], ['novice', 1700], ['novice', 1760], ['reaper', 2050],
+      ['bloat', 2700], ['novice', 2950], ['novice', 3010], ['novice', 3070], ['flagellant', 3300], ['reaper', 3450]],
+    npcs: [{
+      id: 'petra', x: 2550, name: 'Sister Petra', look: 'petra', pose: 'kneel', cleanse: true, essential: true,
+      lines: [
+        ['Sister Petra', 'You are clean? You are. Oh, thank the Saint. Come here, let me wash you. I have not washed anyone in so long.'],
+        ['Sister Petra', 'Mother Severine kept the convent open when every other door shut. She washed them by the hundred. She drank the water after, so none of us would have to.'],
+        ['Sister Petra', 'She said the Saint drinks the world\'s sickness, so a bride of the Saint could drink a little. A little became all of it.'],
+        ['Misery', 'I remember her. She sat up with the dying too. We used to nod to each other.'],
+        ['Sister Petra', 'She is in the chapter house. She still sings the hours. Please. She would not want to be like this. She would want to be washed.'],
+      ],
+      repeat: [['Sister Petra', 'Wash her for me. Gently, if you can. It does not have to be gently.']],
+    }],
+    lore: [
+      { x: 900, title: 'Rule of the House', text: 'I. A Sister does not weep.\nII. A Sister washes all who come, and asks nothing.\nIII. A Sister does not drink the wash-water.\n\nThe third rule has been underlined many times. In a later hand, beside it: "Forgive me. There is no one else."' },
+      { x: 2200, title: 'Infirmary Tally', text: 'Washed this week: 212.\nWashed this week: 340.\nWashed this week: 518.\nSisters remaining: 9.\nSisters remaining: 4.\nSisters remaining: Mother, Petra, me.\n\nThe last line is blotted, as if the writer had been crying. Sisters do not cry.' },
+      { x: 3600, title: "The Abbess's Psalter", text: 'Every margin is filled with one word, written smaller and smaller until it is only a red line:\n\nclean clean clean clean clean clean clean clean' },
+    ],
+    items: [{ x: 4380, weapon: 'scythe', needs: 'boss_abbess_dead' }, { x: 1300, alt: 72, icon: 1 }, { x: 2860, icon: 1, gate: 'veil' }, { x: 3330, alt: 140, icon: 1 }, { x: 1900, cache: 280 }],
+    platforms: [{ x: 1230, w: 150, h: 72 }, { x: 3200, w: 130, h: 72 }, { x: 3290, w: 110, h: 140 }],
+    pits: [{ x: 1580, w: 66 }, { x: 3850, w: 66 }],
+    boss: {
+      type: 'abbess', gate: 3950, x: 4250, end: 4520,
+      intro: [
+        ['Abbess Severine', '...and the third hour, and the sixth, and the ninth... Who comes to the chapter house? Are you sick, child?'],
+        ['Knight', 'Mother. Petra sent me.'],
+        ['Abbess Severine', 'Petra. Good girl. She never drank. I drank for her.'],
+        ['Abbess Severine', 'You are so dirty, knight. Blood to the elbows. Come here. Let Mother wash you. Let Mother wash you CLEAN.'],
+        ['Misery', 'Oh, Severine. You poor thing. You look wonderful.'],
+      ],
+      retry: [['Abbess Severine', 'Back again, and dirtier. Come. Mother will wash you.']],
+      lastWords: [['Abbess Severine', 'Is it the ninth hour? I have to sing the ninth...'], ['Misery', 'Shh. I am here. Nobody goes alone. Do you remember that?'], ['Abbess Severine', '...Mercy?']],
+    },
+  });
 })();

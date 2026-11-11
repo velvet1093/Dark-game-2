@@ -78,18 +78,19 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
-Two **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
+Three **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
 
 | Side area | Way in | Needs | |
 | --- | --- | --- | --- |
 | The Wreck of the Sun | a cliff path near the start of the Gallows Road | Wind-Step Greaves | the Long Battalion's ship, run aground in the shallows. Drowned deckhands and knights of your own battalion, the Bosun who rowed you home, the ship's log, and the battalion roll with your name torn out of it. Boss: **the Standard-Bearer**, who still guards the colours at the stern |
+| The Lily Convent | a chained causeway in the middle of the Weeping Fen | Headsman's Greataxe | the mother house of the Sisters, on an island of lilies. Weeping Novices, Sister Petra (she cleanses), the Rule of the House and the infirmary tally. Boss: **Abbess Severine, the Lily Rotted**, who drank the wash-water so her Sisters would not have to |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
 
 ## Collectables and tools
 
-**Weeping icons** — twenty-six small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 26 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — twenty-nine small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 29 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -174,11 +175,29 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 | Drowned Deckhand, Drowned Knight of the Battalion | the crew and passengers of the Sun, in the Wreck |
 | **The Standard-Bearer of the Long Battalion** | boss of the Wreck of the Sun; a greatsword, long lunges and an overhead slam. His sword is yours when he falls |
 | **Malvern, the Unmade Bishop** | boss of the Ossuary; a crozier-spear, a censer that fills your infection bar, and flagellants he calls twice as he weakens. He leaves the Seventh Knife |
+| Weeping Novice | a young Sister gone over; quick knife thrusts, and she weeps on you |
+| **Abbess Severine, the Lily Rotted** | boss of the Lily Convent; a long scythe, a lunging reap, tears that fill your infection bar, and novices she calls twice. Her scythe is yours when she falls |
 | **Ser Garrick, the Oathkeeper** | the last boss |
 
 ## Misery
 
 A small lavender fairy with white hair follows you as your "guide". She glows faintly and lights the dark around her, and if you stand still long enough she sits on your helm. She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
+
+## Misery fights (for herself)
+
+When something is fighting you, Misery darts in and stings it every couple of seconds, then flits back out. She does not do it to help. You are her seat, and she intends to be the one who watches you die. A sting does little damage and never interrupts anything, unless she has been given Dazzle.
+
+### Misery's gifts
+
+Every execution earns a **thorn** (a boss gives four), shown under your weapon name. Spend thorns at any vigil candle under **Misery's gifts**. Gifts are in three branches, and each needs the one above it:
+
+| | Spite (her sting) | Glow (her light) | Old Name (what Mercy was) |
+| --- | --- | --- | --- |
+| 1 thorn | **Sharper Needle**: stings do nearly twice the damage | **Brighter Wings**: a wider circle of light | **Sip**: each sting gives you back a little life |
+| 2 thorns | **Bleeding Kiss**: stings build bleeding | **Magpie Eye**: icon hints twice as often, with a count and distance | **Fever-Eater**: each sting draws infection out of you |
+| 3 thorns | **Jealousy**: twice as many stings in a boss fight | **Dazzle**: stings stagger lesser foes and delay a boss's blow | **Not Yet**: once per rest, a killing blow leaves you at 1 life |
+
+Saves from before the tree start with three thorns for every boss already beaten.
 
 ## Sound
 
@@ -197,7 +216,7 @@ Progress saves at vigil candles (browser local storage).
 | `js/engine.js` | input, blood / gib particles |
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/interiors.js` | the buildings you can enter: rooms, furniture and street fronts |
-| `js/areas.js` | the two side areas, their enemies, bosses and weapons, and the stairs down to them |
+| `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
 | `js/chibi.js` | chibi pixel sprites for every humanoid, pixel gibs, and the vector-to-pixel helper |
@@ -217,7 +236,7 @@ If that is too much, switch to **Fair** under Settings (from the title screen or
 
 ## Weapons
 
-You start with the longsword. Five more are lying in the world, each driven into the ground with a glow around it. Take one and it is yours for good; press `C` (or tap the weapon name on touch) to change between those you own.
+You start with the longsword. Six more are lying in the world, each driven into the ground with a glow around it. Take one and it is yours for good; press `C` (or tap the weapon name on touch) to change between those you own.
 
 | Weapon | Where | Character |
 | --- | --- | --- |
@@ -226,6 +245,7 @@ You start with the longsword. Five more are lying in the world, each driven into
 | Fen-Warden Spear | the Weeping Fen | long reach, thrusts only, weak at severing |
 | Penitent's Flail | Hollowmere | fast, light, builds bleeding quickly, rarely severs |
 | Battalion Greatsword | the Wreck of the Sun, left by the Standard-Bearer | long, heavy two-hit combo; severs well |
+| The Abbess's Scythe | the Lily Convent, left by Abbess Severine | wide, long sweeps that bleed well |
 | The Seventh Knife | the Ossuary, left by Malvern | very short and very fast four-hit combo; bleeds like nothing else |
 
 Weapons are plain data in `G.WEAPONS` (`js/data.js`): a light combo, a heavy attack, reach, bleed build-up and a sever multiplier per move. To add one, add an entry there, a pixel drawing for it in `js/chibi.js`, and an item with `weapon: '<id>'` in a level.

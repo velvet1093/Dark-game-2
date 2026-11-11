@@ -316,6 +316,7 @@ const THEMES = {
   fen: { sky: ['#040706', '#0b1512', '#1b2c24'], moon: true, mid: ['tree', 'tree', 'tree', 'gallows', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#080d0b', edge: '#1d2c22', weather: 'rain', water: true },
   cathedral: { sky: ['#060406', '#0b0709', '#12090b'], mid: ['window', 'pillar'], near: ['pew', 'candles', 'pew', 'candles'], ground: '#0c090b', edge: '#2a2226', weather: 'ash', indoor: true },
   harbour: { sky: ['#05060b', '#0f0c18', '#2e1420'], moon: true, mid: ['hull', 'mast', 'tree', 'mast', 'hull'], near: ['anchor', 'bollard', 'net', 'crate', 'bollard', 'grave'], ground: '#0c0b0d', edge: '#22202a', weather: 'rain', water: true, sea: true },
+  convent: { sky: ['#07060c', '#141020', '#3a1c2a'], moon: true, mid: ['chapel', 'wall', 'tree', 'cloister', 'wall', 'cloister'], near: ['grave', 'lilies', 'candles', 'cross', 'lilies', 'grave'], ground: '#0d0b0e', edge: '#2c2632', weather: 'ash', water: true },
   crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
 
@@ -621,6 +622,11 @@ G.drawFar = (ctx, level, cam, t) => {
     ctx.fillStyle = 'rgba(160,60,70,0.14)'; for (let k = 0; k < 12; k++) ctx.fillRect(((k * 173 - off * 0.6) % W + W) % W, gy - 60 + (k % 4) * 14, 40 + k % 3 * 20, 2);
     ctx.fillStyle = '#100c16'; each(900, (x, h) => { const y = gy - 66; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 120, y); ctx.lineTo(x + 100, y - 18); ctx.lineTo(x + 14, y - 16); ctx.fill(); ctx.fillRect(x + 50, y - 90 - h % 30, 4, 80); ctx.fillRect(x + 30, y - 70 - h % 30, 44, 3); });
   }
+  else if (th === 'convent') each(1100, (x, h) => {  // the bell tower of the mother house, on its island
+    const y = gy - 50; ctx.fillRect(x, y - 190, 40, 190); ctx.beginPath(); ctx.moveTo(x - 6, y - 190); ctx.lineTo(x + 20, y - 250); ctx.lineTo(x + 46, y - 190); ctx.fill();
+    ctx.fillRect(x + 40, y - 90, 160, 90); ctx.beginPath(); ctx.moveTo(x + 36, y - 90); ctx.lineTo(x + 120, y - 130); ctx.lineTo(x + 204, y - 90); ctx.fill();
+    ctx.fillStyle = '#05030a'; ctx.fillRect(x + 14, y - 170, 12, 20); ctx.fillStyle = `rgba(200,120,150,${0.3 + Math.sin(t * 1.3 + h) * 0.1})`; for (let k = 0; k < 4; k++) ctx.fillRect(x + 60 + k * 34, y - 66, 8, 16); ctx.fillStyle = '#150b0f';
+  });
   else if (th === 'crypt') each(260, (x, h) => {     // low vaults, receding
     ctx.fillRect(x, 0, 30, gy); ctx.beginPath(); ctx.moveTo(x + 30, 230); ctx.quadraticCurveTo(x + 145, 120, x + 260, 230); ctx.lineTo(x + 260, 0); ctx.lineTo(x + 30, 0); ctx.fill();
     ctx.fillStyle = '#060405'; for (let k = 0; k < 4; k++) ctx.fillRect(x + 6, gy - 60 - k * 70, 18, 30); ctx.fillStyle = '#0c080b';
@@ -676,6 +682,15 @@ Object.assign(PROPS, {
   coffin(c, x, y, s) {
     c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8 * s, y - 22 * s); c.lineTo(x + 90 * s, y - 22 * s); c.lineTo(x + 100 * s, y - 12 * s); c.lineTo(x + 92 * s, y); c.fill();
     c.save(); c.fillStyle = GRAIN; c.fillRect(x + 10, y - 16 * s, 78 * s, 2); c.fillStyle = IRON; c.fillRect(x + 40 * s, y - 22 * s, 3, 22 * s); c.fillRect(x + 32 * s, y - 14 * s, 18 * s, 3); c.restore();
+  },
+  cloister(c, x, y, s) {   // a run of round arches, the walk around the convent garth
+    const w = 300 * s, h = 120 * s; c.fillRect(x, y - h - 30 * s, w, 30 * s); c.beginPath(); c.moveTo(x - 10, y - h - 30 * s); c.lineTo(x + w / 2, y - h - 80 * s); c.lineTo(x + w + 10, y - h - 30 * s); c.fill();
+    for (let k = 0; k <= 5; k++) { const ax = x + k * w / 5; c.fillRect(ax - 5, y - h, 10, h); if (k < 5) { c.beginPath(); c.moveTo(ax + 5, y - h * 0.6); c.quadraticCurveTo(ax + w / 10, y - h - 10, ax + w / 5 - 5, y - h * 0.6); c.lineTo(ax + w / 5 - 5, y - h); c.lineTo(ax + 5, y - h); c.fill(); } }
+  },
+  lilies(c, x, y, s, seed, t) {
+    c.save(); const r = G.rng(seed);
+    for (let k = 0; k < 6; k++) { const bx = x + k * 9, h = (14 + r() * 16) * s, sw = Math.sin(t * 1.2 + k + seed) * 1.5; c.fillStyle = '#1a2a1a'; c.fillRect(bx, y - h, 2, h); c.fillStyle = k % 3 ? '#cfc8d6' : '#8a2a30'; c.fillRect(bx - 2 + sw, y - h - 4, 6, 4); c.fillRect(bx + sw, y - h - 6, 2, 2); }
+    c.restore();
   },
   skulls(c, x, y, s, seed) {
     const r = G.rng(seed); c.save();

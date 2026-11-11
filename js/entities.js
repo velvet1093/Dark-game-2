@@ -67,6 +67,7 @@ G.Player = class {
     }
     this.hp -= dmg; this.flash = 0.12; this.vx = dir * 220; this.set('hurt'); this.infect(dmg * 0.55, g);
     G.blood(this.x, G.GROUND - 50, 14, dir, 240); G.sfx('hurt'); g.shake = 8;
+    if (this.hp <= 0 && g.mis && g.mis('watch') && !g.watchUsed) { this.hp = 1; g.watchUsed = true; G.text(this.x, G.GROUND - 150, 'NOT YET', '#d8c6ff', 20); G.sfx('chime'); g.fairy.cd = 0; g.fairy.sayLine(G.pick(G.FAIRY.notYet)); g.save && g.save(); }
     if (this.hp <= 0) { this.hp = 0; this.dead = true; this.set('dead'); G.sfx('death'); G.blood(this.x, G.GROUND - 40, 50, dir, 320); G.decal(this.x, 10, 30); g.onPlayerDeath(); }
     else g.fairy.bark('hurt', false, 0.5);
     return true;
@@ -331,6 +332,7 @@ G.Enemy = class {
     this.hurt(dmg, { dir, decap: part === 'head' && this.limbs.head.gone });
     if (this.dead || this.state === 'executed') return;
     if (this.state === 'broken') { if (!wasBroken) this.vx = dir * 80; return; }
+    if (atk.noStagger && !severed) return;   // Misery's sting hurts, but does not stop anything
     if (this.hard && !severed && Math.random() < 0.6) return;   // on Unfair a boss mostly ignores what would stagger it
     if (!this.def.poise || atk.poiseBreak || severed) { this.set('stagger'); this.stun = severed ? 0.6 : atk.poiseBreak ? 0.5 : 0.3; this.vx = dir * (this.def.poise ? 60 : 150); this.atk = null; }
   }

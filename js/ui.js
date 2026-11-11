@@ -45,7 +45,7 @@
       if (advance) el().firstElementChild.addEventListener('click', () => { G.audioInit(); if (this.advance) this.advance(); });
     },
     menu(cls, head, items, foot = '', listCls = '') {
-      const btns = items.map((it, i) => `<button class="btn" data-opt="${i}" ${it.off ? 'disabled' : ''}>${i < 6 && !listCls ? i + 1 + '. ' : ''}${it.label}</button>`).join('');
+      const btns = items.map((it, i) => `<button class="btn ${it.cls || ''}" data-opt="${i}" ${it.off ? 'disabled' : ''}>${i < 6 && !listCls ? i + 1 + '. ' : ''}${it.label}</button>`).join('');
       this.show(`<div class="screen ${cls}">${head}<div class="opts ${listCls}">${btns}</div>${foot}</div>`, null, items.map(it => () => { if (!it.off) { G.sfx('ui'); it.fn(); } }));
     },
 
@@ -124,11 +124,26 @@
         { label: `Vigor ${s.vig} <small>— more life</small>`, fn: up('vig'), off: poor },
         { label: `Strength ${s.str} <small>— deeper cuts</small>`, fn: up('str'), off: poor },
         { label: `Endurance ${s.end} <small>— more stamina</small>`, fn: up('end'), off: poor },
+        { label: `Misery's gifts <small>— ${g.misery.thorns} thorn${g.misery.thorns === 1 ? '' : 's'} to give</small>`, fn: () => this.miseryTree() },
         { label: 'Rise', fn: () => this.clear() },
       ], '<div class="keys">Resting restores your flasks — but not your blood. The infected never rest; more will have wandered in.</div>');
       this.advance = () => this.clear(); this.escAdvance = true;
     },
     // Dunstan's forge and Fenwick's cart. Each purchase redraws the menu with the new prices.
+    // Misery's gift tree: three branches, each gift needing the one above it.
+    miseryTree(keep = 0) {
+      const g = G.game, m = g.misery, T = G.MISERY_TREE, items = [];
+      for (let tier = 0; tier < 3; tier++) for (const br of T) {
+        const n = br.nodes[tier], got = m.got[n.id], open = tier === 0 || m.got[br.nodes[tier - 1].id], can = !got && open && m.thorns >= n.cost;
+        items.push({ label: `<b>${got ? '✦ ' : ''}${n.name}</b> <span class="cost">${got ? 'given' : n.cost + ' thorn' + (n.cost > 1 ? 's' : '')}</span><small>${open || got ? n.how : 'Give the gift above it first.'}</small>`,
+          off: !can, cls: got ? 'got' : open ? '' : 'locked', fn: () => { const i = items.findIndex(x => x.n === n); if (g.buyGift(n)) { this.keepSel = i; this.miseryTree(); g.fairy.sayLine(G.pick(G.FAIRY.gift)); } }, n });
+      }
+      items.push({ label: 'Back to the candle', fn: () => this.shrine() });
+      const heads = T.map(b => `<div><b>${b.name}</b><small>${b.blurb}</small></div>`).join('');
+      this.menu('dim', `<h2>Misery's Gifts</h2><div class="ichor">${m.thorns} thorn${m.thorns === 1 ? '' : 's'} &nbsp;·&nbsp; one for every execution, four for a boss</div><div class="treehead">${heads}</div>`, items,
+        '<div class="keys">She stings whatever fights you. Feed her thorns and she gets worse at it — for them.</div>', 'tree');
+      this.advance = () => this.shrine(); this.escAdvance = true;
+    },
     shop(kind) {
       const g = G.game, p = g.player, back = { label: 'Leave', fn: () => this.clear() };
       let head, items;
