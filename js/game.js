@@ -19,7 +19,7 @@
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
       Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false });
-      G.questLog.reset();
+      G.questLog.reset(); this.memQ = [];
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
         G.ui.dialogue(G.FAIRY.intro, () => { this.flags.met_wist = 1; this.save(); });
@@ -38,7 +38,8 @@
       this.misery = s.misery || { thorns: Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length * 3, got: {} }; this.watchUsed = !!s.watchUsed;
       this.abilities = s.abilities || {}; if (this.flags.boss_matron_dead) this.abilities.dj = 1;   // saves that beat her before she carried the greaves
       G.LEVELS.forEach((L, lv) => (L.gates || []).forEach((k, i) => { if (s.cp.lv > lv || (s.cp.lv === lv && s.cp.x > k.x)) this.flags[this.gateKey(i, lv)] = 1; }));   // saves already past a gate added later
-      G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x);
+      G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x); this.memQ = [];
+      if (this.flags.boss_malvern_dead) this.remember('blessing'); if (this.flags.boss_abbess_dead) this.remember('letter'); if (this.flags.boss_windcaller_dead) this.remember('sun'); if (this.read['5:2']) this.remember('muster');
     },
     save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
@@ -94,7 +95,7 @@
         if (near(n.x, 70) && n.canTalk) return { x: n.x, y: G.GROUND - (n.def.pose === 'hang' ? 204 : 132), label: (n.def.shop && this.flags['met_' + n.id] ? 'Trade with ' : n.def.cleanse && this.flags['met_' + n.id] && (p.inf > 0 || p.tinct < p.tinctMax) ? 'Be cleansed by ' : 'Speak to ') + n.def.name, hot: n.def.cleanse && p.turnT != null, fn: () => this.talk(n) };
       }
       for (const [i, n] of L.lore.entries()) {
-        if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.lvKey() + ':' + i] = 1; G.ui.note(n.title, n.text); } };
+        if (near(n.x, 45)) return { x: n.x, y: G.GROUND - 46, label: 'Read', fn: () => { this.read[this.lvKey() + ':' + i] = 1; G.ui.note(n.title, n.text); if (n.memory && !this.inside) this.remember(n.memory); } };
       }
       const found = items(); if (found) return found;
       for (const sx of L.shrines) if (near(sx, 55)) return { x: sx, y: G.GROUND - 100, label: 'Rest at the vigil candle', fn: () => this.rest(sx) };
@@ -122,7 +123,7 @@
       const newQ = Object.keys(G.QUESTS).filter(id => !Q.state[id] && G.QUESTS[id].start && G.QUESTS[id].start.talk === d.id);
       // a trader you already know goes straight to business, unless a quest has something to say
       if (d.shop && met && !stepQ.some(id => Q.cur(id).lines) && !newQ.some(id => G.QUESTS[id].offer)) { stepQ.forEach(id => Q.advance(id)); G.ui.shop(d.shop); return; }
-      let lines = met ? [] : d.lines.slice();
+      let lines = met ? [] : (this.flags.named && d.linesNamed ? d.linesNamed : d.lines).slice();
       const stepLines = stepQ.map(id => Q.cur(id).lines).find(Boolean);
       if (stepLines) lines = lines.concat(stepLines);
       for (const id of newQ) if (G.QUESTS[id].offer) lines = lines.concat(G.QUESTS[id].offer);
@@ -142,10 +143,12 @@
           G.questLog.banners.push({ kind: 'A favour', title: 'The Lantern Court', sub: 'The infection takes hold a quarter more slowly', t: 5 }); this.save();
         }
         if (d.id === 'ysolde') {
-          G.ui.dialogue(G.FAIRY.choice, () => G.ui.choice('The Saint\'s Tear is warm in your hand.', [
+          const opts = [
             { label: 'Give her the Tear', fn: () => this.ending('kept') },
             { label: 'Cast the Tear away', fn: () => this.ending('broken') },
-          ]));
+          ];
+          if (this.flags.named) opts.push({ label: 'Put the Tear to your own eye', fn: () => this.ending('named') });   // only a man with a name can be a well
+          G.ui.dialogue(this.flags.named ? G.FAIRY.choiceNamed : G.FAIRY.choice, () => G.ui.choice('The Saint\'s Tear is warm in your hand.', opts));
         }
       });
     },
@@ -200,6 +203,26 @@
     // ---- gates on the main path: chained bars, rubble walls, red veils
     gateKey(i, lv = this.levelIdx) { return 'gate_' + lv + '_' + i; },
     gateOpen(i) { const k = (this.level.gates || [])[i]; return k && k.kind !== 'wall' && !!this.flags[this.gateKey(i)]; },
+    // ---- Remembrances (story.js): queued, and played when the knight is at peace
+    remember(id) { if (!G.MEMORIES[id] || this.flags['mem_' + id]) return; this.memQ = this.memQ || []; if (!this.memQ.includes(id)) this.memQ.push(id); },
+    memCount() { return Object.keys(G.MEMORIES).filter(k => this.flags['mem_' + k]).length; },
+    playMemory(id) {
+      const M = G.MEMORIES[id]; this.flags['mem_' + id] = 1; this.save();
+      const n = this.memCount(), total = Object.keys(G.MEMORIES).length, p = this.player; p.vx = 0;
+      G.sfx('bell');
+      G.ui.slides(M.slides, () => {
+        if (n >= total && !this.flags.named) {
+          G.ui.slides(G.NAMED, () => {
+            this.flags.named = 1; this.save(); G.sfx('questdone');
+            G.questLog.banners.push({ kind: 'Your name', title: G.NAME, sub: 'All five remembrances. The road ahead has a third way to end.', t: 6 });
+            G.ui.dialogue(G.FAIRY.named, () => {});
+          }, 'Remembrance: The Name');
+        } else {
+          G.questLog.banners.push({ kind: 'Remembrance ' + n + ' of ' + total, title: M.title.replace('Remembrance: ', ''), sub: n < total ? 'Something of your name is coming back' : '', t: 4.5 });
+          this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.memory));
+        }
+      }, M.title);
+    },
     // Main-road areas count as reached once you have been there (side areas do not move the story on).
     mis(id) { return !!(this.misery && this.misery.got[id]); },
     buyGift(n) {
@@ -277,6 +300,7 @@
     rest(x) {
       this.player.reset(); this.spawnEnemies(); this.cleared = {}; for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
       this.cp = { lv: this.levelIdx, x }; this.watchUsed = false; this.save();
+      if (this.level.memoryRest && !this.inside) this.remember(this.level.memoryRest);
       const p = this.player; p.x = x + (p.x < x ? -42 : 42); p.facing = p.x < x ? 1 : -1; p.vx = 0; p.set('sit');   // sit down by the flame, facing it
       G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); this.restMenuT = 0.85;   // sit down first, then the candle's menu
     },
@@ -308,7 +332,8 @@
     ending(id) {
       const e = G.STORY.endings[id];
       G.sfx('bell'); this.mode = 'title'; G.music('title');
-      G.ui.slides(e.text.concat(['ASHEN VOW\n\nThank you for playing.']), () => { store.set(null); this.toTitle(); }, e.title);
+      const extra = id === 'named' ? (this.flags.court_met ? e.mercy : e.misery) : [];   // whether she sits with him depends on whether you took her to the Court
+      G.ui.slides(e.text.concat(extra, ['ASHEN VOW\n\nThank you for playing.']), () => { store.set(null); this.toTitle(); }, e.title);
     },
     // Called at the moment the executioner's blow lands.
     executeStrike(e, p) {
@@ -324,6 +349,7 @@
       if (e.def.boss) {
         const B = this.level.boss; this.flags['boss_' + B.type + '_dead'] = 1; if (B.final) this.flags.bossDead = 1;
         if (B.grants) this.gainAbility(B.grants);
+        if (B.memory) this.remember(B.memory);
         this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
       }
     },
@@ -338,6 +364,7 @@
       if (G.input.hit('journal')) { G.ui.journal(); return; }
       if (G.input.hit('swap') && (this.player.state === 'idle' || this.player.state === 'block')) this.swapWeapon();
       if (this.restMenuT > 0 && (this.restMenuT -= dt) <= 0) { if (this.player.state === 'sit') { G.ui.shrine(); return; } }
+      if (this.memQ && this.memQ.length && !(this.restMenuT > 0) && !this.bossFight && !this.player.dead && ['idle', 'block', 'sit'].includes(this.player.state)) { this.playMemory(this.memQ.shift()); return; }
       if (this.hitstop > 0) { this.hitstop -= dt; return; }
       if (this.slow > 0) { this.slow -= dt; dt *= 0.3; }
       const p = this.player, L = this.level;
@@ -380,7 +407,7 @@
       if (this.boss && this.boss.dormant && !p.dead && p.x > L.boss.gate + 70) {
         p.vx = 0; p.set('idle');
         const met = 'boss_' + L.boss.type + '_met';
-        G.ui.dialogue(this.flags[met] ? L.boss.retry : (L.boss.final ? G.FAIRY.boss : []).concat(L.boss.intro), () => { this.flags[met] = 1; this.bossFight = true; this.boss.dormant = false; G.sfx('bell'); G.music('boss'); });
+        G.ui.dialogue(this.flags[met] ? L.boss.retry : (L.boss.final ? G.FAIRY.boss : []).concat((this.flags.named && L.boss.introNamed) || L.boss.intro), () => { this.flags[met] = 1; this.bossFight = true; this.boss.dormant = false; G.sfx('bell'); G.music('boss'); });
       }
       // reclaim ichor from where you last fell
       const s = this.stain;

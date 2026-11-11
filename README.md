@@ -253,6 +253,20 @@ Five chapters told through characters you meet, notes you find, a boss who used 
 
 Progress saves at vigil candles (browser local storage).
 
+## Remembrances
+
+The Battalion took the knight's name. Five memories bring it back, one at a time and in any order, wherever the world shakes them loose:
+
+| Remembrance | Comes back |
+| --- | --- |
+| The Mill | resting at the first candle on the Gallows Road |
+| The Muster | reading the roll of the Long Battalion, in the Wreck of the Sun |
+| The Blessing | when Malvern falls, in the Ossuary |
+| The Letter | when the Abbess falls, in the Lily Convent |
+| The Sun | when the Windcaller falls, on the Pilgrims' Pass |
+
+The journal counts them. With all five you remember your name. After that Garrick and Ysolde speak to you by it, and the choice at the end has a **third option: put the Tear to your own eye** (ending: *The Well Moved*). How Misery takes that ending depends on whether you ever brought her to the Lantern Court, where they still remember what she used to be called.
+
 ## Project layout
 
 | File | Purpose |
@@ -262,6 +276,7 @@ Progress saves at vigil candles (browser local storage).
 | `js/interiors.js` | the buildings you can enter: rooms, furniture and street fronts |
 | `js/traps.js` | the trials: crumbling, false and moving ledges, swinging blades, falling spikes |
 | `js/mountain.js` | the Pilgrims' Pass: its people, enemies, boss, quest and the wind |
+| `js/story.js` | the Remembrances, the knight's name, and the third ending |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
