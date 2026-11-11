@@ -1,18 +1,18 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// Ashen Vow — Wist, the "guide". A small lavender fairy who follows the
+// Ashen Vow — Misery, the "guide". A small lavender fairy who follows the
 // knight, offers advice that is mostly bad, and is waiting to watch him die.
 // ---------------------------------------------------------------------------
 G.FAIRY = {
   intro: [
-    ['Wist', 'Oh! A live one. And so shiny. What do they call you? ...Nothing? A Long Battalion boy. How delicious. No name to carve on the stone.'],
-    ['Wist', 'I am Wist. I guide lost knights along the gallows road. I have guided ever so many.'],
+    ['Misery', 'Oh! A live one. And so shiny. What do they call you? ...Nothing? A Long Battalion boy. How delicious. No name to carve on the stone.'],
+    ['Misery', 'I am Misery. Someone named me that a long time ago, and I have grown into it. I guide lost knights along the gallows road. I have guided ever so many.'],
     ['Knight', 'Where are they now?'],
-    ['Wist', 'Oh, here and there. Mostly there. Under things.'],
-    ['Wist', 'Walk on, ser knight. I shall be right behind you. I would not miss it for the world.'],
+    ['Misery', 'Oh, here and there. Mostly there. Under things.'],
+    ['Misery', 'Walk on, ser knight. I shall be right behind you. I would not miss it for the world.'],
   ],
-  boss: [['Wist', 'Ooh, this one. I have such hopes for this one. Do stand nice and still for him.']],
-  choice: [['Wist', 'Give it, keep it — I do not mind. Only hurry up and die of something. I have been so patient.']],
+  boss: [['Misery', 'Ooh, this one. I have such hopes for this one. Do stand nice and still for him.']],
+  choice: [['Misery', 'Give it, keep it — I do not mind. Only hurry up and die of something. I have been so patient.']],
   idle: [
     'Rolling is undignified. A real knight stands and takes it.',
     'Save your flasks. You will want them later. Much later.',
@@ -80,13 +80,14 @@ G.Fairy = class {
     let tx = p.x - p.facing * (fight ? 96 : 50), ty = gy - (fight ? 168 : 118);
     // left standing long enough, the knight becomes a chair
     const perch = (g.idleFor || 0) > 6 && !fight && !p.dead && p.headPos;
-    if (perch) { tx = p.headPos[0] - p.facing * 2; ty = p.headPos[1] - 20; }
+    if (perch) { tx = p.headPos[0] + p.facing * 2; ty = p.headPos[1] - 22; }   // on the crown of the helm, in front of the plume
     else if (p.dead) { tx = p.x + 26; ty = gy - 52; }
     if (!perch) { tx += Math.sin(this.t * 0.9) * 10; ty += Math.sin(this.t * 2.3) * 7; }
     const k = Math.min(1, dt * (p.dead ? 1.6 : perch ? 4 : 3.2));
     const wasSitting = this.sitting; this.sitting = !!perch && Math.hypot(tx - this.x, ty - this.y) < 6;
     if (this.sitting && !wasSitting && !this.say && Math.random() < 0.6) this.sayLine(G.pick(G.FAIRY.perch));
-    if (this.sitting) { this.x = tx; this.y = ty; this.facing = p.facing; }
+    this.sitT = this.sitting ? (this.sitT || 0) + dt : 0;
+    if (this.sitting) { this.x = tx; this.y = ty + (this.sitT < 0.1 ? -4 : this.sitT < 0.22 ? 2 : 0); this.facing = p.facing; }   // a little hop as she lands
     if (!this.sitting) { this.x += (tx - this.x) * k; this.y += (ty - this.y) * k; if (Math.abs(p.x - this.x) > 4) this.facing = p.x > this.x ? 1 : -1; }
     // dust falling from her wings
     if (Math.random() < dt * 14) this.motes.push({ x: this.x + G.rand(-12, 12), y: this.y + G.rand(-8, 10), t: 0 });
@@ -111,14 +112,14 @@ G.Fairy = class {
     const t = this.t, glee = this.glee > 0 || g.player.dead;
     // motes
     for (const m of this.motes) { ctx.fillStyle = `rgba(214,190,255,${0.8 * (1 - m.t / 1.1)})`; ctx.fillRect(Math.round(m.x / 2) * 2, Math.round(m.y / 2) * 2, 2, 2); }
-    G.drawWist(ctx, this.x, this.y, this.facing, t, glee, this.near, this.sitting);
+    G.drawMisery(ctx, this.x, this.y, this.facing, t, glee, this.near, this.sitting && this.sitT > 0.1);
     // speech bubble
     if (this.say) {
       ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left';
       const words = this.say.split(' '), lines = [''];
       for (const w of words) { const l = lines[lines.length - 1]; if (ctx.measureText(l + ' ' + w).width > 200 && l) lines.push(w); else lines[lines.length - 1] = l ? l + ' ' + w : w; }
       const w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 18, h = lines.length * 16 + 10;
-      const bx = G.clamp(this.x - w / 2, g.cam + 8, g.cam + G.W - w - 8), by = Math.max(8, this.y - 50 - h);
+      const bx = G.clamp(this.x - w / 2, g.cam + 8, g.cam + G.W - w - 8), by = Math.max(8, this.y - 34 - h);
       ctx.globalAlpha = G.clamp(this.sayT * 3, 0, 1);
       ctx.fillStyle = 'rgba(14,8,22,0.88)'; ctx.fillRect(bx, by, w, h); ctx.strokeStyle = '#7a5fb0'; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, by + 0.5, w, h);
       ctx.fillStyle = '#d8c6ff'; lines.forEach((l, i) => ctx.fillText(l, bx + 9, by + 18 + i * 16));

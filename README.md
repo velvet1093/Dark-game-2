@@ -96,7 +96,7 @@ Each tool is also needed once on the main path, so none of them can be skipped:
 - **A collapsed wall** blocks the lane through Hollowmere; it takes the double jump.
 - **A red veil** chokes the hill path at the end of Hollowmere; it takes the lantern, found on a ledge just before it.
 
-**Wist notices them.** If an icon is still hidden in the area, she lets something slip every minute or two: only a direction from far away, and what is in the way when you are close. The motes around her turn gold when one is near. She says so once when an area is cleared out.
+**Misery notices them.** If an icon is still hidden in the area, she lets something slip every minute or two: only a direction from far away, and what is in the way when you are close. The motes around her turn gold when one is near. She says so once when an area is cleared out.
 
 ## Buildings
 
@@ -111,7 +111,7 @@ Six buildings can be entered. Walk up to the door and press the interact key. Th
 | Hollowmere | The Old Mill | your family's home, still turning; Ysolde's ledger; an icon in the loft |
 | Cathedral | The Sacristy | the Bishop's seven knives, two guards, a reliquary and an icon |
 
-Wist counts icons behind a door when she hints, and tells you when one is indoors.
+Misery counts icons behind a door when she hints, and tells you when one is indoors.
 
 ## Trade in Brannoc's Hold
 
@@ -160,7 +160,7 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 | Pale Reaper | tall, wide scythe sweeps |
 | **Ser Garrick, the Oathkeeper** | the last boss |
 
-## Wist
+## Misery
 
 A small lavender fairy with white hair follows you as your "guide". She glows faintly and lights the dark around her, and if you stand still long enough she sits on your helm. She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
 
@@ -181,8 +181,8 @@ Progress saves at vigil candles (browser local storage).
 | `js/engine.js` | input, blood / gib particles |
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/interiors.js` | the buildings you can enter: rooms, furniture and street fronts |
-| `js/fairy.js` | Wist: lines, behaviour and drawing |
-| `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Wist |
+| `js/fairy.js` | Misery: lines, behaviour and drawing |
+| `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
 | `js/chibi.js` | chibi pixel sprites for every humanoid, pixel gibs, and the vector-to-pixel helper |
 | `js/npc.js` | villagers: fighting, fleeing, dying |
 | `js/quests.js` | quest definitions and the quest log |

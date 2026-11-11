@@ -161,7 +161,7 @@
       return { x: it.x, y: y - 40, label: 'Gather the white lily', fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, 'White lily', '#efeaf2', 13); }) };
     },
     iconTotal() { return G.LEVELS.concat(Object.values(G.INTERIORS)).reduce((n, l) => n + (l.items || []).filter(it => it.icon).length, 0); },
-    // Icons still to be found in the area the knight is in (Wist hints at these).
+    // Icons still to be found in the area the knight is in (Misery hints at these).
     iconsHere() {
       const key = this.lvKey(), out = (this.level.items || []).map((it, i) => ({ it, i })).filter(o => o.it.icon && !this.flags['item_' + key + '_' + o.i]).map(o => o.it);
       if (!this.inside) for (const d of this.level.doors || []) (G.INTERIORS[d.to].items || []).forEach((it, i) => { if (it.icon && !this.flags['item_in_' + d.to + '_' + i]) out.push({ x: d.x, alt: 0, gate: 'inside' }); });   // icons behind a door count, hinted at the door
@@ -325,7 +325,7 @@
       if (!p.dead && p.hp < p.maxHp * 0.35 && (this.heartT -= dt) <= 0) { this.heartT = 0.85; G.sfx('heart'); }
 
       // the Oathkeeper's door
-      for (const [i, k] of (L.gates || []).entries()) {   // Wist cannot resist remarking on a way you cannot take
+      for (const [i, k] of (L.gates || []).entries()) {   // Misery cannot resist remarking on a way you cannot take
         if (!this.toldGate[i] && !this.gateOpen(i) && !this.hasTool(k.need) && Math.abs(p.x - k.x) < 170) { this.toldGate[i] = 1; this.fairy.cd = 0; this.fairy.sayLine(k.wist); }
       }
       if (this.boss && this.boss.dormant && !p.dead && p.x > L.boss.gate + 70) {
@@ -355,8 +355,8 @@
       if (this.inside) G.drawInterior(ctx, L, cam, t); else G.drawBackdrop(ctx, L, cam, t);
       ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.drawFx(ctx, 'ground'); ctx.restore();
       if (!this.inside) G.drawFog(ctx, L, cam, t);
-      {   // Wist gives off a little light of her own, more of it indoors
-        const f = this.fairy, lx = f.x - cam, ly = f.y, r = this.inside ? 210 : 170, glee = f.glee > 0 || p.dead, lg = ctx.createRadialGradient(lx, ly, 4, lx, ly, r);
+      {   // Misery gives off a little light of her own, more of it indoors
+        const f = this.fairy, lx = f.x - cam, ly = f.y, r = this.inside ? 165 : 130, glee = f.glee > 0 || p.dead, lg = ctx.createRadialGradient(lx, ly, 4, lx, ly, r);
         lg.addColorStop(0, glee ? 'rgba(150,70,110,0.34)' : this.inside ? 'rgba(130,105,190,0.36)' : 'rgba(115,90,170,0.28)'); lg.addColorStop(0.45, glee ? 'rgba(80,30,60,0.12)' : 'rgba(70,55,115,0.12)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lg; ctx.fillRect(lx - r, ly - r, r * 2, r * 2); ctx.restore();
       }
@@ -379,7 +379,7 @@
         ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, px, by);
       }
       ctx.restore();
-      G.drawAtmosphere(ctx, L, cam, t, { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: this.inside ? 190 : 150 }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
+      G.drawAtmosphere(ctx, L, cam, t, { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: this.inside ? 150 : 115 }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);

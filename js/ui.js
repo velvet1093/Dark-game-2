@@ -104,7 +104,7 @@
         clearInterval(timer);
         if (i >= lines.length) { this.clear(); if (done) done(); return; }
         const [who, text] = lines[i++]; full = text; shown = 0;
-        const wist = who === 'Wist'; let n = 0;
+        const wist = who === 'Misery'; let n = 0;
         if (wist) G.sfx('chime');
         this.show(`<div class="dialogue${wist ? ' wist' : ''}"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ ${esc(G.keyName('use'))}</div></div>`, next);
         const t = el().querySelector('.txt');
@@ -180,7 +180,7 @@
       this.grace = 1.2;
     },
     death(lost, done, quote, n, turned) {
-      const wist = quote ? `<div class="wistq">“${esc(quote)}”<br><small>— Wist has watched you die ${n === 1 ? 'once' : n + ' times'}.</small></div>` : '';
+      const wist = quote ? `<div class="wistq">“${esc(quote)}”<br><small>— Misery has watched you die ${n === 1 ? 'once' : n + ' times'}.</small></div>` : '';
       this.show(`<div class="screen dim"><h1 style="font-size:3em${turned ? ';color:#c04ad0' : ''}">${turned ? 'TURNED' : 'UNMADE'}</h1><div class="sub">${turned ? 'The infection took you. ' : ''}${lost ? `${lost} ichor lies where you fell.` : 'The vow remains.'}</div>${wist}<div class="hint">press ${esc(G.keyName('use'))} / Enter / tap</div></div>`, () => { this.clear(); done(); });
     },
   };

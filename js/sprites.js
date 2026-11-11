@@ -1,7 +1,7 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // Ashen Vow — hand-placed pixel sprites for everything that is not a person:
-// the carrion hound, the gallows crow and Wist the fairy. Each is drawn on the
+// the carrion hound, the gallows crow and Misery the fairy. Each is drawn on the
 // shared sprite grid (G.spr), outlined, and shown at twice size.
 // ---------------------------------------------------------------------------
 (() => {
@@ -89,55 +89,54 @@
 
   G.drawBeast = (ctx, e, time) => (e.def.model === 'hound' ? hound : crow)(ctx, e, time);
 
-  // ------------------------------- Wist ------------------------------------
+  // ------------------------------ Misery -----------------------------------
+  // About twenty sprite pixels tall: a small thing, next to the knight.
   const LV = { b: '#b79be8', s: '#8a6ad0', l: '#e3d6ff' }, HR = { b: '#f3f0fa', s: '#c6bedb', l: '#ffffff' }, DR = { b: '#2a1838', s: '#170c22', l: '#4a3260' }, SKN = { b: '#f4e8ec', s: '#d6bfca' };
-  G.drawWist = (ctx, x, y, facing, t, glee, near, sit) => {
-    const { R, E, line } = G.spr.open(64, 60), up = sit ? Math.sin(t * 2.1) > 0.97 : Math.floor(t * 13) % 2 === 0, sway = Math.round(Math.sin(t * 2.6) * 1.2);
-    // four long wings, folded down behind her when she sits
-    if (sit) for (const s of [-1, 1]) {
-      const ty = up ? -14 : -2; line(s * 3, -5, s * 13, ty, LV.b, 4); line(s * 4, -6, s * 13, ty, LV.l, 1); line(s * 3, 0, s * 9, 10, LV.s, 3);
+  G.drawMisery = (ctx, x, y, facing, t, glee, near, sit) => {
+    const { R, E, line } = G.spr.open(64, 60), sway = Math.round(Math.sin(t * 2.6) * 0.7);
+    const stretch = sit && (t % 7) < 0.6;                                    // now and then she stretches her wings
+    const up = sit ? stretch : Math.floor(t * 13) % 2 === 0;
+    // four wings: fluttering in flight, folded down her back when she sits
+    for (const sd of [-1, 1]) {
+      if (sit && !stretch) { line(sd, -3, sd * 6, 0, LV.b, 2); line(sd, -3, sd * 6, -1, LV.l, 1); line(sd, -1, sd * 4, 3, LV.s, 1); }
+      else { const ty = up ? -10 : -6; line(sd, -3, sd * 10, ty, LV.b, 2); line(sd, -4, sd * 10, ty, LV.l, 1); R(sd * 10, ty, 1, 1, LV.l); line(sd, 0, sd * 7, up ? 2 : 5, LV.s, 2); }
     }
-    else for (const s of [-1, 1]) {
-      const tx = s * 19, ty = up ? -19 : -11, lx = s * 14, ly = up ? 4 : 10;
-      line(s * 3, -5, tx, ty, LV.b, 4); line(s * 5, -5, tx - s * 2, ty + 3, LV.b, 3); line(s * 4, -6, tx, ty, LV.l, 1); R(tx - 1, ty - 1, 2, 2, LV.l);
-      line(s * 3, 0, lx, ly, LV.s, 3); line(s * 4, 0, lx, ly, LV.b, 1);
-    }
-    // long white hair behind
-    for (let i = 0; i < 20; i++) R(-6 + (i > 12 ? Math.round((i - 12) * 0.5) : 0) + (i > 8 ? sway : 0), -9 + i, 12 - (i > 12 ? i - 12 : 0), 1, i > 14 ? HR.s : HR.b);
-    R(-6, -6, 1, 12, HR.s);
-    // legs: one tucked in flight; both dangling and swinging when she sits
-    if (sit) { const kk = Math.round(Math.sin(t * 3.4) * 1.5), kk2 = Math.round(Math.sin(t * 3.4 + 1.6) * 1.5); R(-3, 8, 2, 4 + kk, SKN.b); R(-3, 12 + kk, 3, 1, DR.s); R(2, 8, 2, 4 + kk2, SKN.s); R(2, 12 + kk2, 3, 1, DR.s); }
-    else { R(-2, 7, 2, 4, SKN.b); R(-2, 11, 2, 1, DR.s); R(1, 7, 2, 2, SKN.s); R(2, 9, 2, 1, DR.s); }
-    // arms in dark sleeves, spread wide
-    line(-3, 0, -8, up ? 0 : 1, DR.b, 2); R(-10, up ? -1 : 0, 2, 2, SKN.b); line(3, 0, 8, up ? -2 : -1, DR.b, 2); R(9, up ? -3 : -2, 2, 2, SKN.b);
-    // plum gown, lavender sash and hem
-    R(-3, -2, 6, 5, DR.b); R(-3, -2, 1, 5, DR.s); R(2, -1, 1, 3, DR.l);
-    for (let i = 0; i < 5; i++) { R(-3 - i, 3 + i, 7 + 2 * i, 1, DR.b); R(-3 - i, 3 + i, 2, 1, DR.s); if (i % 2) R(1 + i, 3 + i, 1, 1, DR.l); }
-    for (let k = -7; k <= 7; k++) R(k, 8, 1, 1, (k & 1) ? LV.b : LV.l);
-    R(-3, 2, 6, 1, LV.s); R(-1, -2, 2, 1, LV.b);
-    // head, pointed ears, fringe, stray strands
-    E(0, -9, 6, 6, SKN.b); R(-6, -9, 1, 4, SKN.s); R(-3, -4, 6, 1, SKN.s);
-    R(-9, -11, 3, 1, SKN.b); R(-10, -12, 2, 1, SKN.b); R(7, -11, 3, 1, SKN.b); R(9, -12, 2, 1, SKN.s);
-    R(-6, -14, 13, 4, HR.b); for (let k = -6; k <= 6; k += 2) R(k, -10, 1, 1 + ((k / 2) & 1), HR.b);
-    R(-7, -11, 2, 8, HR.b); R(6, -11, 2, 7, HR.s); R(-2, -13, 5, 1, HR.l);
-    line(-2, -15, -6, -20, HR.b, 1); line(-6, -20, -10, -18, HR.b, 1); line(2, -15, 6, -21, HR.b, 1); line(6, -21, 11, -19, HR.b, 1);
-    // black lace headdress with lavender ribbons
-    R(-5, -16, 11, 2, '#1c1026'); for (let k = -5; k <= 5; k += 2) R(k, -17, 1, 1, '#1c1026'); R(-8, -15, 2, 3, LV.b); R(7, -15, 2, 3, LV.b); R(-8, -15, 1, 1, LV.l); R(7, -15, 1, 1, LV.l);
-    // face: sweet until something bleeds
-    if (glee) {
-      R(-4, -9, 3, 2, '#e0122a'); R(2, -9, 3, 2, '#e0122a'); R(-3, -9, 1, 1, '#ffb0b0'); R(3, -9, 1, 1, '#ffb0b0');
-      R(-4, -11, 1, 1, '#3a1020'); R(-3, -10, 2, 1, '#3a1020'); R(4, -11, 1, 1, '#3a1020'); R(2, -10, 2, 1, '#3a1020');
-      R(-3, -6, 7, 1, '#5a1030'); R(-2, -5, 5, 1, '#5a1030'); R(-2, -6, 5, 1, '#ffffff');
-    } else {
-      for (const ex of [-3, 2]) { R(ex, -9, 2, 3, '#6a48b8'); R(ex, -9, 2, 1, '#2a1c48'); R(ex, -8, 1, 1, '#ffffff'); }
-      R(-5, -6, 2, 1, '#eaa3b3'); R(4, -6, 2, 1, '#eaa3b3'); R(0, -5, 1, 1, '#a85a72');
-    }
+    // white hair falling behind
+    for (let i = 0; i < 12; i++) R(-4 + (i > 6 ? sway : 0), -7 + i, 7 - (i > 8 ? i - 8 : 0), 1, i > 9 ? HR.s : HR.b);
+    // legs: tucked in flight; sitting, they hang over the front of the helm and swing
+    if (sit) {
+      const k1 = Math.sin(t * 3.4) > 0 ? 1 : 0, k2 = Math.sin(t * 3.4 + 2.2) > 0 ? 1 : 0;
+      R(1, 3, 3, 1, SKN.s); R(4, 3, 1, 2 + k1, SKN.b); R(4, 5 + k1, 2, 1, DR.s); R(3, 4, 1, 1 + k2, SKN.s); R(3, 5 + k2, 1, 1, DR.s);
+    } else { R(-1, 4, 1, 2, SKN.b); R(-1, 6, 1, 1, DR.s); R(1, 4, 1, 1, SKN.s); R(2, 5, 1, 1, DR.s); }
+    // gown, sash and hem
+    R(-1, -3, 3, 2, DR.b); R(-1, -2, 3, 1, LV.s);
+    for (let i = 0; i < 4; i++) { R(-1 - i, -1 + i, 3 + 2 * i, 1, DR.b); R(-1 - i, -1 + i, 1, 1, DR.s); }
+    for (let k = -4; k <= 4; k++) R(k, 3, 1, 1, (k & 1) ? LV.b : LV.l);
+    // arms: spread in flight; sitting, one hand on her knee and one braced on the helm behind
+    if (sit) { line(1, -2, 3, 1, DR.b, 1); R(3, 1, 1, 1, SKN.b); line(-1, -2, -3, 1, DR.b, 1); R(-4, 2, 1, 1, SKN.s); }
+    else { line(-1, -2, -4, up ? -2 : -1, DR.b, 1); R(-5, up ? -3 : -2, 1, 1, SKN.b); line(1, -2, 4, up ? -3 : -2, DR.b, 1); R(5, up ? -4 : -3, 1, 1, SKN.b); }
+    // head: pointed ears, fringe, the black lace band and its ribbons, two stray strands
+    E(0, -6, 3, 3, SKN.b); R(-3, -5, 1, 2, SKN.s);
+    R(-5, -7, 2, 1, SKN.b); R(4, -7, 2, 1, SKN.s);
+    R(-3, -10, 7, 2, HR.b); R(-3, -8, 1, 1, HR.b); R(-1, -8, 1, 1, HR.b); R(1, -8, 1, 1, HR.b); R(3, -8, 1, 1, HR.b); R(-4, -9, 1, 5, HR.b); R(3, -9, 1, 4, HR.s); R(-1, -10, 2, 1, HR.l);
+    R(-3, -11, 7, 1, '#1c1026'); R(-5, -10, 1, 2, LV.b); R(5, -10, 1, 2, LV.b);
+    R(-2, -12, 1, 1, HR.b); R(-3, -13, 1, 1, HR.b); R(2, -12, 1, 1, HR.b); R(3, -13, 1, 1, HR.b);
+    // face: sweet until something bleeds. Sitting, her eyes wander.
+    const look = sit ? (Math.sin(t * 0.7) > 0.55 ? 1 : Math.sin(t * 0.7) < -0.55 ? -1 : 0) : 0, blink = Math.sin(t * 1.3) > 0.97;
+    if (glee) { R(-2, -6, 1, 1, '#e0122a'); R(1, -6, 1, 1, '#e0122a'); R(-1, -4, 3, 1, '#5a1030'); }
+    else if (blink) { R(-2 + look, -5, 1, 1, '#2a1c48'); R(1 + look, -5, 1, 1, '#2a1c48'); }
+    else { R(-2 + look, -6, 1, 2, '#6a48b8'); R(1 + look, -6, 1, 2, '#6a48b8'); R(-3, -4, 1, 1, '#eaa3b3'); R(2, -4, 1, 1, '#eaa3b3'); }
     G.spr.close(ctx, x, y, { facing });
-    // a few motes of light around her instead of a soft glow
-    for (let i = 0; i < 5; i++) {
-      const a = t * 1.3 + i * 1.257, r = 30 + Math.sin(t * 2 + i) * 6;
-      ctx.fillStyle = glee ? 'rgba(255,120,150,0.8)' : near ? 'rgba(240,205,120,0.95)' : 'rgba(214,190,255,0.8)';   // her motes turn gold near something hidden
+    // motes of light circling her: gold near something hidden, pink when she gloats
+    for (let i = 0; i < 4; i++) {
+      const a = t * 1.3 + i * 1.57, r = 18 + Math.sin(t * 2 + i) * 4;
+      ctx.fillStyle = glee ? 'rgba(255,120,150,0.8)' : near ? 'rgba(240,205,120,0.95)' : 'rgba(214,190,255,0.8)';
       if (Math.sin(t * 5 + i * 2.1) > -0.2) ctx.fillRect(Math.round((x + Math.cos(a) * r) / 2) * 2, Math.round((y + Math.sin(a) * r * 0.7) / 2) * 2, 2, 2);
+    }
+    // sitting, she hums: little notes drift up and fade
+    if (sit && Math.sin(t * 0.45) > -0.2) for (let k = 0; k < 2; k++) {
+      const ph = (t * 0.45 + k * 0.5) % 1, nx = Math.round((x + facing * (8 + ph * 12)) / 2) * 2, ny = Math.round((y - 18 - ph * 30) / 2) * 2;
+      ctx.fillStyle = `rgba(214,190,255,${0.85 * (1 - ph)})`; ctx.fillRect(nx, ny + 6, 4, 2); ctx.fillRect(nx + 2, ny, 2, 6); ctx.fillRect(nx + 4, ny, 2, 2);
     }
   };
 })();

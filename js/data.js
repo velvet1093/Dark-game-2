@@ -318,10 +318,10 @@ G.LEVELS = [
     boss: {
       type: 'hangman', gate: 3420, x: 3760, end: 3990,
       intro: [
-        ['Wist', 'Oh, him! Gaunt. He hanged forty in a day once — I counted. Then his eyes went, and he simply kept going.'],
-        ['Wist', 'He cannot speak any more. He does not need to. Do go and say hello.'],
+        ['Misery', 'Oh, him! Gaunt. He hanged forty in a day once — I counted. Then his eyes went, and he simply kept going.'],
+        ['Misery', 'He cannot speak any more. He does not need to. Do go and say hello.'],
       ],
-      retry: [['Wist', 'Again! He does so enjoy you.']],
+      retry: [['Misery', 'Again! He does so enjoy you.']],
       lastWords: [['Knight', 'Kneel, headsman. The road is closed.']],
     },
     exit: { x: 6200, label: "Enter Brannoc's Hold" },
@@ -475,10 +475,10 @@ G.LEVELS = [
     boss: {
       type: 'matron', grants: 'dj', gate: 4820, x: 5080, end: 5290,
       intro: [
-        ['Wist', 'Mind your step. That one was the fen midwife. She still tries to hold things.'],
-        ['Wist', 'And she still calls her dogs. Such a full house!'],
+        ['Misery', 'Mind your step. That one was the fen midwife. She still tries to hold things.'],
+        ['Misery', 'And she still calls her dogs. Such a full house!'],
       ],
-      retry: [['Wist', 'She missed you. Go on, she is waiting.']],
+      retry: [['Misery', 'She missed you. Go on, she is waiting.']],
       lastWords: [['Knight', 'Whoever you were — it is over now.']],
     },
     exit: { x: 6100, label: 'Enter Hollowmere' },
