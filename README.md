@@ -82,10 +82,10 @@ Five **side areas** branch off the main road. Neither is needed to finish the ga
 
 | Side area | Way in | Needs | |
 | --- | --- | --- | --- |
-| The Wreck of the Sun | a cliff path near the start of the Gallows Road | Wind-Step Greaves | the Long Battalion's ship, run aground in the shallows. Drowned deckhands and knights of your own battalion, the Bosun who rowed you home, the ship's log, and the battalion roll with your name torn out of it. Boss: **the Standard-Bearer**, who still guards the colours at the stern |
+| The Wreck of the Sun | a cliff path near the start of the Gallows Road | Moth Wings | the Long Battalion's ship, run aground in the shallows. Drowned deckhands and knights of your own battalion, the Bosun who rowed you home, the ship's log, and the battalion roll with your name torn out of it. Boss: **the Standard-Bearer**, who still guards the colours at the stern |
 | The Lily Convent | a chained causeway in the middle of the Weeping Fen | Headsman's Greataxe | the mother house of the Sisters, on an island of lilies. Weeping Novices, Sister Petra (she cleanses), the Rule of the House and the infirmary tally. Boss: **Abbess Severine, the Lily Rotted**, who drank the wash-water so her Sisters would not have to |
-| The Pilgrims' Pass | a goat path near Hollowmere's third candle | Wind-Step Greaves | a snowbound mountain road to the Windcallers' monastery, swept by **gusts that push you back down it** (see below). Frozen Pilgrims, White Wolves and Cairn Wardens; Sigrun the Guide, Bram the Woodcutter (who fights beside you) and Brother Aldous. Boss: **Brother Hask, the Windcaller** |
-| The Gloamwater | an old causeway east out of the Weeping Fen, past where the Matron fell | Lily Lantern | a drowned mire where the sickness first came up out of the ground. **Slowing water** (see below), boardwalks on stilts, Bloodflies, Weeping Moths and the Mire-Drowned; Osk the Ferryman, Hagge Wren the Mire-Wife, and Ser Pell of the Long Battalion. Boss: **the Lamplight Mother** |
+| The Pilgrims' Pass | a goat path near Hollowmere's third candle | Moth Wings | a snowbound mountain road to the Windcallers' monastery, swept by **gusts that push you back down it** (see below). Frozen Pilgrims, White Wolves and Cairn Wardens; Sigrun the Guide, Bram the Woodcutter (who fights beside you) and Brother Aldous. Boss: **Brother Hask, the Windcaller** |
+| The Gloamwater | an old causeway east out of the Weeping Fen, past where the Matron fell | nothing: and you must go, for the wings | a drowned mire where the sickness first came up out of the ground. **Slowing water** (see below), boardwalks on stilts, Bloodflies, Weeping Moths and the Mire-Drowned; Osk the Ferryman, Hagge Wren the Mire-Wife, and Ser Pell of the Long Battalion. Boss: **the Lamplight Mother** |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
@@ -99,7 +99,7 @@ Not all of them can be reached when you first see them. Three tools open the way
 | Tool | Found | Opens |
 | --- | --- | --- |
 | Headsman's Greataxe | dropped by Gaunt on the Gallows Road | **barred niches**: break the bars |
-| Wind-Step Greaves | dropped by the Drowned Matron in the fen | a **second jump in mid-air**, enough to reach the lone high ledges |
+| Moth Wings | torn from the Lamplight Mother in the Gloamwater, east of the fen | a **second jump in mid-air**, and a **glide**: hold jump while falling. The wings show on your back when you use them |
 | Lily Lantern | on a ledge at the far end of Hollowmere | **red veils**: its light parts them |
 
 Each tool is also needed once on the main path, so none of them can be skipped:
@@ -314,6 +314,12 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/entities.js` | player and enemy logic (combat, limbs, bleeding, AI) |
 | `js/ui.js` | title, dialogue, notes, menus |
 | `js/game.js` | game state, level flow, HUD, main loop |
+
+## The Lamplight Mother's wings
+
+When the Lamplight Mother breaks, the first prompt is **Tear out her wings**. It always comes before the choice to execute or spare, so the wings are always yours. She drops to the mud, wingless, and her wings flutter down beside her. They give you the **Moth Wings**: a second jump in mid-air, and a **glide** (hold jump while falling, and you drift down slowly). Her wings show on your back while you glide or double-jump. If you spare her afterwards she is enraged, and fights on foot.
+
+The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen, go east before going on to Hollowmere. (The Drowned Matron no longer carries the old Wind-Step Greaves. Saves that already have the double jump keep it, glide included.)
 
 ## Execute or spare
 

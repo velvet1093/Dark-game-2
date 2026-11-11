@@ -169,7 +169,7 @@ G.ENEMIES = {
 
 // Tools that open what was shut. Each is found in one area and is needed in others.
 G.ABILITIES = {
-  dj: { name: 'Wind-Step Greaves', how: 'Jump again in mid-air. High ledges are now in reach.' },
+  dj: { name: 'Moth Wings', how: 'Jump again in mid-air, and hold jump while falling to glide. High ledges are now in reach.' },
   lantern: { name: 'Lily Lantern', how: 'Its light parts the red veils that guard some icons.' },
 };
 G.ICON_NAMES = ['The Saint at the Well', 'The Saint Washing the Dead', 'The Saint and the Miller', 'The Saint Unveiled', 'The Saint Asleep',
@@ -473,7 +473,7 @@ G.LEVELS = [
       { x: 5350, title: 'A Green Hood, Empty', text: 'Caught on the reeds. Inside the lining, stitched small:\n\nILSE MADE THIS — COME HOME' },
     ],
     boss: {
-      type: 'matron', grants: 'dj', gate: 4820, x: 5080, end: 5290,
+      type: 'matron', gate: 4820, x: 5080, end: 5290,
       intro: [
         ['Misery', 'Mind your step. That one was the fen midwife. She still tries to hold things.'],
         ['Misery', 'And she still calls her dogs. Such a full house!'],
@@ -559,8 +559,8 @@ G.LEVELS = [
       { x: 3780, title: "The Doctor's Ledger", text: 'Subject 388 wept nine days before turning.\nSubject 391: eleven.\n\nThe miller\'s girl: four hundred and six days. Still lucid. Still weeping.\n\nShe is not immune. She is the well it is drawn from. God forgive me — I told the Bishop.' },
     ],
     gates: [
-      { x: 2580, kind: 'wall', h: 128, need: 'dj', shut: 'Fallen masonry. Too high to climb', hint: 'Jump, then jump again in mid-air',
-        wist: 'A wall. You cannot fly, can you? I can. It is wonderful.' },
+      { x: 2580, kind: 'wall', h: 128, need: 'dj', shut: 'Fallen masonry. Too high to climb. Something with wings could get over', hint: 'Jump, then jump again in mid-air',
+        wist: 'A wall. You cannot fly, can you? I can. It is wonderful. ...There is a moth in the black water east of the fen with lovely big wings. Not that you would ever.' },
       { x: 6250, kind: 'veil', need: 'lantern', shut: 'A red veil. It wants a blessed light', open: 'Part the veil with the Lily Lantern',
         wist: 'Pretty, is it not? It eats people. Somebody left a lamp up on those boards behind us, but I would not bother.' },
     ],

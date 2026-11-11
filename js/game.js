@@ -36,7 +36,7 @@
       this.npcInf = s.npcInf || {}; this.weaponLv = s.weaponLv || {}; this.bought = s.bought || {};
       // saves from before Misery took gifts: a thorn for each boss already put down
       this.misery = s.misery || { thorns: Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length * 3, got: {} }; this.watchUsed = !!s.watchUsed; this.kills = s.kills || {}; this.seen = s.seen || {};
-      this.abilities = s.abilities || {}; if (this.flags.boss_matron_dead) this.abilities.dj = 1;   // saves that beat her before she carried the greaves
+      this.abilities = s.abilities || {};   // (saves that took the old Wind-Step Greaves from the Matron keep the double jump; it is the Moth Wings now)
       G.LEVELS.forEach((L, lv) => (L.gates || []).forEach((k, i) => { if (s.cp.lv > lv || (s.cp.lv === lv && s.cp.x > k.x)) this.flags[this.gateKey(i, lv)] = 1; }));   // saves already past a gate added later
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x); this.memQ = [];
       if (this.flags.boss_malvern_dead) this.remember('blessing'); if (this.flags.boss_abbess_dead) this.remember('letter'); if (this.flags.boss_windcaller_dead) this.remember('sun'); if (this.read['5:2']) this.remember('muster');
@@ -77,6 +77,7 @@
       const items = () => { for (const [i, it] of (L.items || []).entries()) { const pr = this.itemPrompt(it, i, p); if (pr) return pr; } return null; };
       for (const e of this.enemies) {
         if (e.state === 'broken' && near(e.x, 90 * e.scale) && Math.abs((e.alt || 0) - p.alt) < 30) {
+          if (e.def.boss && L.boss.wings && !e.wingless) return { x: e.x, y: G.GROUND - 105 * e.scale, label: 'Tear out her wings', hot: true, fn: () => this.tearWings(e) };   // this happens first, whatever you decide after
           const canSpare = e.def.boss && L.boss.spare && !e.enraged;
           return { x: e.x, y: G.GROUND - (e.crawling ? 50 : 105 * e.scale), label: canSpare ? 'Execute or spare' : 'Execute', hot: true, fn: () => {
             const kill = () => G.ui.dialogue(L.boss.lastWords, () => p.startExecute(e));
@@ -114,7 +115,7 @@
       for (const d of L.doors || []) if (near(d.x, 36)) return { x: d.x, y: G.GROUND - 110, label: 'Enter ' + G.INTERIORS[d.to].name, fn: () => this.enterBuilding(d) };
       if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: L.backLabel || 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
       for (const q of L.passages || []) if (near(q.x, 50)) {
-        const tool = this.hasTool(q.needs);
+        const tool = !q.needs || this.hasTool(q.needs);
         return { x: q.x, y: G.GROUND - 150, label: tool ? q.label : q.shut, fn: () => (tool ? this.travelTo(q.to, q.at, q.slides) : this.gateRefused(q)) };
       }
       return null;
@@ -359,6 +360,20 @@
       if (B.memory) this.remember(B.memory);
       this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
     },
+    // The Lamplight Mother's wings: torn out before the end, and yours from then on.
+    tearWings(e) {
+      const p = this.player, L = this.level; p.vx = 0; p.facing = e.x >= p.x ? 1 : -1;
+      G.ui.dialogue(L.boss.wingsLines, () => {
+        e.wingless = true; e.grounded = true; e.alt = 0; e.flash = 0.4;
+        const [jx, jy] = e.joint('head'), y = jy + 40;
+        G.blood(e.x - 14, y, 60, -1, 420); G.blood(e.x + 14, y, 60, 1, 420); G.decal(e.x, 14, 50);
+        G.sfx('sever'); G.sfx('scream'); G.sfx('exec'); this.shake = 16; this.hitstop = 0.16; this.slow = 0.5;
+        G.text(e.x, G.GROUND - 150, 'HER WINGS ARE TORN AWAY', '#e0222c', 20);
+        G.swamp.dropWings(this, e.x, y);
+        this.gainAbility('dj');
+        this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.wings)); this.save();
+      });
+    },
     // Mercy. Some take it and go; some cannot bear it, and get up again.
     spareBoss(e) {
       const B = this.level.boss, S = B.spare, p = this.player;
@@ -579,7 +594,7 @@
       if (L.exit) arch(L.exit.x, 'rgba(150,40,30,0.28)');
       if (this.levelIdx > 0 && !this.inside) arch(BACK_X, 'rgba(90,90,120,0.22)');
       if (!this.inside) for (const q of L.passages || []) {   // a stair going down, off the main road
-        const open = this.hasTool(q.needs);
+        const open = !q.needs || this.hasTool(q.needs);
         arch(q.x, open ? 'rgba(120,150,190,0.24)' : 'rgba(70,70,80,0.16)');
         for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? '#0d0a0c' : '#1a1416'; ctx.fillRect(q.x - 30 + k * 4, gy - 12 + k * 2, 60 - k * 8, 2); }
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(q.x - 30, gy - 130, 60, 118);

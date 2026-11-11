@@ -120,7 +120,7 @@
       E(ex, ey, 2, 2, '#efe6d6'); R(ex - 1, ey - 1, 3, 3, '#1a100c'); R(ex, ey, 1, 1, '#e0b040');                   // wing-eye
       const hx = side * 10, hy = -14 + by + (down ? 4 : 0); R(hx - 1, hy, 3, 2, '#1a100c'); R(hx, hy, 1, 1, '#ff3b2f'); // a smaller eye on the hindwing
     };
-    wing(lm.armB && lm.armB.gone, -1); wing(lm.armF && lm.armF.gone, 1);
+    wing((lm.armB && lm.armB.gone) || e.wingless, -1); wing((lm.armF && lm.armF.gone) || e.wingless, 1);
     // ---- legs: dark stockings, dangling (kneeling when down)
     if (down) { R(-6, -4, 5, 3, DR.s); R(2, -4, 5, 3, DR.s); R(-7, -2, 2, 2, '#140c12'); R(6, -2, 2, 2, '#140c12'); }
     else { const sw = Math.round(Math.sin(time * 4)); R(-3 + sw, -10, 2, 8, '#2a1e2a'); R(2 + sw, -10, 2, 7, '#2a1e2a'); R(-3 + sw, -2, 2, 1, '#140c12'); R(2 + sw, -3, 2, 1, '#140c12'); }
@@ -161,8 +161,8 @@
   G.drawBeast = (ctx, e, t) => (e.def.model === 'bloodfly' ? bloodfly : e.def.model === 'moth' ? moth : e.def.model === 'mothgirl' ? mothgirl : prev)(ctx, e, t);
 
   // ---- the way in: an old causeway east out of the fen, past where the Matron fell
-  G.LEVELS[2].passages = (G.LEVELS[2].passages || []).concat([{ x: 5400, to: LV, at: 120, needs: 'lantern', label: 'Wade east into the Gloamwater',
-    shut: 'The causeway sinks into a dark you cannot see through. You would need a light', wist: 'East? Into the black water? It is where the weeping comes from, you know. I am not supposed to tell you that.',
+  G.LEVELS[2].passages = (G.LEVELS[2].passages || []).concat([{ x: 5400, to: LV, at: 120, label: 'Wade east into the Gloamwater',
+    wist: 'East? Into the black water? It is where the weeping comes from, you know. I am not supposed to tell you that.',
     slides: ['The causeway goes under the water, and you go with it.\n\nThe fen thins into something older: drowned trees, drowned roofs, drowned bell-towers leaning in the mud.\n\nThe water is warm. It should not be warm.'] }]);
 
   // ---- the water: [x, w, deep]
@@ -223,7 +223,8 @@
       { x: 2940, w: 170, h: 50 }, { x: 3180, w: 90, h: 72 }, { x: 3250, w: 100, h: 120 }, { x: 3820, w: 150, h: 60 }, { x: 4440, w: 160, h: 50 }, { x: 5110, w: 110, h: 60 }],
     pits: [{ x: 2790, w: 70 }],
     boss: {
-      type: 'mothmother', gate: 5450, x: 5680, end: 5860,
+      type: 'mothmother', gate: 5450, x: 5680, end: 5860, wings: true,
+      wingsLines: [['Misery', 'Her wings. Corin. Knight. Whoever you are. Take her WINGS.'], ['The Lamplight Mother', '...no... no, not the wings... Mother needs them for the light...'], ['Knight', 'You will not need them now.']],
       intro: [
         ['Misery', 'Oh. Oh no. She is looking at me. Why is she looking at ME?'],
         ['The Lamplight Mother', '...light... little light... come to Mother...'],
@@ -255,10 +256,33 @@
     ],
   };
 
+  // ---- moth wings: on the knight's back when he double-jumps or glides, and the torn pair fluttering down
+  const MW = { b: '#8a6478', s: '#5a3c4e', band: '#d8c4b4', edge: '#3a2432' };
+  const px = (ctx, x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, w * 2, h * 2); };
+  // one wing from the shoulder (x, y), swept back (dir = which way the body faces) and up; open 0..1
+  const wingShape = (ctx, x, y, dir, slope, far, t, span = 22) => {   // slope: how steeply the forewing rises (0 = straight out behind)
+    for (let i = 0; i <= span; i++) {
+      const k = i / span, cx = x - dir * i * 2, mid = -Math.round(i * slope), half = Math.max(1, Math.round(7 * Math.sin(Math.PI * Math.min(1, k * 1.05))));
+      px(ctx, cx, y + (mid - half) * 2, 1, half * 2 + 1, far ? MW.s : MW.b);
+      px(ctx, cx, y + (mid - half) * 2, 1, 1, MW.edge); px(ctx, cx, y + (mid + half) * 2, 1, 1, MW.edge);
+      if (!far && i > 2 && i < span - 1) px(ctx, cx, y + (mid + Math.round(half * 0.2)) * 2, 1, 1, MW.band);   // the pale band
+      if (i > 0 && i < 13) { const hk = i / 13, ht = mid + half, hb = Math.round(4 + 9 * Math.sin(Math.PI * hk)) - Math.round(i * slope * 0.25);   // hindwing below
+        if (hb > ht) { px(ctx, cx, y + ht * 2, 1, hb - ht, far ? MW.edge : MW.s); px(ctx, cx, y + hb * 2, 1, 1, MW.edge); } }
+    }
+    if (!far) { const ei = 12, ex = x - dir * ei * 2, ey = y - Math.round(ei * slope) * 2; px(ctx, ex - 2, ey - 2, 3, 3, '#1a100c'); px(ctx, ex, ey, 1, 1, '#e0b040'); px(ctx, ex - 2, ey - 2, 1, 1, '#efe6d6'); }   // the eye on the wing
+  };
+  // gliding: held out wide and nearly flat, trembling; double jump (k 1 -> 0): one hard downward beat
+  G.drawPlayerWings = (ctx, x, y, facing, k, t, glide) => {
+    const slope = glide ? 0.42 + Math.sin(t * 18) * 0.03 : -0.25 + k * 1.35;
+    wingShape(ctx, x + facing * 4, y - 6, facing, slope + 0.3, true, t + 0.3);   // the far wing, a little higher
+    wingShape(ctx, x, y, facing, slope, false, t);
+  };
+  const fallen = [];
   // ---- slowing water
   const inWater = (L, x) => (L.waters || []).find(w => x > w.x && x < w.x + w.w);
   G.swamp = {
     inWater,
+    dropWings(g, x, y) { fallen.length = 0; for (const d of [-1, 1]) fallen.push({ x: x + d * 10, y, vx: d * 90, vy: -120, dir: d, t: 0, lv: g.levelIdx }); },
     afterPlayer(g, px0, wasAir, dt) {
       const p = g.player, L = g.level, w = !g.inside && inWater(L, p.x), un = G.unfair();
       if (!w || p.dead) { g.wadeT = 0; return; }
@@ -288,6 +312,11 @@
     // the near lip of the water, over feet, paws and the hems of robes
     drawFront(ctx, g, t) {
       const gy = G.GROUND;
+      for (const w of fallen) {   // the torn wings, fluttering down to lie in the mud
+        if (w.lv !== g.levelIdx) continue;
+        if (w.y < gy - 6) { w.t += 1 / 60; w.vy += 260 / 60; w.vy = Math.min(w.vy, 60); w.vx *= 0.97; w.x += w.vx / 60 + Math.sin(w.t * 6) * 0.8; w.y += w.vy / 60; }
+        wingShape(ctx, w.x, w.y, w.dir, w.y < gy - 6 ? 0.5 + Math.sin(w.t * 9) * 0.35 : 0.08, false, 0, 18);
+      }
       g.splashes = (g.splashes || []).filter(sp => (sp.t += 1 / 60) < 0.5);
       for (const sp of g.splashes) { const r = 6 + sp.t * 40; ctx.fillStyle = `rgba(170,200,150,${0.6 - sp.t})`; ctx.fillRect(sp.x - r, gy - 12, 4, 2); ctx.fillRect(sp.x + r - 4, gy - 12, 4, 2); ctx.fillRect(sp.x - 2, gy - 14 - sp.t * 30, 2, 3); }
       for (const w of g.level.waters) {

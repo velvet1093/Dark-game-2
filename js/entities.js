@@ -97,8 +97,8 @@ G.Player = class {
       }
       this.vx = dir * (blocking ? 62 : 158);
       if (want('jump') && this.air && g.abilities.dj && !this.jumped2 && this.st > 0) {
-        // Wind-Step Greaves: a second jump from thin air
-        this.buf = null; this.jumped2 = true; this.st = Math.max(0, this.st - 8); this.vy = 470; G.sfx('roll'); G.sfx('chime');
+        // Moth Wings: a second jump from thin air
+        this.buf = null; this.jumped2 = true; this.wingT = 0.5; this.st = Math.max(0, this.st - 8); this.vy = 470; G.sfx('roll'); G.sfx('chime');
         for (let i = 0; i < 6; i++) G.fx.sparks.push({ x: this.x + G.rand(-12, 12), y: G.GROUND - this.alt, vx: G.rand(-60, 60), vy: G.rand(20, 120), t: 0.3 });
       } else if (want('jump') && !this.air && this.st > 0) {
         // a short hop: clears hounds and crawlers, and lets the sword reach what flies
@@ -180,7 +180,9 @@ G.Player = class {
       else if (!plats.some(pl => Math.abs(pl.h - this.alt) < 1 && this.x >= pl.x - 4 && this.x <= pl.x + pl.w + 4)) { this.air = true; this.vy = 0; }
     }
     if (this.air) {
-      const prev = this.alt; this.vy -= 1500 * dt; this.alt += this.vy * dt;
+      // gliding: falling with jump held, on the Lamplight Mother's wings
+      this.gliding = !!(g.abilities.dj && this.vy < 0 && I.down('jump') && (this.state === 'idle' || this.state === 'block') && !this.dead);
+      const prev = this.alt; this.vy -= 1500 * dt; if (this.gliding) this.vy = Math.max(this.vy, -80); this.alt += this.vy * dt;
       if (this.vy <= 0) {
         let land = -1;
         if (this.dropT <= 0) for (const pl of plats) if (this.x >= pl.x && this.x <= pl.x + pl.w && pl.h <= prev + 0.5 && pl.h >= this.alt && pl.h > land) land = pl.h;
@@ -230,6 +232,8 @@ G.Player = class {
     if (this.air && this.alt > 0) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
     const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: this.look, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
     if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
+    this.wingT = Math.max(0, (this.wingT || 0) - 1 / 60);
+    if ((this.gliding || this.wingT > 0) && this.air && G.drawPlayerWings) G.drawPlayerWings(ctx, this.x - this.facing * 6, o.y - 50, this.facing, this.wingT / 0.5, g.time, this.gliding && this.wingT <= 0);   // her wings, on your back
     G.drawHumanoid(ctx, o); this.headPos = o.out.head;
     // sword trail
     const swinging = (this.state === 'attack' && this.t >= this.atk.wind - 0.03 && this.t < this.atk.wind + this.atk.active + 0.06) || (this.state === 'execute' && this.t > 0.48 && this.t < 0.64);
@@ -515,7 +519,7 @@ G.Enemy = class {
         break;
     }
     if (this.def.fly) {
-      const s = this.state, low = this.crawling || s === 'broken' || s === 'executed' || s === 'idle';
+      const s = this.state, low = this.crawling || this.grounded || s === 'broken' || s === 'executed' || s === 'idle';
       const fa = this.def.flyAlt || 122, want = low ? 0 : s === 'strike' ? (this.def.diveAlt || 46) : s === 'windup' ? fa + 16 : s === 'stagger' ? 70 : fa + Math.sin(g.time * 2.3 + this.id) * (this.def.bob || 0);
       this.alt += (want - this.alt) * Math.min(1, dt * (s === 'strike' ? 14 : low ? 6 : 3));
     }

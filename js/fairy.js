@@ -51,6 +51,7 @@ G.FAIRY = {
   sting: ['Mine. MINE. Get your own knight.', 'Nobody kills him but the dark. Shoo.', 'Hee! Did that sting?', 'I am not helping. I am protecting my seat.', 'Not THAT one. That one is boring.', 'Hands off. I was here first.'],
   notYet: ['Not yet. Not by THEM.', 'No no no. You die when I say. Up.', 'Get up. That one did not count.'],
   gift: ['Oh, you are giving me things now? How sweet. How strange.', 'Mm. I feel sharper already. You will regret that.', 'Thorns. You brought me thorns. You do understand me.'],
+  wings: ['Oh. OH. You tore them right out. I take back every unkind thing I ever thought about you.', 'Wings! You have WINGS now! Hers! Still warm!', 'Now we can both fly. Do not get ideas. I am still the pretty one.'],
   spared: ['You let it LIVE? After all that? I am going to be sick.', 'Mercy. Ugh. Do not make a habit of it.', 'Oh, it is just WALKING AWAY. Where is the blood? Where is the ending?'],
   enraged: ['Ha! You insulted it! Look at it go!', 'Oh, you have made it ANGRY. Now this is a fight.', 'Pity is the worst thing you can give a proud thing. I should know.'],
   water: ['Ooh, warm. Like a bath somebody died in. Wade in deeper, go on.', 'The water is slow, and you are slow, and the flies are not. Lovely arithmetic.'],
