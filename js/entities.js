@@ -285,7 +285,7 @@ G.Enemy = class {
     let dmg = this.limbs.armF.gone ? 0.5 : 1, reach = this.limbs.armF.gone ? 0.7 : 1;
     if (lost === 2) { dmg = 0.35; reach = 0.55; }
     if (this.crawling) reach *= 0.85;
-    return { dmg: dmg * (this.frenzy ? 1.15 : 1), reach, speed: this.frenzy ? 0.8 : 1 };
+    return { dmg: dmg * (this.frenzy ? 1.15 : 1) * (this.enraged ? 1.3 : 1), reach, speed: (this.frenzy ? 0.8 : 1) * (this.enraged ? 0.75 : 1) };
   }
   set(state) { this.state = state; this.t = 0; }
   joint(k) {
@@ -378,6 +378,12 @@ G.Enemy = class {
 
   update(dt, g) {
     this.t += dt; this.flash -= dt; this.cd -= dt;
+    if (this.leaving) {   // spared: it turns away and is gone
+      this.leaving += dt; this.state = 'idle'; this.facing = this.x > g.player.x ? 1 : -1; this.vx = this.facing * 60; this.x += this.vx * dt;
+      if (this.def.fly) this.alt += 70 * dt;
+      if (this.leaving > 2.2) { this.dead = true; this.left = true; }
+      return;
+    }
     if (this.focus > 0) this.focus -= dt;
     if (!this.tgt || this.tgt.dead || this.state === 'idle' || this.state === 'chase') this.tgt = this.pickTarget(g);
     const p = this.tgt, dx = p.x - this.x, dist = Math.abs(dx), gy = G.GROUND;
@@ -406,6 +412,15 @@ G.Enemy = class {
     const boss = this.def.boss, m = this.mods;
     if (boss && !this.phase2 && this.hp < this.maxHp * 0.5) { this.phase2 = true; this.frenzy = true; G.text(this.x, gy - 150 * this.scale / 1.3, this.def.shout || '"I HELD THE DOOR!"', '#e0222c', 18); G.sfx('bell'); G.sfx('roar'); g.shake = 12; }
 
+    const sp = this.def.spawn;   // some bosses keep calling their kind for as long as the fight lasts
+    if (sp && boss && !this.dormant && this.hp > 0 && this.state !== 'broken' && this.state !== 'executed' && g.bossFight) {
+      this.spawnT = (this.spawnT == null ? sp.first || sp.every : this.spawnT) - dt * (this.enraged ? 1.8 : this.phase2 ? 1.3 : 1);
+      const alive = g.enemies.filter(e => e.type === sp.type && !e.dead).length;
+      if (this.spawnT <= 0) { this.spawnT = sp.every; if (alive < sp.max + (this.hard ? 1 : 0)) {
+        const side = Math.random() < 0.5 ? g.level.boss.gate + 60 : g.level.boss.end - 20, e = new G.Enemy(sp.type, side); e.alt = 200; e.set('chase'); g.enemies.push(e);
+        G.text(this.x, gy - 140 * this.scale, sp.text || 'SHE CALLS', '#e0b84a', 14); G.sfx('whoosh');
+      } }
+    }
     const sm = this.def.summon;   // some bosses call for help as their health falls
     if (sm && this.hp > 0 && this.state !== 'broken' && this.state !== 'executed' && (this.summoned || 0) < sm.at.length && this.hp < this.maxHp * sm.at[this.summoned || 0]) {
       this.summoned = (this.summoned || 0) + 1; G.sfx('roar'); G.text(this.x, gy - 170, sm.text || 'SHE CALLS HER HOUNDS', '#e0222c', 16); g.shake = 8;
@@ -562,7 +577,13 @@ G.Enemy = class {
       ctx.fillStyle = '#1a0608'; ctx.fillRect(x - 4, y - 2, 8, 22);
       ctx.fillStyle = on ? (u > 0.7 ? '#fff0e0' : '#ff3a2a') : '#7a1210'; ctx.fillRect(x - 2, y, 4, 10); ctx.fillRect(x - 2, y + 14, 4, 4);
     }
+    if (this.enraged && !this.dead) {   // humiliated: a red haze about it
+      const ay = G.GROUND - this.alt - 60 * this.scale, gr = ctx.createRadialGradient(this.x, ay, 4, this.x, ay, 110 * this.scale);
+      gr.addColorStop(0, `rgba(255,20,30,${0.6 + Math.sin(g.time * 8) * 0.15})`); gr.addColorStop(0.5, 'rgba(200,10,20,0.25)'); gr.addColorStop(1, 'rgba(220,20,30,0)'); ctx.fillStyle = gr; ctx.fillRect(this.x - 120 * this.scale, ay - 120 * this.scale, 240 * this.scale, 240 * this.scale);
+    }
+    const fade = this.leaving ? Math.max(0, 1 - this.leaving / 2.2) : 1; if (fade < 1) { ctx.save(); ctx.globalAlpha = fade; }
     if (d.model) G.drawBeast(ctx, this, g.time); else { G.drawHumanoid(ctx, o); this.out = o.out; }
+    if (fade < 1) ctx.restore();
     if (!this.dead && !d.boss && this.hp < this.maxHp && this.state !== 'executed') {
       const w = 40 * this.scale, y = G.GROUND - this.alt - (d.height || (this.crawling ? 34 : 96 * this.scale));
       ctx.fillStyle = '#000'; ctx.fillRect(this.x - w / 2 - 1, y - 1, w + 2, 5);

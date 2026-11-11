@@ -106,4 +106,19 @@
       'On your pauldron, Misery leans in close, delighted.\n\n"There," she whispers. "Now I get to watch you forever."',
     ],
   };
+
+  // ---------------------------------------------------------------------------
+  // Mercy at the end of a fight. A broken boss can be spared instead of executed.
+  // 'yield': they stop, and go. 'enrage': the humiliation is more than they can bear,
+  // and they get up again, faster and harder, and cannot be spared a second time.
+  // ---------------------------------------------------------------------------
+  const spare = (lv, kind, lines) => { G.LEVELS[lv].boss.spare = { kind, lines }; };
+  spare(0, 'enrage', [['Knight', '...'], ['Gaunt', 'You lower your blade? To ME? I hang men. I am not SPARED.'], ['Gaunt', 'Get up, he says. Get up and be pitied. No. Get up and be FED TO THE ROPE!']]);
+  spare(2, 'enrage', [['The Drowned Matron', 'You would leave me... with them? Crying in the water? Every night?'], ['The Drowned Matron', 'No. NO. If you will not end it, then I will end YOU, and we will all cry together.']]);
+  spare(5, 'yield', [['Knight', 'Stand down, brother.'], ['The Standard-Bearer', '...Stand down. Is that an order?'], ['Knight', 'It is.'], ['The Standard-Bearer', 'Then I am relieved.'], ['The Standard-Bearer', 'He lays the colours across the deck, very carefully, and walks down into the sea.']]);
+  spare(6, 'enrage', [['Malvern', 'Pity. From a nameless sword. From a NUMBER.'], ['Malvern', 'I did not ask for mercy. I gave none. I will not be the only one in this vault who received it. KNEEL!']]);
+  spare(7, 'yield', [['Abbess Severine', '...You would let me go? Unwashed?'], ['Knight', 'Wash yourself, Mother.'], ['Abbess Severine', 'Yes. Yes, I think... I think I can do that. It is the ninth hour. I will go to the font.'], ['Abbess Severine', 'Tell Petra she was right not to drink.']]);
+  spare(8, 'yield', [['Brother Hask', 'You will not throw me off my own mountain?'], ['Knight', 'Stop blowing, brother.'], ['Brother Hask', '...If I stop, it comes back up.'], ['Knight', 'Then let it. It is not yours to hold.'], ['Brother Hask', 'He unlaces his hobnailed boots, sets them in the snow beside you, and walks up into the white, barefoot.']]);
+  spare(G.LEVELS.findIndex(l => l.boss && l.boss.type === 'mothmother'), 'enrage', [['The Lamplight Mother', '...you will not... give Mother the little light?'], ['Misery', 'He will NOT.'], ['The Lamplight Mother', 'Then Mother will TAKE it! Children! CHILDREN! COME TO THE LIGHT!']]);
+  spare(4, 'yield', [['Knight', 'Enough, brother.'], ['Ser Garrick', '...You were always the soft one. Even with a sword in your hand.'], ['Ser Garrick', 'Fine. I will not get up again. Not as one of them, and not as her keeper.'], ['Ser Garrick', 'Go on. She is waiting. I will hold the door from the other side, where it cannot be opened.']]);
 })();

@@ -51,6 +51,8 @@ G.FAIRY = {
   sting: ['Mine. MINE. Get your own knight.', 'Nobody kills him but the dark. Shoo.', 'Hee! Did that sting?', 'I am not helping. I am protecting my seat.', 'Not THAT one. That one is boring.', 'Hands off. I was here first.'],
   notYet: ['Not yet. Not by THEM.', 'No no no. You die when I say. Up.', 'Get up. That one did not count.'],
   gift: ['Oh, you are giving me things now? How sweet. How strange.', 'Mm. I feel sharper already. You will regret that.', 'Thorns. You brought me thorns. You do understand me.'],
+  spared: ['You let it LIVE? After all that? I am going to be sick.', 'Mercy. Ugh. Do not make a habit of it.', 'Oh, it is just WALKING AWAY. Where is the blood? Where is the ending?'],
+  enraged: ['Ha! You insulted it! Look at it go!', 'Oh, you have made it ANGRY. Now this is a fight.', 'Pity is the worst thing you can give a proud thing. I should know.'],
   water: ['Ooh, warm. Like a bath somebody died in. Wade in deeper, go on.', 'The water is slow, and you are slow, and the flies are not. Lovely arithmetic.'],
   gust: ['Wheee! Oh, hold on to something. Not me.', 'Here it comes! Plant your feet, little leaf.', 'I weigh nothing. You weigh a great deal. Only one of us is going over the edge.', 'Behind the stone, behind the stone! Or not. I like it either way.'],
   trial: ['Oh, I LOVE this part.', 'Spikes all the way down. Do look before you leap. Or do not. Either is fun.', 'Some of those ledges are lying to you. I will not say which.', 'Go on. I will be right here. Watching.'],

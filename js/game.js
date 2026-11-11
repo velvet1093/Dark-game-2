@@ -77,8 +77,12 @@
       const items = () => { for (const [i, it] of (L.items || []).entries()) { const pr = this.itemPrompt(it, i, p); if (pr) return pr; } return null; };
       for (const e of this.enemies) {
         if (e.state === 'broken' && near(e.x, 90 * e.scale) && Math.abs((e.alt || 0) - p.alt) < 30) {
-          return { x: e.x, y: G.GROUND - (e.crawling ? 50 : 105 * e.scale), label: 'Execute', hot: true, fn: () => {
-            if (e.def.boss) { p.vx = 0; G.ui.dialogue(L.boss.lastWords, () => p.startExecute(e)); } else p.startExecute(e);
+          const canSpare = e.def.boss && L.boss.spare && !e.enraged;
+          return { x: e.x, y: G.GROUND - (e.crawling ? 50 : 105 * e.scale), label: canSpare ? 'Execute or spare' : 'Execute', hot: true, fn: () => {
+            const kill = () => G.ui.dialogue(L.boss.lastWords, () => p.startExecute(e));
+            if (!e.def.boss) p.startExecute(e);
+            else if (canSpare) { p.vx = 0; G.ui.choice(e.def.name.split(',')[0] + ' lies broken at your feet.', [{ label: 'Execute <small>— finish it</small>', fn: kill }, { label: 'Spare <small>— lower your blade</small>', fn: () => this.spareBoss(e) }]); }
+            else { p.vx = 0; kill(); }
           } };
         }
       }
@@ -346,12 +350,30 @@
       const th = e.def.boss ? 4 : 1; this.misery.thorns += th; G.text(e.x, G.GROUND - 160 * e.scale, '+' + th + ' thorn' + (th > 1 ? 's' : ''), '#b89ae0', 14);
       this.hitstop = 0.14; this.shake = 14; this.slow = 0.55; G.sfx('exec');
       G.text(e.x, G.GROUND - 130 * e.scale, 'EXECUTED', '#e0222c', 20);
-      if (e.def.boss) {
-        const B = this.level.boss; this.flags['boss_' + B.type + '_dead'] = 1; if (B.final) this.flags.bossDead = 1;
-        if (B.grants) this.gainAbility(B.grants);
-        if (B.memory) this.remember(B.memory);
-        this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
-      }
+      if (e.def.boss) this.bossDefeated();
+    },
+    // A boss put down: executed, or spared and gone. Either way the way on is open.
+    bossDefeated() {
+      const B = this.level.boss; this.flags['boss_' + B.type + '_dead'] = 1; if (B.final) this.flags.bossDead = 1;
+      if (B.grants) this.gainAbility(B.grants);
+      if (B.memory) this.remember(B.memory);
+      this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
+    },
+    // Mercy. Some take it and go; some cannot bear it, and get up again.
+    spareBoss(e) {
+      const B = this.level.boss, S = B.spare, p = this.player;
+      G.ui.dialogue(S.lines, () => {
+        if (S.kind === 'enrage') {
+          e.enraged = true; e.wasBroken = false; e.hp = e.maxHp * (S.hp || 0.45); e.phase2 = true; e.frenzy = true; e.set('chase'); e.cd = 0.2; e.flash = 0.3;
+          G.text(e.x, G.GROUND - 170 * e.scale, 'ENRAGED', '#ff2a2a', 22); G.sfx('roar'); G.sfx('bell'); this.shake = 16; p.vx = -p.facing * 200;
+          this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.enraged));
+        } else {
+          this.flags['boss_' + B.type + '_spared'] = 1; e.leaving = 0.01; e.set('idle');
+          this.addIchor(Math.round(e.def.ichor * 0.6), e.x); G.text(e.x, G.GROUND - 150 * e.scale, 'SPARED', '#d8d0c4', 20); G.sfx('cleanse');
+          this.bossDefeated();
+          this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.spared));
+        }
+      });
     },
 
     // ------------------------------ update ---------------------------------
@@ -447,7 +469,7 @@
       ctx.translate(-cam + shx, shy);
       const vis = x => x > cam - 160 && x < cam + W + 160;   // sprites are built per frame, so skip what is off screen
       for (const n of this.npcs) if (vis(n.x)) n.draw(ctx, this);
-      for (const e of this.enemies) if (e.dead && vis(e.x)) e.draw(ctx, this);
+      for (const e of this.enemies) if (e.dead && !e.left && vis(e.x)) e.draw(ctx, this);
       for (const e of this.enemies) if (!e.dead && vis(e.x)) e.draw(ctx, this);
       p.draw(ctx, this);
       if (L.waters && !this.inside) G.swamp.drawFront(ctx, this, t);   // the water closes over feet and paws

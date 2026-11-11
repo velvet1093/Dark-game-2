@@ -38,7 +38,8 @@
     },
     mothmother: {
       name: 'The Lamplight Mother', boss: true, model: 'mothgirl', fly: true, hp: 470, limbHp: 140, speed: 120, ichor: 1300, aggro: 9999, stop: 150, weapon: 'none', height: 60, limbs: ['head', 'armF', 'armB'],
-      scale: 1.6, poise: true, noSever: ['armF', 'armB'], shout: 'SHE COMES TO THE LIGHT', flyAlt: 150, diveAlt: 46, bob: 16,
+      scale: 1.0, poise: true, noSever: ['armF', 'armB'], shout: 'SHE COMES TO THE LIGHT', flyAlt: 125,
+      spawn: { type: 'moth', every: 8, first: 4, max: 3, text: 'SHE CALLS THE MOTHS' }, diveAlt: 46, bob: 16,
       summon: { type: 'bloodfly', at: [0.7, 0.4], n: 3, text: 'HER CHILDREN WAKE' },
       look: { skin: '#9a8468', body: '#4a3a2c', arm: '#9a8468', leg: '#4a3a2c', helm: 'none', eye: '#ff3b2f' },
       attacks: [

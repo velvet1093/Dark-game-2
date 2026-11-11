@@ -196,7 +196,7 @@ Every entry has a portrait drawn from the character's own sprite. Some entries g
 | Bloodfly | small, fast and in swarms; dives in to drink, and what it leaves behind is the sickness |
 | Weeping Moth | flies high and slow, then sweeps down and shakes its wings over you; the dust fills your infection bar |
 | Mire-Drowned | at home in the water: the mire does not slow it |
-| **The Lamplight Mother** | boss of the Gloamwater; a moth girl, queen of the moths, drawn to light (and Misery glows). Long dives, clouds of weeping dust, and swarms of bloodflies as she weakens. Strike her as she dives, or jump |
+| **The Lamplight Mother** | boss of the Gloamwater; a human-sized moth girl, queen of the moths, drawn to light (and Misery glows). Long dives, clouds of weeping dust, Weeping Moths called in all through the fight, and swarms of bloodflies as she weakens. Strike her as she dives, or jump |
 | **Ser Garrick, the Oathkeeper** | the last boss |
 
 ## Misery
@@ -314,6 +314,23 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/entities.js` | player and enemy logic (combat, limbs, bleeding, AI) |
 | `js/ui.js` | title, dialogue, notes, menus |
 | `js/game.js` | game state, level flow, HUD, main loop |
+
+## Execute or spare
+
+When a boss is broken you choose: **Execute** (the old way) or **Spare**. Spared or executed, the boss counts as beaten: the way on opens and any tool they carried is yours. Misery only gets her thorns for an execution, and she hates mercy. But not every boss can bear being pitied:
+
+| Boss | If spared |
+| --- | --- |
+| Gaunt, the High Headsman | **enraged**: gets up again |
+| The Drowned Matron | **enraged** |
+| The Standard-Bearer | **yields**: lays down the colours and walks into the sea |
+| Malvern, the Unmade Bishop | **enraged** |
+| Abbess Severine | **yields**: goes to wash herself at the font |
+| Brother Hask, the Windcaller | **yields**: leaves his boots in the snow and walks up into the white |
+| The Lamplight Mother | **enraged**, and calls her moths twice as fast |
+| Ser Garrick | **yields**: "I will hold the door from the other side" |
+
+An **enraged** boss gets back up with nearly half its health, wrapped in a red haze. It hits a third harder, moves faster, and cannot be spared a second time. A boss that **yields** turns away and is gone, leaving some ichor. The Bestiary records who you spared.
 
 ## Difficulty
 
