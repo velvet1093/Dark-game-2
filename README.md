@@ -183,6 +183,10 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 
 A small lavender fairy with white hair follows you as your "guide". She glows faintly and lights the dark around her, and if you stand still long enough she sits on your helm. She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
 
+## Resting
+
+At a vigil candle the knight lowers himself to the ground beside the flame, sword held upright, before the candle's menu opens. He stays seated after you close it, and Misery soon settles on his helmet. Move, attack, roll or jump to get up. After a death you wake already sitting at the last candle you rested at.
+
 ## Misery fights (for herself)
 
 When something is fighting you, Misery darts in and stings it every couple of seconds, then flits back out. She does not do it to help. You are her seat, and she intends to be the one who watches you die. A sting does little damage and never interrupts anything, unless she has been given Dazzle.

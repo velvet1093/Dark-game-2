@@ -83,13 +83,14 @@
     let u = G.clamp(Math.round((p.crouch || 0) / 2.5), 0, 7);
     const hx = G.clamp(Math.round(Math.sin(p.lean || 0) * 6), -3, 4), tx = Math.round(hx / 2), hd = G.clamp(Math.round((p.head || 0) * 2.5), -1, 2);
     const legTop = 28 - tl, torsoH = 9 + tt, torsoTop = legTop - torsoH, tw = 4 + wd;
+    if (p.sit) u = 35 - legTop;   // sat on the ground: hips down at the earth
     const kneel = !!L.skirt && u >= 5, longSkirt = L.skirt === 'long';
     const fx = 1 + hx, fy = torsoTop - 2 - hr + u + hd;
     const shY = torsoTop + 1 + u, shF = tw + tx, shB = -tw + tx;
 
     // ---- cape
     if (L.cape) {
-      const CP = tones(L.cape), n = legTop - torsoTop + 7;
+      const CP = tones(L.cape), n = Math.min(legTop - torsoTop + 7, 39 - torsoTop - u);
       for (let i = 0; i < n; i++) {
         const sw = Math.round(i * 0.3 + Math.sin(time * 3 + i * 0.4) * 0.7 - (o.vx || 0) * (o.facing || 1) * 0.004 * i), w = 5 + Math.min(3, Math.round(i / 3));
         if (i === n - 1) { for (let k = 0; k < w; k += 2) R(shB - w - sw + k + 1, torsoTop + u + i, 1, 1, CP.s); }
@@ -136,7 +137,14 @@
     // back arm, then legs
     const bh = gone('armB') ? (stump(shB, shY + 1), null) : arm(shB, p.bA || 0, p.bE || 0, false);
     if (bh) { hand(bh, false, !!o.shield); if (o.shield && !p.shieldFront) shield(bh[0] - 1, bh[1]); }
-    if (!kneel && !longSkirt) { leg(-3 - (wd > 1 ? 1 : 0) + tx, p.footB, p.liftB, gone('legB'), { b: LG.s, s: G.shade(L.leg, 0.5) }, lw); leg(1 + tx, p.footF, p.liftF, gone('legF'), LG, lw); }
+    // sitting: the back leg stretched out along the ground, the front one drawn up at the knee
+    const sitLeg = (hipx, knee, isGone, c, w) => {
+      const hy = legTop + u + 1; if (isGone) { stump(hipx + 1, hy); return; }
+      if (knee) { line(hipx + 1, hy, hipx + 7, hy - 5, c.b, w); line(hipx + 7, hy - 5, hipx + 9, 37, c.b, w); line(hipx + 2, hy - 1, hipx + 7, hy - 6, c.l || c.b, 1); R(hipx + 8, 37, w + 2, 2, BOOT); R(hipx + 9, 37, w, 1, '#2a2230'); }
+      else { R(hipx, hy, 12, w, c.b); R(hipx, hy, 12, 1, c.s); R(hipx + 12, hy - 2, 2, w + 2, BOOT); }
+    };
+    if (p.sit) { sitLeg(-3 + tx, false, gone('legB'), { b: LG.s, s: G.shade(L.leg, 0.5) }, lw); sitLeg(1 + tx, true, gone('legF'), LG, lw); }
+    else if (!kneel && !longSkirt) { leg(-3 - (wd > 1 ? 1 : 0) + tx, p.footB, p.liftB, gone('legB'), { b: LG.s, s: G.shade(L.leg, 0.5) }, lw); leg(1 + tx, p.footF, p.liftF, gone('legF'), LG, lw); }
     else if (!longSkirt) R(-10, 38, 4, 2, BOOT);
     else { R(-3 + tx, 38, 3, 2, BOOT); R(2 + tx, 38, 3, 2, BOOT); }
 

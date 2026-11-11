@@ -136,6 +136,11 @@ G.Player = class {
       if (!this.healed && this.t >= 0.55 && this.curing) { this.healed = true; this.cleanse(55); G.sfx('cleanse'); G.text(this.x, G.GROUND - 90, 'Lily tincture', '#d8c6ff', 13); g.fairy.bark('cleansed', false, 0.7); }
       if (!this.healed && this.t >= 0.55) { this.healed = true; this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.45); G.sfx('heal'); G.text(this.x, G.GROUND - 90, 'Blessed water', '#d9c9b0', 13); }
       if (this.t >= 0.9) this.set('idle');
+    } else if (this.state === 'sit' || this.state === 'rise') {
+      // resting at a vigil candle: sit until something is pressed, then get up
+      this.vx = 0; this.buf = null;
+      if (this.state === 'sit' && !G.ui.blocking && this.t > 0.7 && (dir || I.down('block') || ['attack', 'heavy', 'roll', 'jump', 'flask', 'cure', 'use'].some(a => I.hit(a)))) { this.set('rise'); G.sfx('step'); }
+      if (this.state === 'rise' && this.t >= 0.42) this.set('idle');
     } else if (this.state === 'execute') {
       this.vx = 0;
       if (!this.struck && this.t >= 0.55) { this.struck = true; this.bloody = 1; g.executeStrike(this.target, this); }
@@ -206,6 +211,13 @@ G.Player = class {
       P.footF = 14; P.footB = -12; P.crouch = 4;
       const an = this.execKind === 'decap' ? { a: [3.4, 0.95], e: [0.2, 0.1], w: [4.2, 1.05], lean: [-0.25, 0.45] } : { a: [2.6, 1.15], e: [1.4, 0.1], w: [0.9, 1.15], lean: [-0.2, 0.5] };
       if (t < 0.5) G.swing(P, an, 0, t / 0.5); else if (t < 0.58) G.swing(P, an, 1, (t - 0.5) / 0.08); else G.swing(P, an, 2, clamp((t - 0.95) / 0.35, 0, 1));
+    } else if (s === 'sit' || s === 'rise') {
+      // down onto one knee, then onto the ground beside the flame; rising runs it backwards
+      const k = s === 'sit' ? Math.min(1, t / 0.5) : 1 - Math.min(1, t / 0.42);
+      if (k > 0.55) {
+        const br = Math.sin(G.game.time * 1.6) * 0.04;
+        Object.assign(P, { sit: true, lean: 0.2 + br, head: 0.45 + br, armA: 0.9, armE: 0.35, bA: -0.35, bE: 0.5, w: 2.92 });
+      } else Object.assign(P, { crouch: 15 * k / 0.55, lean: 0.3 * k, head: 0.3 * k, footF: 11, footB: -13, armA: 0.6 * k, armE: 0.9 * k });
     } else if (s === 'dead') {
       const u = G.ease(Math.min(1, t / 0.5)); P.lying = -u; P.armA = 2.6; P.w = 3.0; P.bA = -0.6; P.head = -0.3 * u;
     }

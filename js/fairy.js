@@ -144,7 +144,7 @@ G.Fairy = class {
       if (e) { this.dive = { e, t: 0, hit: false }; this.stingCd = (g.mis('frenzy') && g.bossFight ? 1.2 : 2.3) + G.rand(0, 0.6); }
     }
     // left standing long enough, the knight becomes a chair
-    const perch = (g.idleFor || 0) > 6 && !fight && !this.dive && !p.dead && p.headPos;
+    const perch = ((g.idleFor || 0) > 6 || (p.state === 'sit' && p.t > 1.4)) && !fight && !this.dive && !p.dead && p.headPos;   // sit with him at the candle
     if (perch) { tx = p.headPos[0] + p.facing * 2; ty = p.headPos[1] - 22; }   // on the crown of the helm, in front of the plume
     else if (p.dead) { tx = p.x + 26; ty = gy - 52; }
     if (!perch) { tx += Math.sin(this.t * 0.9) * 10; ty += Math.sin(this.t * 2.3) * 7; }

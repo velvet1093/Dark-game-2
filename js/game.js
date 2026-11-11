@@ -60,6 +60,7 @@
       this.watchUsed = false;
       const p = this.player; p.turnT = null; p.inf = Math.min(p.inf, 50);   // you wake with the fever broken, not gone
       this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save();
+      if (this.level.shrines.includes(this.cp.x)) { const q = this.player; q.x = this.cp.x - 42; q.facing = 1; q.set('sit'); q.t = 0.6; }   // you wake beside the candle, already sitting
     },
     onPlayerDeath() {
       this.flags.deaths = (this.flags.deaths || 0) + 1; G.music(null);
@@ -79,6 +80,7 @@
           } };
         }
       }
+      if (p.state === 'sit' || p.state === 'rise') return null;
       if (p.alt >= 30) return items();   // up on a ledge: only what is up here with you can be reached
       for (const n of this.npcs) {   // a wounded villager can be saved with your own tincture, even mid-fight
         if (n.dead || n.gone || n.inf < 35 || !near(n.x, 70)) continue;
@@ -273,7 +275,8 @@
     rest(x) {
       this.player.reset(); this.spawnEnemies(); this.cleared = {}; for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
       this.cp = { lv: this.levelIdx, x }; this.watchUsed = false; this.save();
-      G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); G.ui.shrine();
+      const p = this.player; p.x = x + (p.x < x ? -42 : 42); p.facing = p.x < x ? 1 : -1; p.vx = 0; p.set('sit');   // sit down by the flame, facing it
+      G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); this.restMenuT = 0.85;   // sit down first, then the candle's menu
     },
     // Return to the far end of the previous area. Its enemies will have wandered back in.
     travelBack() {
@@ -332,6 +335,7 @@
       if (G.input.hit('pause')) { G.ui.pause(); return; }
       if (G.input.hit('journal')) { G.ui.journal(); return; }
       if (G.input.hit('swap') && (this.player.state === 'idle' || this.player.state === 'block')) this.swapWeapon();
+      if (this.restMenuT > 0 && (this.restMenuT -= dt) <= 0) { if (this.player.state === 'sit') { G.ui.shrine(); return; } }
       if (this.hitstop > 0) { this.hitstop -= dt; return; }
       if (this.slow > 0) { this.slow -= dt; dt *= 0.3; }
       const p = this.player, L = this.level;
