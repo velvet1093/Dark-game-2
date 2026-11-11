@@ -216,7 +216,7 @@ G.Player = class {
     if (this.air && this.alt > 0) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
     const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: this.look, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
     if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
-    G.drawHumanoid(ctx, o);
+    G.drawHumanoid(ctx, o); this.headPos = o.out.head;
     // sword trail
     const swinging = (this.state === 'attack' && this.t >= this.atk.wind - 0.03 && this.t < this.atk.wind + this.atk.active + 0.06) || (this.state === 'execute' && this.t > 0.48 && this.t < 0.64);
     if (swinging && o.out.tip) this.trail.push(o.out.tip); else this.trail.shift();
@@ -240,10 +240,13 @@ G.Enemy = class {
       state: 'idle', t: 0, cd: rand(0, 0.5), flash: 0, walk: rand(0, 6), dead: false, dormant: !!d.boss,
       bleed: 0, bleedT: 0, drip: 0, frenzy: false, wasBroken: false, atk: null, hitDone: false, fountain: 0, phase2: false, out: null, tag, alt: 0, focus: 0, tgt: null, air: false, vy: 0, jumpCd: 0, dropT: 0,
     });
+    if (d.boss) { this.maxHp = this.hp = d.hp * G.bossHpMul(); }
     this.limbs = {};
     for (const k of LIMBS) this.limbs[k] = { hp: d.limbHp, gone: false, absent: !!d.limbs && !d.limbs.includes(k) };
   }
   // grounded: a walker missing a leg, or a flyer missing a wing
+  // On Unfair, bosses feint, chain blows, punish a drink, shrug off staggers and turn light hits aside.
+  get hard() { return this.def.boss && G.unfair(); }
   // the lighter infected climb after you; the heavy, the swollen and the bosses do not
   get canClimb() { const d = this.def; return !d.boss && !d.fly && !d.poise && !d.burst && !this.crawling; }
   get crawling() { const L = this.limbs; return L.legF.gone || L.legB.gone || (!!this.def.fly && (L.armF.gone || L.armB.gone)); }
@@ -296,6 +299,11 @@ G.Enemy = class {
     if (this.dead || this.state === 'executed') return;
     if (this.def.boss && this.state === 'broken') return;
     if (this.dormant) this.dormant = false;
+    if (this.hard && this.phase2 && this.def.weapon !== 'none' && !atk.poiseBreak && !atk.quiet && this.state !== 'strike' && Math.random() < 0.28) {
+      // turned aside, and the knight is thrown off balance
+      const p = g.player; G.sfx('block'); G.spark(this.x - dir * 18 * this.scale, G.GROUND - 70 * this.scale, 12); G.text(this.x, G.GROUND - 130 * this.scale, 'DEFLECTED', '#d9c9b0', 16);
+      g.hitstop = 0.07; p.vx = -dir * 260; p.st = Math.max(0, p.st - 22); p.stDelay = 0.8; return;
+    }
     // which part did the blade find?
     const opts = Object.keys(LIMB_WEIGHT).filter(k => k === 'torso' || (!this.limbs[k].gone && !this.limbs[k].absent));
     let roll = Math.random() * opts.reduce((s, k) => s + LIMB_WEIGHT[k], 0), part = 'torso';
@@ -322,6 +330,7 @@ G.Enemy = class {
     this.hurt(dmg, { dir, decap: part === 'head' && this.limbs.head.gone });
     if (this.dead || this.state === 'executed') return;
     if (this.state === 'broken') { if (!wasBroken) this.vx = dir * 80; return; }
+    if (this.hard && !severed && Math.random() < 0.6) return;   // on Unfair a boss mostly ignores what would stagger it
     if (!this.def.poise || atk.poiseBreak || severed) { this.set('stagger'); this.stun = severed ? 0.6 : atk.poiseBreak ? 0.5 : 0.3; this.vx = dir * (this.def.poise ? 60 : 150); this.atk = null; }
   }
 
@@ -385,7 +394,7 @@ G.Enemy = class {
     const sm = this.def.summon;   // some bosses call for help as their health falls
     if (sm && this.hp > 0 && this.state !== 'broken' && this.state !== 'executed' && (this.summoned || 0) < sm.at.length && this.hp < this.maxHp * sm.at[this.summoned || 0]) {
       this.summoned = (this.summoned || 0) + 1; G.sfx('roar'); G.text(this.x, gy - 170, 'SHE CALLS HER HOUNDS', '#e0222c', 16); g.shake = 8;
-      for (let k = 0; k < sm.n; k++) { const e = new G.Enemy(sm.type, clamp(this.x + (k ? -1 : 1) * rand(150, 210), g.level.boss.gate + 40, g.level.boss.end)); e.set('chase'); g.enemies.push(e); }
+      for (let k = 0; k < sm.n + (this.hard ? 1 : 0); k++) { const e = new G.Enemy(sm.type, clamp(this.x + (k ? -1 : 1) * rand(150, 210), g.level.boss.gate + 40, g.level.boss.end)); e.set('chase'); g.enemies.push(e); }
     }
     // ledges: walking off an edge, and flight through the air. Nothing fights in mid-air.
     if (!this.def.fly) {
@@ -432,14 +441,21 @@ G.Enemy = class {
             }
           } else if (ta < this.alt - 30 && this.alt > 0) { this.air = true; this.dropT = 0.25; this.vy = 0; this.vx = this.facing * this.speed; this.jumpCd = 0.8; break; }
         }
+        if (this.hard && p === g.player && p.state === 'heal' && !this.punished && dist < 360) {
+          // drink in front of a boss on Unfair and it comes for you at once, with its longest reach
+          this.punished = true; this.atk = this.def.attacks.reduce((a, b) => ((b.trigger || b.reach) > (a.trigger || a.reach) ? b : a)); this.windMul = 0.3;
+          this.set('windup'); this.vx = 0; G.sfx('grunt'); G.text(this.x, gy - 150 * this.scale / 1.3, '!', '#e0222c', 26); break;
+        }
+        if (p.state !== 'heal') this.punished = false;
         if (this.cd <= 0 && !p.dead) {
           const c = this.def.attacks.filter(a => dist >= (a.min || 0) && dist <= (a.trigger || a.reach * m.reach * this.scale * 0.92));
-          if (c.length) { this.atk = G.pick(c); this.set('windup'); this.vx = 0; if (this.def.poise) G.sfx('grunt'); }
+          // on Unfair the wind-up is never the same length twice: some blows come early, some are held
+          if (c.length) { this.atk = G.pick(c); this.windMul = this.hard ? rand(0.55, 1.45) : 1; this.set('windup'); this.vx = 0; if (this.def.poise) G.sfx('grunt'); }
         }
         break;
       }
       case 'windup':
-        if (this.t >= this.atk.wind * m.speed) { this.set('strike'); this.hitDone = false; this.vx = this.facing * this.atk.lunge * (this.crawling ? 0.4 : 1); G.sfx('swing'); }
+        if (this.t >= this.atk.wind * m.speed * (this.windMul || 1)) { this.set('strike'); this.rolledChain = false; this.hitDone = false; this.vx = this.facing * this.atk.lunge * (this.crawling ? 0.4 : 1); G.sfx('swing'); }
         break;
       case 'strike': {
         const rel = (p.x - this.x) * this.facing;
@@ -447,12 +463,18 @@ G.Enemy = class {
         // the knight jumped clean over a low attack, or stands on a ledge above this weapon's reach
         const reachUp = this.alt + (['spear', 'scythe', 'axe', 'greatsword'].includes(this.def.weapon) ? 150 : 96 * this.scale);
         const over = (p.alt > 44 && (this.crawling || this.def.model === 'hound')) || (p.alt || 0) > reachUp || this.alt - (p.alt || 0) > 60;
-        if (!this.hitDone && !over && rel > -14 && rel < this.atk.reach * m.reach * this.scale) { if (p.damage(this.atk.dmg * m.dmg, this.x, g)) { this.hitDone = true; if (this.atk.spew && p.infect) p.infect(this.atk.spew, g); } else if (p.state === 'block') this.hitDone = true; }
+        if (!this.hitDone && !over && rel > -14 && rel < this.atk.reach * m.reach * this.scale) { if (p.damage(this.atk.dmg * m.dmg * (this.hard ? 1.35 : 1), this.x, g)) { this.hitDone = true; if (this.atk.spew && p.infect) p.infect(this.atk.spew * (this.hard ? 1.5 : 1), g); } else if (p.state === 'block') this.hitDone = true; }
         if (this.t >= this.atk.active) this.set('recover');
         break;
       }
       case 'recover':
-        if (this.t >= this.atk.rec * m.speed) { this.set('chase'); this.cd = rand(0.15, 0.6) * m.speed; }
+        if (this.hard && !this.rolledChain && this.t >= this.atk.rec * 0.25) {
+          // on Unfair a boss can follow one blow straight into another, twice over
+          this.rolledChain = true; this.facing = dx >= 0 ? 1 : -1;
+          const c = this.def.attacks.filter(a => dist >= (a.min || 0) && dist <= (a.trigger || a.reach * m.reach * this.scale * 0.95));
+          if ((this.chains || 0) < 2 && c.length && Math.random() < 0.6) { this.chains = (this.chains || 0) + 1; this.atk = G.pick(c); this.windMul = rand(0.35, 0.6); this.set('windup'); this.vx = 0; break; }
+        }
+        if (this.t >= this.atk.rec * m.speed * (this.hard ? 0.7 : 1)) { this.set('chase'); this.chains = 0; this.cd = rand(0.15, 0.6) * m.speed * (this.hard ? 0.5 : 1); }
         break;
       case 'stagger':
         if (this.t >= this.stun) this.set('chase');

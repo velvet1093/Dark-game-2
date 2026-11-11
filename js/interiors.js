@@ -63,14 +63,14 @@ G.INTERIORS = {
     npcs: [],
   },
   mill: {
-    name: 'The Vane Mill', area: 3, style: 'wood', facade: 'mill', length: 1300, entry: 120,
+    name: 'The Old Mill', area: 3, style: 'wood', facade: 'mill', length: 1300, entry: 120,
     furniture: [['heightmarks', 150], ['hearth', 270, { cold: true }], ['window', 520], ['table', 420], ['chair', 380], ['chair', 470], ['window', 760], ['sacks', 850], ['millstone', 1000], ['bed', 1150, { loft: true }]],
     platforms: [{ x: 820, w: 80, h: 70 }, { x: 920, w: 340, h: 140 }],
     enemies: [],
     items: [{ x: 1230, alt: 140, icon: 1 }],
     lore: [
-      { x: 150, title: 'Marks on the Doorframe', text: 'Two rows of notches, cut with a knife.\n\nA. — 6\nY. — 4\nA. — 9\nY. — 7\nA. — 12\nY. — 10\nA. — 16  (the day he sailed)\n\nAfter that, only one row. It goes on for a long time.\n\nY. — 20\nY. — 22\nY. — 23' },
-      { x: 420, title: "Ysolde's Ledger", text: "Flour, four sacks. Owed by the Tanners, two pence.\nFlour, two sacks. Paid in eggs.\nFlour, one sack. Not paid. They are gone.\n\nAldric — the wheel still turns. I keep it turning so the house sounds like someone lives here.\n\nIf you come home, the key is where Mother kept it." },
+      { x: 150, title: 'Marks on the Doorframe', text: 'Two rows of notches, cut with a knife.\n\n— 6\nY. — 4\n— 9\nY. — 7\n— 12\nY. — 10\n— 16  (the day he marched)\n\nThe letters on the first row have been gouged out, one by one, the way the Battalion priests ask a family to do at the muster.\n\nAfter that, only one row. It goes on for a long time.\n\nY. — 20\nY. — 22\nY. — 23' },
+      { x: 420, title: "Ysolde's Ledger", text: "Flour, four sacks. Owed by the Tanners, two pence.\nFlour, two sacks. Paid in eggs.\nFlour, one sack. Not paid. They are gone.\n\nBrother — the wheel still turns. I keep it turning so the house sounds like someone lives here. I still say your name to it, every night, so that one of us remembers.\n\nIf you come home, the key is where Mother kept it." },
     ],
     npcs: [],
   },

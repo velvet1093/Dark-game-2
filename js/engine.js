@@ -62,6 +62,19 @@ G.pollPad = () => {
   for (const k in padPrev) if (!now[k]) acts(k).forEach(a => G.input.release(a));
   padPrev = now;
 };
+// Settings kept per browser. Difficulty: 'unfair' (the default) or 'fair'.
+const SETSTORE = 'ashenvow_settings';
+G.settings = { difficulty: 'unfair' };
+try { const s = JSON.parse(localStorage.getItem(SETSTORE)); if (s && (s.difficulty === 'fair' || s.difficulty === 'unfair')) G.settings.difficulty = s.difficulty; } catch (e) { /* defaults */ }
+G.unfair = () => G.settings.difficulty === 'unfair';
+const BOSS_HP = 1.6;   // how much more a boss can take on Unfair
+G.setDifficulty = d => {
+  const was = G.unfair(); G.settings.difficulty = d;
+  try { localStorage.setItem(SETSTORE, JSON.stringify(G.settings)); } catch (e) { /* storage is optional */ }
+  if (was !== G.unfair() && G.game) for (const e of G.game.enemies) if (e.def.boss && !e.dead) { const r = e.hp / e.maxHp; e.maxHp = e.def.hp * (G.unfair() ? BOSS_HP : 1); e.hp = r * e.maxHp; }   // a fight in progress keeps its share of health
+};
+G.bossHpMul = () => (G.unfair() ? BOSS_HP : 1);
+
 G.input = {
   held: {}, just: {},
   press(a) { if (!this.held[a]) this.just[a] = true; this.held[a] = true; },

@@ -91,10 +91,13 @@
 
   // ------------------------------- Wist ------------------------------------
   const LV = { b: '#b79be8', s: '#8a6ad0', l: '#e3d6ff' }, HR = { b: '#f3f0fa', s: '#c6bedb', l: '#ffffff' }, DR = { b: '#2a1838', s: '#170c22', l: '#4a3260' }, SKN = { b: '#f4e8ec', s: '#d6bfca' };
-  G.drawWist = (ctx, x, y, facing, t, glee, near) => {
-    const { R, E, line } = G.spr.open(64, 60), up = Math.floor(t * 13) % 2 === 0, sway = Math.round(Math.sin(t * 2.6) * 1.2);
-    // four long wings
-    for (const s of [-1, 1]) {
+  G.drawWist = (ctx, x, y, facing, t, glee, near, sit) => {
+    const { R, E, line } = G.spr.open(64, 60), up = sit ? Math.sin(t * 2.1) > 0.97 : Math.floor(t * 13) % 2 === 0, sway = Math.round(Math.sin(t * 2.6) * 1.2);
+    // four long wings, folded down behind her when she sits
+    if (sit) for (const s of [-1, 1]) {
+      const ty = up ? -14 : -2; line(s * 3, -5, s * 13, ty, LV.b, 4); line(s * 4, -6, s * 13, ty, LV.l, 1); line(s * 3, 0, s * 9, 10, LV.s, 3);
+    }
+    else for (const s of [-1, 1]) {
       const tx = s * 19, ty = up ? -19 : -11, lx = s * 14, ly = up ? 4 : 10;
       line(s * 3, -5, tx, ty, LV.b, 4); line(s * 5, -5, tx - s * 2, ty + 3, LV.b, 3); line(s * 4, -6, tx, ty, LV.l, 1); R(tx - 1, ty - 1, 2, 2, LV.l);
       line(s * 3, 0, lx, ly, LV.s, 3); line(s * 4, 0, lx, ly, LV.b, 1);
@@ -102,8 +105,9 @@
     // long white hair behind
     for (let i = 0; i < 20; i++) R(-6 + (i > 12 ? Math.round((i - 12) * 0.5) : 0) + (i > 8 ? sway : 0), -9 + i, 12 - (i > 12 ? i - 12 : 0), 1, i > 14 ? HR.s : HR.b);
     R(-6, -6, 1, 12, HR.s);
-    // legs, one tucked
-    R(-2, 7, 2, 4, SKN.b); R(-2, 11, 2, 1, DR.s); R(1, 7, 2, 2, SKN.s); R(2, 9, 2, 1, DR.s);
+    // legs: one tucked in flight; both dangling and swinging when she sits
+    if (sit) { const kk = Math.round(Math.sin(t * 3.4) * 1.5), kk2 = Math.round(Math.sin(t * 3.4 + 1.6) * 1.5); R(-3, 8, 2, 4 + kk, SKN.b); R(-3, 12 + kk, 3, 1, DR.s); R(2, 8, 2, 4 + kk2, SKN.s); R(2, 12 + kk2, 3, 1, DR.s); }
+    else { R(-2, 7, 2, 4, SKN.b); R(-2, 11, 2, 1, DR.s); R(1, 7, 2, 2, SKN.s); R(2, 9, 2, 1, DR.s); }
     // arms in dark sleeves, spread wide
     line(-3, 0, -8, up ? 0 : 1, DR.b, 2); R(-10, up ? -1 : 0, 2, 2, SKN.b); line(3, 0, 8, up ? -2 : -1, DR.b, 2); R(9, up ? -3 : -2, 2, 2, SKN.b);
     // plum gown, lavender sash and hem

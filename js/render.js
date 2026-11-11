@@ -465,7 +465,7 @@ G.drawFog = (ctx, level, cam, t) => {
 // Everything that lies over the scene — weather, the vignette, the hurt and fever tints — is drawn at
 // half size and its transparency dithered into steps, so it reads as pixels rather than a soft wash.
 let ovBuf = null, ovCtx = null;
-G.drawAtmosphere = (ctx, level, cam, t, hurt, fever = 0) => {
+G.drawAtmosphere = (ctx, level, cam, t, light, hurt, fever = 0) => {
   const T = level._theme, W = G.W, H = G.H;
   if (!ovBuf) { ovBuf = document.createElement('canvas'); ovBuf.width = W / 2; ovBuf.height = H / 2; ovCtx = ovBuf.getContext('2d', { willReadFrequently: true }); }
   const c = ovCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W / 2, H / 2); c.setTransform(0.5, 0, 0, 0.5, 0, 0);
@@ -481,6 +481,10 @@ G.drawAtmosphere = (ctx, level, cam, t, hurt, fever = 0) => {
   }
   const ring = (inner, outer, col, a) => { if (a <= 0) return; const g = c.createRadialGradient(W / 2, H / 2, H * inner, W / 2, H / 2, H * outer); g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${a})`); c.fillStyle = g; c.fillRect(0, 0, W, H); };
   ring(0.35, 0.95, '0,0,0', 0.8); ring(0.3, 0.8, '140,0,6', hurt); ring(0.28, 0.8, '120,20,130', fever);
+  if (light) {   // the dark gives way around Wist
+    const g = c.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.r); g.addColorStop(0, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.globalCompositeOperation = 'destination-out'; c.fillStyle = g; c.fillRect(light.x - light.r, light.y - light.r, light.r * 2, light.r * 2); c.globalCompositeOperation = 'source-over';
+  }
   c.setTransform(1, 0, 0, 1, 0, 0);
   const img = c.getImageData(0, 0, W / 2, H / 2), d = img.data, STEP = 28;
   for (let y = 0, i = 3; y < H / 2; y++) for (let x = 0; x < W / 2; x++, i += 4) {

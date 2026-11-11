@@ -52,25 +52,41 @@
     title(hasSave) {
       const items = [{ label: 'Take the Vow <small>(new game)</small>', fn: () => G.game.newGame() }];
       if (hasSave) items.unshift({ label: 'Resume the Vigil <small>(continue)</small>', fn: () => G.game.continueGame() });
+      items.push({ label: 'Settings', fn: () => this.settings('title') }); this.hasSave = hasSave;
       this.menu('', '<h1>ASHEN VOW</h1><div class="sub">a tale of the Weeping Year</div>', items, keysHtml());
     },
     pause() {
       this.menu('dim', '<h2>Paused</h2>', [
         { label: 'Return to the road', fn: () => this.clear() },
-        { label: 'Controls', fn: () => this.controls() },
+        { label: 'Settings', fn: () => this.settings('pause') },
         { label: 'Abandon to title', fn: () => G.game.toTitle() },
       ], keysHtml());
       this.advance = () => this.clear(); this.escAdvance = true;
+    },
+    // Difficulty, sound and controls.
+    settings(from = this.setFrom || 'pause', keep = 0) {
+      this.setFrom = from;
+      const u = G.unfair(), back = () => (from === 'title' ? this.title(this.hasSave) : this.pause());
+      const items = [
+        { label: u ? 'Difficulty: Unfair <small>— bosses take more, hit harder, feint, chain blows, punish a drink and turn light hits aside</small>'
+                   : 'Difficulty: Fair <small>— bosses fight as they always did</small>', fn: () => { G.setDifficulty(u ? 'fair' : 'unfair'); this.keepSel = 0; this.settings(from); } },
+        { label: `Sound: ${G.isMuted() ? 'Off' : 'On'}`, fn: () => { G.toggleMute(); this.keepSel = 1; this.settings(from); } },
+        { label: 'Controls', fn: () => this.controls() },
+        { label: 'Back', fn: back },
+      ];
+      this.keepSel = this.keepSel || keep;
+      this.menu('dim', '<h2>Settings</h2>', items, '<div class="keys">Difficulty changes only the bosses. It can be changed at any time, even mid-fight.</div>');
+      this.advance = back; this.escAdvance = true;
     },
     // Rebind keys. Pick an action, then press the key you want for it.
     controls(waiting) {
       const items = G.BINDABLE.map(([a, name]) => ({ label: waiting === a ? `${name} <small>— press a key (Esc to cancel)</small>` : `${name} <small>— ${G.keys[a].map(G.codeName).join(' / ') || 'unbound'}</small>`,
         fn: () => { const idx = G.BINDABLE.findIndex(b => b[0] === a); this.keepSel = idx; this.controls(a); G.input.capture = code => { if (code !== 'Escape') G.bindKey(a, code); this.keepSel = idx; this.controls(); }; } }));
-      items.push({ label: 'Reset to defaults', fn: () => { G.resetKeys(); this.keepSel = G.BINDABLE.length; this.controls(); } }, { label: 'Back', fn: () => this.pause() });
+      items.push({ label: 'Reset to defaults', fn: () => { G.resetKeys(); this.keepSel = G.BINDABLE.length; this.controls(); } }, { label: 'Back', fn: () => { this.keepSel = 2; this.settings(); } });
       this.menu('dim controls', '<h2>Controls</h2>', items,
         '<div class="keys">Controller: A jump · B roll · X slash · Y heavy · LB interact · RB block · LT flask · RT tincture · D-pad up change weapon · D-pad down drop · Select quests · Start pause</div>', 'grid');
       if (waiting) { const bs = this.btns(); bs.forEach(b => (b.disabled = true)); const w = bs[G.BINDABLE.findIndex(b => b[0] === waiting)]; if (w) { w.disabled = false; w.classList.add('sel'); } }
-      this.advance = () => this.pause(); this.escAdvance = !waiting;
+      this.advance = () => { this.keepSel = 2; this.settings(); }; this.escAdvance = !waiting;
     },
     slides(pages, done, title) {
       let i = 0;
@@ -92,7 +108,7 @@
         if (wist) G.sfx('chime');
         this.show(`<div class="dialogue${wist ? ' wist' : ''}"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ ${esc(G.keyName('use'))}</div></div>`, next);
         const t = el().querySelector('.txt');
-        timer = setInterval(() => { shown = Math.min(full.length, shown + 2); if (n++ % 2 === 0 && shown < full.length) G.sfx('blip', wist ? 1100 : who === 'Aldric' ? 150 : 200); if (t.isConnected) t.textContent = full.slice(0, shown); if (shown >= full.length || !t.isConnected) clearInterval(timer); }, 22);
+        timer = setInterval(() => { shown = Math.min(full.length, shown + 2); if (n++ % 2 === 0 && shown < full.length) G.sfx('blip', wist ? 1100 : who === 'Knight' ? 150 : 200); if (t.isConnected) t.textContent = full.slice(0, shown); if (shown >= full.length || !t.isConnected) clearInterval(timer); }, 22);
       };
       next();
     },

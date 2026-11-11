@@ -5,9 +5,9 @@
 // ---------------------------------------------------------------------------
 G.FAIRY = {
   intro: [
-    ['Wist', 'Oh! A live one. And so shiny.'],
+    ['Wist', 'Oh! A live one. And so shiny. What do they call you? ...Nothing? A Long Battalion boy. How delicious. No name to carve on the stone.'],
     ['Wist', 'I am Wist. I guide lost knights along the gallows road. I have guided ever so many.'],
-    ['Aldric', 'Where are they now?'],
+    ['Knight', 'Where are they now?'],
     ['Wist', 'Oh, here and there. Mostly there. Under things.'],
     ['Wist', 'Walk on, ser knight. I shall be right behind you. I would not miss it for the world.'],
   ],
@@ -42,6 +42,7 @@ G.FAIRY = {
   clueNear: ['Mm. Close. {how}', 'You are standing very near something. {how}', 'Warm. Warmer. {how}'],
   clueHow: { high: 'Not down here, though. Look up.', bars: 'Someone shut it behind iron.', veil: 'It is sitting in that red mist. Lovely colour.', plain: 'It is not even hidden properly.', inside: 'It is indoors. Knock, why not.' },
   clueNone: ['Nothing left to steal here. You have been thorough. How dull.'],
+  perch: ['Comfy. Your helmet is warm.', 'Do not move. I can see every way you might die from up here.', 'Your head makes a lovely chair. Empty, mostly.', 'Hum hum. Nobody comes. Hum hum.', 'If you stand still long enough, they will think you are one of them.'],
   rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
     'Hee hee hee! Oh, that was a good one.',
@@ -77,11 +78,16 @@ G.Fairy = class {
     const fight = g.enemies.some(e => !e.dead && !e.dormant && e.state !== 'idle' && e.state !== 'broken' && Math.abs(e.x - p.x) < 320);
     // hover behind the knight; keep well clear of the fighting; lean in close to enjoy a death
     let tx = p.x - p.facing * (fight ? 96 : 50), ty = gy - (fight ? 168 : 118);
-    if (p.dead) { tx = p.x + 26; ty = gy - 52; }
-    tx += Math.sin(this.t * 0.9) * 10; ty += Math.sin(this.t * 2.3) * 7;
-    const k = Math.min(1, dt * (p.dead ? 1.6 : 3.2));
-    this.x += (tx - this.x) * k; this.y += (ty - this.y) * k;
-    if (Math.abs(p.x - this.x) > 4) this.facing = p.x > this.x ? 1 : -1;
+    // left standing long enough, the knight becomes a chair
+    const perch = (g.idleFor || 0) > 6 && !fight && !p.dead && p.headPos;
+    if (perch) { tx = p.headPos[0] - p.facing * 2; ty = p.headPos[1] - 20; }
+    else if (p.dead) { tx = p.x + 26; ty = gy - 52; }
+    if (!perch) { tx += Math.sin(this.t * 0.9) * 10; ty += Math.sin(this.t * 2.3) * 7; }
+    const k = Math.min(1, dt * (p.dead ? 1.6 : perch ? 4 : 3.2));
+    const wasSitting = this.sitting; this.sitting = !!perch && Math.hypot(tx - this.x, ty - this.y) < 6;
+    if (this.sitting && !wasSitting && !this.say && Math.random() < 0.6) this.sayLine(G.pick(G.FAIRY.perch));
+    if (this.sitting) { this.x = tx; this.y = ty; this.facing = p.facing; }
+    if (!this.sitting) { this.x += (tx - this.x) * k; this.y += (ty - this.y) * k; if (Math.abs(p.x - this.x) > 4) this.facing = p.x > this.x ? 1 : -1; }
     // dust falling from her wings
     if (Math.random() < dt * 14) this.motes.push({ x: this.x + G.rand(-12, 12), y: this.y + G.rand(-8, 10), t: 0 });
     for (let i = this.motes.length - 1; i >= 0; i--) { const m = this.motes[i]; m.t += dt; m.y += 16 * dt; if (m.t > 1.1) this.motes.splice(i, 1); }
@@ -105,7 +111,7 @@ G.Fairy = class {
     const t = this.t, glee = this.glee > 0 || g.player.dead;
     // motes
     for (const m of this.motes) { ctx.fillStyle = `rgba(214,190,255,${0.8 * (1 - m.t / 1.1)})`; ctx.fillRect(Math.round(m.x / 2) * 2, Math.round(m.y / 2) * 2, 2, 2); }
-    G.drawWist(ctx, this.x, this.y, this.facing, t, glee, this.near);
+    G.drawWist(ctx, this.x, this.y, this.facing, t, glee, this.near, this.sitting);
     // speech bubble
     if (this.say) {
       ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left';

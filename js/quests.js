@@ -167,7 +167,7 @@ G.QUESTS = {
     steps: [
       { type: 'read', lore: '4:1', text: "Find Bishop Malvern's confession in the nave" },
       { type: 'talk', npc: 'anselm', text: 'Return to Brother Anselm', lines: [
-        ['Aldric', 'He never believed. He meant to cut her open and call it mercy.'],
+        ['Knight', 'He never believed. He meant to cut her open and call it mercy.'],
         ['Brother Anselm', '...Then for twenty years I knelt to a butcher. Good. Good. That is lighter to carry than a saint.'],
         ['Brother Anselm', 'Take the offertory. No one else is coming for it.'],
       ] },

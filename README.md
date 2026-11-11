@@ -1,7 +1,7 @@
 # Ashen Vow
 
 A dark, bloody, story-driven 2D action game set in a dark age consumed by an infection.
-You are **Ser Aldric Vane**, a knight who comes home after seven years abroad carrying a relic that was meant to save a kingdom that no longer exists.
+You are a **nameless knight of the Long Battalion**: seven hundred knights who gave up their names at the muster and marched east for King Osric. You are the one who came home, seven years later, carrying a relic meant to save a kingdom that no longer exists. Only your sister still remembers what you were called.
 
 No build step, no dependencies, no asset files — all art and sound are generated in code.
 
@@ -108,7 +108,7 @@ Six buildings can be entered. Walk up to the door and press the interact key. Th
 | Brannoc's Hold | The Drowned Lamb | Maren the innkeeper and two regulars; an icon up in the loft |
 | Brannoc's Hold | Dunstan's Forge | Dunstan, his furnace and his trade |
 | Weeping Fen | The Eel-Catcher's Hovel | flooded, and not empty; a reliquary on the loft |
-| Hollowmere | The Vane Mill | your family's home, still turning; Ysolde's ledger; an icon in the loft |
+| Hollowmere | The Old Mill | your family's home, still turning; Ysolde's ledger; an icon in the loft |
 | Cathedral | The Sacristy | the Bishop's seven knives, two guards, a reliquary and an icon |
 
 Wist counts icons behind a door when she hints, and tells you when one is indoors.
@@ -162,7 +162,7 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 
 ## Wist
 
-A small lavender fairy with white hair follows you as your "guide". She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
+A small lavender fairy with white hair follows you as your "guide". She glows faintly and lights the dark around her, and if you stand still long enough she sits on your helm. She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
 
 ## Sound
 
@@ -191,6 +191,12 @@ Progress saves at vigil candles (browser local storage).
 | `js/entities.js` | player and enemy logic (combat, limbs, bleeding, AI) |
 | `js/ui.js` | title, dialogue, notes, menus |
 | `js/game.js` | game state, level flow, HUD, main loop |
+
+## Difficulty
+
+**Bosses are hard and unfair by default.** On **Unfair** they have 60% more health and hit 35% harder; their wind-ups are never the same length twice, so some blows come early and some are held; they follow one blow straight into another; they rush you the moment you drink a flask nearby; they mostly ignore what would stagger them; and in their second phase the armed ones turn light hits aside. The Matron calls one extra hound each time.
+
+If that is too much, switch to **Fair** under Settings (from the title screen or Pause). It changes only the bosses, is remembered by your browser, and can be changed at any time, even mid-fight.
 
 ## Weapons
 

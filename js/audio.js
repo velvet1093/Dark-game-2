@@ -139,5 +139,6 @@
     mus.name = name; mus.tr = TRACKS[name] || null; mus.step = 0;
     if (ac) mus.next = ac.currentTime + 0.25;
   };
+  G.isMuted = () => muted;
   G.toggleMute = () => { muted = !muted; if (ac) master.gain.setTargetAtTime(muted ? 0 : 0.6, ac.currentTime, 0.05); return muted; };
 })();
