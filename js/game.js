@@ -18,7 +18,7 @@
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false, kills: {}, seen: {} });
       G.questLog.reset(); this.memQ = [];
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -35,13 +35,13 @@
       if (this.flags.bossDead) this.flags.boss_garrick_dead = 1; if (this.flags.metBoss) this.flags.boss_garrick_met = 1;   // saves from before there were three bosses
       this.npcInf = s.npcInf || {}; this.weaponLv = s.weaponLv || {}; this.bought = s.bought || {};
       // saves from before Misery took gifts: a thorn for each boss already put down
-      this.misery = s.misery || { thorns: Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length * 3, got: {} }; this.watchUsed = !!s.watchUsed;
+      this.misery = s.misery || { thorns: Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length * 3, got: {} }; this.watchUsed = !!s.watchUsed; this.kills = s.kills || {}; this.seen = s.seen || {};
       this.abilities = s.abilities || {}; if (this.flags.boss_matron_dead) this.abilities.dj = 1;   // saves that beat her before she carried the greaves
       G.LEVELS.forEach((L, lv) => (L.gates || []).forEach((k, i) => { if (s.cp.lv > lv || (s.cp.lv === lv && s.cp.x > k.x)) this.flags[this.gateKey(i, lv)] = 1; }));   // saves already past a gate added later
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x); this.memQ = [];
       if (this.flags.boss_malvern_dead) this.remember('blessing'); if (this.flags.boss_abbess_dead) this.remember('letter'); if (this.flags.boss_windcaller_dead) this.remember('sun'); if (this.read['5:2']) this.remember('muster');
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, kills: this.kills, seen: this.seen, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx; this.inside = null; this.outside = null; this.cleared = {};
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
@@ -288,7 +288,7 @@
       this.fade = 0.5; G.sfx('page'); G.ambience(AMB[this.level.theme]);
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
-    onEnemyDeath(e) { G.questLog.onKill(e, this); if (this.inside && e.inIdx != null) (this.cleared[this.inside.id] || (this.cleared[this.inside.id] = {}))[e.inIdx] = 1; },
+    onEnemyDeath(e) { this.kills = this.kills || {}; this.kills[e.type] = (this.kills[e.type] || 0) + 1; G.questLog.onKill(e, this); if (this.inside && e.inIdx != null) (this.cleared[this.inside.id] || (this.cleared[this.inside.id] = {}))[e.inIdx] = 1; },
     onNpcTurn(n) {
       G.text(n.x, G.GROUND - 130, n.def.name + ' has turned', '#e060f0', 16); G.sfx('infect');
       this.fairy.cd = 0; this.fairy.bark('npcturn', true); this.save();
@@ -362,6 +362,7 @@
       if (this.mode !== 'play') return;
       if (G.input.hit('pause')) { G.ui.pause(); return; }
       if (G.input.hit('journal')) { G.ui.journal(); return; }
+      if (G.input.hit('bestiary')) { G.ui.bestiary(); return; }
       if (G.input.hit('swap') && (this.player.state === 'idle' || this.player.state === 'block')) this.swapWeapon();
       if (this.restMenuT > 0 && (this.restMenuT -= dt) <= 0) { if (this.player.state === 'sit') { G.ui.shrine(); return; } }
       if (this.memQ && this.memQ.length && !(this.restMenuT > 0) && !this.bossFight && !this.player.dead && ['idle', 'block', 'sit'].includes(this.player.state)) { this.playMemory(this.memQ.shift()); return; }
@@ -379,6 +380,9 @@
       p.update(dt, this);
       if (L.waters) G.swamp.afterPlayer(this, px0, pAir, dt);
       G.wind.tick(this, dt);
+      this.seen = this.seen || {};
+      const fresh = this.enemies.filter(e => !this.seen[e.type] && !e.dormant && this.onScreen(e.x));
+      if (fresh.length) { const names = [...new Set(fresh.map(e => { this.seen[e.type] = 1; return e.def.name; }))]; G.questLog.banners.push({ kind: names.length > 1 ? 'New bestiary entries' : 'New bestiary entry', title: names.join(', '), sub: 'Press ' + G.keyName('bestiary') + ' to read', t: 3 }); }
       for (const e of this.enemies) { const ex = e.x; e.update(dt, this); if (L.waters) G.swamp.afterEnemy(this, e, ex); }
       for (const n of this.npcs) n.update(dt, this);
       G.questLog.tick(this, dt);

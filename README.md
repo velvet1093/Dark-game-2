@@ -161,6 +161,16 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 - A death is permanent for that save, and resting does not bring anyone back. Survivors are healed when you rest.
 - A few people the story needs, and everyone inside the walls of Brannoc's Hold, cannot be harmed.
 
+## The Bestiary in the game
+
+Press `B` (or choose **Bestiary** in the pause menu) to open it. It has three tabs:
+
+- **Foes**: every kind of enemy, added the first time you see one, with a description, a tip and how many you have slain.
+- **Bosses**: each boss, added once you have faced them, and whether they are defeated.
+- **People**: Misery, Ysolde and the people who matter on the road, added once you have met them.
+
+Every entry has a portrait drawn from the character's own sprite. Some entries grow as you learn more: Misery's after the Lantern Court and after you remember your name, Ysolde's after Hagge Wren tells you about the spring, Ser Pell's once you know your number. The key can be rebound under Settings → Controls.
+
 ## Bestiary
 
 | Enemy | Notes |
@@ -292,6 +302,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/mountain.js` | the Pilgrims' Pass: its people, enemies, boss, quest and the wind |
 | `js/story.js` | the Remembrances, the knight's name, and the third ending |
 | `js/swamp.js` | the Gloamwater: slowing water, the flying enemies and their sprites, its people, boss and quests |
+| `js/bestiary.js` | the in-game Bestiary: entries, sprite portraits and the screen |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |

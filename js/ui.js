@@ -9,9 +9,9 @@
   const K = a => `<b>${esc(G.keyName(a))}</b>`;
   const keysHtml = () => (G.inputMode === 'pad'
     ? `<div class="keys">${K('left')} ${K('right')} / stick move &nbsp; ${K('jump')} jump &nbsp; ${K('attack')} slash &nbsp; ${K('heavy')} heavy &nbsp; ${K('roll')} roll &nbsp; ${K('block')} block<br>
-      ${K('use')} interact &nbsp; ${K('flask')} flask &nbsp; ${K('cure')} tincture &nbsp; ${K('swap')} change weapon &nbsp; ${K('down')} drop &nbsp; ${K('journal')} quests &nbsp; ${K('pause')} pause</div>`
+      ${K('use')} interact &nbsp; ${K('flask')} flask &nbsp; ${K('cure')} tincture &nbsp; ${K('swap')} change weapon &nbsp; ${K('down')} drop &nbsp; ${K('journal')} quests &nbsp; ${K('bestiary')} bestiary &nbsp; ${K('pause')} pause</div>`
     : `<div class="keys">${K('left')} ${K('right')} move &nbsp; ${K('jump')} jump &nbsp; ${K('attack')} / click slash &nbsp; ${K('heavy')} / right-click heavy &nbsp; ${K('roll')} roll &nbsp; ${K('block')} block<br>
-      ${K('flask')} flask &nbsp; ${K('cure')} tincture &nbsp; ${K('swap')} change weapon &nbsp; ${K('use')} interact · execute &nbsp; ${K('down')} drop &nbsp; ${K('journal')} quests &nbsp; <b>Esc</b> pause &nbsp; ${K('mute')} mute</div>`);
+      ${K('flask')} flask &nbsp; ${K('cure')} tincture &nbsp; ${K('swap')} change weapon &nbsp; ${K('use')} interact · execute &nbsp; ${K('down')} drop &nbsp; ${K('journal')} quests &nbsp; ${K('bestiary')} bestiary &nbsp; <b>Esc</b> pause &nbsp; ${K('mute')} mute</div>`);
 
   const ui = G.ui = {
     blocking: false, advance: null, options: null, sel: 0, openT: 0, grace: 0.45,
@@ -58,6 +58,7 @@
     pause() {
       this.menu('dim', '<h2>Paused</h2>', [
         { label: 'Return to the road', fn: () => this.clear() },
+        { label: 'Bestiary', fn: () => this.bestiary() },
         { label: 'Settings', fn: () => this.settings('pause') },
         { label: 'Abandon to title', fn: () => G.game.toTitle() },
       ], keysHtml());

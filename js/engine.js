@@ -22,10 +22,10 @@ const FIXED = { Enter: 'confirm', Escape: 'pause', Digit1: 'opt1', Digit2: 'opt2
 const DEFAULT_KEYS = {
   left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'], jump: ['KeyW', 'ArrowUp'], down: ['KeyS', 'ArrowDown'],
   attack: ['KeyJ'], heavy: ['KeyK'], roll: ['Space'], block: ['KeyL', 'ShiftLeft'], use: ['KeyE'], flask: ['KeyQ'],
-  cure: ['KeyR', 'KeyF'], swap: ['KeyC', 'KeyX'], journal: ['Tab', 'KeyT'], mute: ['KeyM'],
+  cure: ['KeyR', 'KeyF'], swap: ['KeyC', 'KeyX'], journal: ['Tab', 'KeyT'], bestiary: ['KeyB'], mute: ['KeyM'],
 };
 G.BINDABLE = [['left', 'Move left'], ['right', 'Move right'], ['jump', 'Jump'], ['down', 'Drop through a ledge'], ['attack', 'Slash'], ['heavy', 'Heavy attack'],
-  ['roll', 'Roll'], ['block', 'Block'], ['use', 'Interact · execute'], ['flask', 'Drink flask'], ['cure', 'Drink tincture'], ['swap', 'Change weapon'], ['journal', 'Quests'], ['mute', 'Mute']];
+  ['roll', 'Roll'], ['block', 'Block'], ['use', 'Interact · execute'], ['flask', 'Drink flask'], ['cure', 'Drink tincture'], ['swap', 'Change weapon'], ['journal', 'Quests'], ['bestiary', 'Bestiary'], ['mute', 'Mute']];
 const KEYSTORE = 'ashenvow_keys';
 let KEYMAP = {};
 const rebuildKeys = () => { KEYMAP = Object.assign({}, FIXED); for (const a in G.keys) for (const c of G.keys[a]) KEYMAP[c] = a; };
@@ -39,7 +39,7 @@ G.resetKeys = () => { G.keys = JSON.parse(JSON.stringify(DEFAULT_KEYS)); rebuild
 const PRETTY = { Space: 'Space', ShiftLeft: 'Shift', ShiftRight: 'R-Shift', ControlLeft: 'Ctrl', ControlRight: 'R-Ctrl', AltLeft: 'Alt', AltRight: 'R-Alt', Tab: 'Tab',
   ArrowLeft: 'Left', ArrowRight: 'Right', ArrowUp: 'Up', ArrowDown: 'Down', Backspace: 'Bksp', Comma: ',', Period: '.', Slash: '/', Semicolon: ';', Quote: "'", BracketLeft: '[', BracketRight: ']', Minus: '-', Equal: '=', Backquote: '`' };
 G.codeName = c => PRETTY[c] || c.replace(/^Key|^Digit|^Numpad/, '');
-const PAD_NAMES = { jump: 'A', roll: 'B', attack: 'X', heavy: 'Y', use: 'LB', block: 'RB', flask: 'LT', cure: 'RT', journal: 'Select', pause: 'Start', swap: 'D-pad up', down: 'D-pad down', left: 'Left', right: 'Right', confirm: 'A', mute: '—' };
+const PAD_NAMES = { bestiary: 'Start, then Bestiary', jump: 'A', roll: 'B', attack: 'X', heavy: 'Y', use: 'LB', block: 'RB', flask: 'LT', cure: 'RT', journal: 'Select', pause: 'Start', swap: 'D-pad up', down: 'D-pad down', left: 'Left', right: 'Right', confirm: 'A', mute: '—' };
 // What to show for an action: a controller button if the controller was used last, otherwise the first bound key.
 G.inputMode = 'keys';
 G.keyName = a => (G.inputMode === 'pad' ? PAD_NAMES[a] : G.keys[a] && G.keys[a].length ? G.codeName(G.keys[a][0]) : a === 'confirm' ? 'Enter' : a === 'pause' ? 'Esc' : '—');

@@ -150,3 +150,21 @@ body.on-ledge #t-down { display: block; }
 .opts.tree .btn .cost { float: right; color: #b89ae0; }
 .opts.tree .btn.got { opacity: 1; border-color: #7a5fb0; color: #d8c6ff; background: #1a1026; }
 .opts.tree .btn.locked { opacity: .25; }
+
+/* ---- the bestiary ---- */
+.screen.bestiary { justify-content: flex-start; padding-top: 2.5%; background: rgba(4, 2, 3, .95); }
+.btabs { display: flex; gap: .5em; margin-bottom: .5em; }
+.btabs .btn { width: auto; margin: 0; padding: .3em .9em; font-size: .75em; }
+.btn.on { border-color: #b3141c; color: #fff; background: #2a0a0e; }
+.bwrap { display: flex; gap: 1.2em; width: 94%; max-width: 54em; height: 64%; text-align: left; }
+.opts.blist { width: 36%; flex: none; overflow-y: auto; justify-content: flex-start; align-items: stretch; flex-wrap: nowrap; }
+.blist .btn { width: auto; max-width: none; margin: .12em 0; padding: .25em .6em; font-size: .62em; text-align: left; flex: none; }
+.blist .btn.unknown { color: #5a5048; }
+.bpage { flex: 1; display: flex; gap: 1em; align-items: flex-start; background: rgba(14, 6, 7, .96); border: 2px solid #3a1418; padding: .8em; overflow-y: auto; }
+.bport { width: 9em; height: auto; image-rendering: pixelated; flex: none; background: radial-gradient(circle at 50% 70%, rgba(120, 30, 40, .35), rgba(0, 0, 0, 0) 70%); }
+.btext h3 { margin: 0 0 .1em; font-weight: normal; color: #e0b84a; letter-spacing: .06em; }
+.btext .bkind { color: #8d8177; font-size: .7em; text-transform: uppercase; letter-spacing: .12em; margin-bottom: .6em; }
+.btext p { margin: 0 0 .7em; font-size: .7em; line-height: 1.5; color: #cfc4b8; }
+.btext .btip { color: #b89ae0; }
+.bclose { width: auto; padding: .3em 1.4em; font-size: .75em; margin-top: .6em; }
+@media (max-width: 700px) { .bwrap { flex-direction: column; height: 70%; } .opts.blist { width: 100%; max-height: 35%; } .bport { width: 6em; } }
