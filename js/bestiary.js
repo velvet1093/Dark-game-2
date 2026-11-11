@@ -34,7 +34,7 @@
     ['malvern', 'Bishop of Saint Avaric. He cut the Saint for her tears, and sent seven hundred men east for a relic he already knew about.', 'The censer fills your infection bar.'],
     ['abbess', 'Mother Severine of the Lily Convent. She drank the wash-water so her Sisters would not have to.', 'Long scythe, longer lunge, and tears.'],
     ['windcaller', 'Brother Hask blew the great horns to drive the sickness off the mountain. It went down to Hollowmere.', 'His horn is a gust, aimed at you.'],
-    ['mothmother', 'The Lamplight Mother, queen of the moths. The spring called her up out of the mire.', 'She dives for the light. Misery glows.'],
+    ['mothmother', 'The Lamplight Mother, queen of the moths: a girl of drowned Hildsmere who went into the water the first summer and came up with wings. The spring called her up, and she calls the moths.', 'She dives for the light. Misery glows.'],
     ['garrick', 'Ser Garrick of the Long Battalion. He came home first, took his name back, and held the cathedral door.', 'The better sword, until he is not.'],
   ];
   // Important people: [id, name, look, what is known, more-when-flag, flag, art]

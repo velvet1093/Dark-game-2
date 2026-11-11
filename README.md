@@ -196,7 +196,7 @@ Every entry has a portrait drawn from the character's own sprite. Some entries g
 | Bloodfly | small, fast and in swarms; dives in to drink, and what it leaves behind is the sickness |
 | Weeping Moth | flies high and slow, then sweeps down and shakes its wings over you; the dust fills your infection bar |
 | Mire-Drowned | at home in the water: the mire does not slow it |
-| **The Lamplight Mother** | boss of the Gloamwater; a great moth drawn to light (and Misery glows). Long dives, clouds of weeping dust, and swarms of bloodflies as she weakens. Strike her as she dives, or jump |
+| **The Lamplight Mother** | boss of the Gloamwater; a moth girl, queen of the moths, drawn to light (and Misery glows). Long dives, clouds of weeping dust, and swarms of bloodflies as she weakens. Strike her as she dives, or jump |
 | **Ser Garrick, the Oathkeeper** | the last boss |
 
 ## Misery

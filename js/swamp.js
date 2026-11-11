@@ -37,8 +37,8 @@
       ],
     },
     mothmother: {
-      name: 'The Lamplight Mother', boss: true, model: 'moth', fly: true, hp: 470, limbHp: 140, speed: 120, ichor: 1300, aggro: 9999, stop: 150, weapon: 'none', height: 60, limbs: ['head', 'armF', 'armB'],
-      scale: 2.1, poise: true, noSever: ['armF', 'armB'], shout: 'SHE COMES TO THE LIGHT', flyAlt: 170, diveAlt: 46, bob: 16,
+      name: 'The Lamplight Mother', boss: true, model: 'mothgirl', fly: true, hp: 470, limbHp: 140, speed: 120, ichor: 1300, aggro: 9999, stop: 150, weapon: 'none', height: 60, limbs: ['head', 'armF', 'armB'],
+      scale: 1.6, poise: true, noSever: ['armF', 'armB'], shout: 'SHE COMES TO THE LIGHT', flyAlt: 150, diveAlt: 46, bob: 16,
       summon: { type: 'bloodfly', at: [0.7, 0.4], n: 3, text: 'HER CHILDREN WAKE' },
       look: { skin: '#9a8468', body: '#4a3a2c', arm: '#9a8468', leg: '#4a3a2c', helm: 'none', eye: '#ff3b2f' },
       attacks: [
@@ -94,8 +94,70 @@
     G.spr.close(ctx, e.x, y0, { facing: e.facing, flash: e.flash > 0, scale: sc, rot: st === 'strike' ? 0.35 : e.dead ? 0.6 : 0 });
     e.out = { head: [e.x + e.facing * 12 * sc, y0 - 6 * sc], sh: [e.x, y0 - 3 * sc], hip: [e.x - e.facing * 8 * sc, y0] };
   }
+  // The Lamplight Mother: a moth girl, seen from the front, wings spread. Hovering, wings raised to wind up, tilted into a dive, slumped when broken.
+  function mothgirl(ctx, e, time) {
+    const sh = (c, k) => G.shade(c, k), T = c => ({ b: c, s: sh(c, 0.62), l: sh(c, 1.3) });
+    const { R, E, line } = G.spr.open(64, 78);
+    const st = e.state, down = e.dead || st === 'broken' || st === 'executed', wind = st === 'windup', strike = st === 'strike';
+    const sc = (e.def && e.def.scale) || 1.6, lm = e.limbs || { head: {}, armF: {}, armB: {} };
+    const beat = down ? 0 : wind ? 1 : 0.5 + Math.sin(time * 9 + (e.id || 0)) * 0.5;
+    const WG = T('#8a6478'), WD = T('#5a3c4e'), BAND = '#d8c4b4', EDGE = '#3a2432', FUR = T('#efe6d6'), SK = T('#e8d6c8'), DR = T('#2e2030'), HAIR = T('#e6d8b4'), GOLD = '#d8b860';
+    const by = down ? 6 : 0;
+    // ---- wings: forewing with a pale band and a dark scalloped edge; rounded hindwing below; a wing-eye on each
+    const lift = down ? -8 : Math.round(beat * 10);
+    const wing = (gone, side) => {
+      if (gone) { R(side * 6, -26 + by, 3, 3, '#7a0509'); return; }
+      for (let i = 0; i < 24; i++) {
+        const k = i / 24, x = side > 0 ? 4 + i : -4 - i;
+        const top = -30 - Math.round(lift * Math.sin(k * 2.4)) - Math.round(11 * Math.sin(k * 2.6)) + by + (i % 3 === 2 && i > 14 ? 1 : 0), bot = -21 + Math.round(3 * k) + by + (down ? Math.round(k * 6) : 0);
+        R(x, top, 1, bot - top, WG.b); R(x, top, 1, 2, EDGE);
+        const band = top + Math.round((bot - top) * 0.45); R(x, band, 1, 2, i > 3 ? BAND : WG.b);       // the pale band
+        if (i > 18) R(x, top, 1, bot - top, WG.s);                                                     // dark tip
+        if (i > 2 && i < 19) { const ht = bot, hb = bot + Math.round(11 * Math.sin(Math.PI * (i - 2) / 17)); R(x, ht, 1, hb - ht, WD.b); R(x, hb - 1, 1, 1, EDGE); if (i % 4 === 1) R(x, ht + 1, 1, hb - ht - 2, WD.s); }
+      }
+      const ex = side * 13, ey = -36 - Math.round(lift * 0.7) + by;
+      E(ex, ey, 2, 2, '#efe6d6'); R(ex - 1, ey - 1, 3, 3, '#1a100c'); R(ex, ey, 1, 1, '#e0b040');                   // wing-eye
+      const hx = side * 10, hy = -14 + by + (down ? 4 : 0); R(hx - 1, hy, 3, 2, '#1a100c'); R(hx, hy, 1, 1, '#ff3b2f'); // a smaller eye on the hindwing
+    };
+    wing(lm.armB && lm.armB.gone, -1); wing(lm.armF && lm.armF.gone, 1);
+    // ---- legs: dark stockings, dangling (kneeling when down)
+    if (down) { R(-6, -4, 5, 3, DR.s); R(2, -4, 5, 3, DR.s); R(-7, -2, 2, 2, '#140c12'); R(6, -2, 2, 2, '#140c12'); }
+    else { const sw = Math.round(Math.sin(time * 4)); R(-3 + sw, -10, 2, 8, '#2a1e2a'); R(2 + sw, -10, 2, 7, '#2a1e2a'); R(-3 + sw, -2, 2, 1, '#140c12'); R(2 + sw, -3, 2, 1, '#140c12'); }
+    // ---- dress: dark bodice, a full skirt with a fluffy pale fur hem
+    for (let y = -23; y < -12; y++) { const w = 3 + Math.round((y + 23) * 0.55); R(-w, y + by, w * 2 + 1, 1, DR.b); R(-w, y + by, 2, 1, DR.s); R(w - 1, y + by, 1, 1, DR.l); }
+    for (let x = -9; x <= 9; x++) { R(x, -13 + by, 1, 2, FUR.b); if (x & 1) R(x, -11 + by, 1, 1, FUR.s); }
+    R(-1, -22 + by, 3, 6, '#5a3c4e'); R(0, -21 + by, 1, 1, GOLD);                                                       // a little lamp-pendant on the bodice
+    // ---- arms
+    const arm = (side, gone) => {
+      if (gone) return;
+      const sx = side * 4, sy = -24 + by; let hx, hy;
+      if (wind) { hx = side * 13; hy = -33 + by; } else if (strike) { hx = 10 + (side < 0 ? 2 : 0); hy = -19 + by; } else if (down) { hx = side * 4; hy = -12 + by; } else { hx = side * 7; hy = -16 + by; }
+      line(sx, sy, hx, hy, DR.b, 2); R(hx - 1, hy - 1, 3, 3, SK.b); R(hx + (side > 0 ? 1 : -1), hy + 2, 1, 1, '#2a1a1a');
+    };
+    arm(-1, lm.armB && lm.armB.gone);
+    // ---- the fur ruff
+    E(0, -25 + by, 7, 3, FUR.b); for (let x = -7; x <= 7; x += 2) R(x, -23 + by, 1, 2, FUR.s); R(-5, -27 + by, 10, 1, FUR.l);
+    // ---- head: soft lilac-grey hair, big dark moth eyes with a highlight, red tears
+    if (lm.head && lm.head.gone) { R(-2, -30 + by, 5, 3, '#7a0509'); R(0, -29 + by, 1, 1, '#d9c9b0'); }
+    else {
+      const hy = -36 + by + (down ? 2 : 0);
+      E(0, hy - 1, 8, 7, HAIR.b); R(-8, hy, 3, 9, HAIR.b); R(6, hy, 3, 9, HAIR.b); R(-8, hy + 4, 1, 5, HAIR.s); R(8, hy + 4, 1, 5, HAIR.s);   // fluffy bob
+      E(0, hy + 2, 5, 5, SK.b); R(-4, hy + 6, 9, 1, SK.s);                                                                                 // face
+      R(-6, hy - 5, 13, 3, HAIR.b); R(-4, hy - 6, 8, 1, HAIR.l); R(-5, hy - 2, 2, 2, HAIR.b); R(-1, hy - 2, 2, 1, HAIR.b); R(4, hy - 2, 2, 2, HAIR.b);   // fringe
+      R(-4, hy + 1, 3, 3, '#1a0e16'); R(2, hy + 1, 3, 3, '#1a0e16'); R(-4, hy + 1, 1, 1, '#ffffff'); R(2, hy + 1, 1, 1, '#ffffff');     // big moth eyes
+      R(-2, hy + 3, 1, 1, '#c03040'); R(4, hy + 3, 1, 1, '#c03040');                                                                    // red glint
+      R(-5, hy + 4, 1, 1, '#e8a0a8'); R(5, hy + 4, 1, 1, '#e8a0a8');                                                                    // blush
+      if (!e.dead) { R(-3, hy + 4, 1, 3, '#a00a12'); R(3, hy + 4, 1, 2, '#a00a12'); } else { R(-4, hy + 2, 3, 1, '#1a0e16'); R(2, hy + 2, 3, 1, '#1a0e16'); }
+      R(0, hy + 5, 1, 1, strike || wind ? '#5a1018' : SK.s);
+      for (let i = 0; i < 9; i++) { const ax = 2 + Math.round(i * 0.7), ay = hy - 7 - i; R(ax, ay, 1, 1, GOLD); R(-ax, ay, 1, 1, GOLD); if (i % 2 === 0 && i > 1) { R(ax + 1, ay, 2, 1, sh(GOLD, 0.7)); R(-ax - 2, ay, 2, 1, sh(GOLD, 0.7)); } }   // feathered antennae
+    }
+    arm(1, lm.armF && lm.armF.gone);
+    if (!e.dead && Math.random() < 0.5) R(-10 + Math.random() * 20, -2 + Math.random() * 6, 1, 1, '#d8c8f0');   // dust
+    G.spr.close(ctx, e.x, G.GROUND - 4 * sc - e.alt, { facing: e.facing, flash: e.flash > 0, scale: sc, rot: strike ? 0.32 : e.dead ? 0.5 : 0 });
+    e.out = { head: [e.x, G.GROUND - e.alt - 4 * sc - 36 * 2 * sc], sh: [e.x, G.GROUND - e.alt - 24 * 2 * sc], hip: [e.x, G.GROUND - e.alt - 12 * 2 * sc] };
+  }
   const prev = G.drawBeast;
-  G.drawBeast = (ctx, e, t) => (e.def.model === 'bloodfly' ? bloodfly : e.def.model === 'moth' ? moth : prev)(ctx, e, t);
+  G.drawBeast = (ctx, e, t) => (e.def.model === 'bloodfly' ? bloodfly : e.def.model === 'moth' ? moth : e.def.model === 'mothgirl' ? mothgirl : prev)(ctx, e, t);
 
   // ---- the way in: an old causeway east out of the fen, past where the Matron fell
   G.LEVELS[2].passages = (G.LEVELS[2].passages || []).concat([{ x: 5400, to: LV, at: 120, needs: 'lantern', label: 'Wade east into the Gloamwater',
