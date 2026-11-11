@@ -317,7 +317,7 @@ The journal counts them. With all five you remember your name. After that Garric
 
 ## The Lamplight Mother's wings
 
-When the Lamplight Mother breaks, the first prompt is **Tear out her wings**. It always comes before the choice to execute or spare, so the wings are always yours. She drops to the mud, wingless, and her wings flutter down beside her. They give you the **Moth Wings**: a second jump in mid-air, and a **glide** (hold jump while falling, and you drift down slowly). Her wings show on your back while you glide or double-jump. If you spare her afterwards she is enraged, and fights on foot.
+When the Lamplight Mother breaks, the first prompt is **Tear out her wings**. It always comes before the choice to execute or spare, so the wings are always yours. The knight steps out to her wingtip, takes it in both hands and hauls on it in jerks while she shakes and the wing-root stretches. Then it tears. He flings it away, the other one falls loose, and he steps back. Without her wings she **cowers**: curled up in the mud with her hands over her head, eyes shut, trembling. They give you the **Moth Wings**: a second jump in mid-air, and a **glide** (hold jump while falling, and you drift down slowly). Her wings show on your back while you glide or double-jump. They unfold as they appear and fold up and fade, shedding a little moth-dust, when you land or let go. If you spare her she **does not fight back**: she drags herself away into the reeds on her hands, and the moths go with her.
 
 The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen, go east before going on to Hollowmere. (The Drowned Matron no longer carries the old Wind-Step Greaves. Saves that already have the double jump keep it, glide included.)
 
@@ -333,7 +333,7 @@ When a boss is broken you choose: **Execute** (the old way) or **Spare**. Spared
 | Malvern, the Unmade Bishop | **enraged** |
 | Abbess Severine | **yields**: goes to wash herself at the font |
 | Brother Hask, the Windcaller | **yields**: leaves his boots in the snow and walks up into the white |
-| The Lamplight Mother | **enraged**, and calls her moths twice as fast |
+| The Lamplight Mother | **yields**: wingless and cowering, she drags herself away |
 | Ser Garrick | **yields**: "I will hold the door from the other side" |
 
 An **enraged** boss gets back up with nearly half its health, wrapped in a red haze. It hits a third harder, moves faster, and cannot be spared a second time. A boss that **yields** turns away and is gone, leaving some ichor. The Bestiary records who you spared.

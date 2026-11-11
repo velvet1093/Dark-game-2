@@ -57,7 +57,7 @@ G.Player = class {
   get invulnerable() { return this.dead || this.pitInv > 0 || this.state === 'execute' || (this.state === 'roll' && this.t < 0.32); }
 
   damage(dmg, fromX, g) {
-    if (this.invulnerable) return false;
+    if (this.invulnerable || this.state === 'rip') return false;   // nothing interrupts the tearing
     const dir = this.x >= fromX ? 1 : -1;
     if (this.state === 'block' && this.facing === -dir) {
       this.st -= dmg * 1.15; this.stDelay = 0.9; this.vx = dir * 110;
@@ -141,6 +141,13 @@ G.Player = class {
       this.vx = 0; this.buf = null;
       if (this.state === 'sit' && !G.ui.blocking && this.t > 0.7 && (dir || I.down('block') || ['attack', 'heavy', 'roll', 'jump', 'flask', 'cure', 'use'].some(a => I.hit(a)))) { this.set('rise'); G.sfx('step'); }
       if (this.state === 'rise' && this.t >= 0.42) this.set('idle');
+    } else if (this.state === 'rip') {   // tearing out the Lamplight Mother's wings
+      this.vx = 0; const e = this.target;
+      if (e) { e.ripSide = (this.x >= e.x ? 1 : -1) * e.facing; e.ripPull = this.t < 0.35 ? 0 : this.t < 1.15 ? Math.min(1, (this.t - 0.35) / 0.6) : 0; }
+      if (this.t > 0.4 && this.t < 1.15 && Math.floor(this.t * 6) !== Math.floor((this.t - dt) * 6)) { G.sfx('grunt'); g.shake = Math.max(g.shake, 3); if (e) G.blood(e.x + (this.x >= e.x ? 14 : -14), G.GROUND - 50, 4, this.facing * -1, 160); }   // tug, tug
+      if (!this.ripped && this.t >= 1.15) { this.ripped = true; g.ripWings(e, this); }
+      if (this.t > 1.5 && this.t < 2.0) this.x -= this.facing * 40 * dt;   // step back from what you have done
+      if (this.t >= 2.0) { this.set('idle'); this.target = null; }
     } else if (this.state === 'execute') {
       this.vx = 0;
       if (!this.struck && this.t >= 0.55) { this.struck = true; this.bloody = 1; g.executeStrike(this.target, this); }
@@ -209,6 +216,12 @@ G.Player = class {
       P.lean = -0.3; P.head = -0.3; P.armA = -0.3; P.w = 1.8; P.footF = 2; P.footB = -12;
     } else if (s === 'heal') {
       P.bA = 2.4; P.bE = 0.9; P.head = -0.35; P.lean = -0.1; P.armA = 0.2; P.w = 0.6;
+    } else if (s === 'rip') {
+      // reach in, grip with both hands, haul back in jerks, then the tear: arms flung up and back with the wing
+      if (t < 0.35) { const u = t / 0.35; Object.assign(P, { armA: 2.1 * u, armE: 0.3, bA: 1.9 * u, bE: 0.4, lean: 0.3 * u, footF: 12, footB: -8 }); }
+      else if (t < 1.15) { const tug = Math.sin((t - 0.35) * 6 * Math.PI) * 0.12; Object.assign(P, { armA: 1.8, armE: 0.2, bA: 1.6, bE: 0.3, lean: -0.25 + tug, head: -0.2, crouch: 4, footF: 16, footB: -14 }); }
+      else if (t < 1.5) { const u = (t - 1.15) / 0.35; Object.assign(P, { armA: 1.8 + u * 1.7, armE: 0.2 + u * 0.6, bA: 1.6 - u * 1.2, bE: 0.3, lean: -0.25 - u * 0.2, head: -0.35, crouch: 2, footF: 14, footB: -14 }); }
+      else { const u = Math.min(1, (t - 1.5) / 0.5); Object.assign(P, { armA: 3.5 * (1 - u), armE: 0.8 * (1 - u), bA: 0.4, bE: 0.3, lean: -0.45 * (1 - u), footF: 10, footB: -10 }); }
     } else if (s === 'execute') {
       P.footF = 14; P.footB = -12; P.crouch = 4;
       const an = this.execKind === 'decap' ? { a: [3.4, 0.95], e: [0.2, 0.1], w: [4.2, 1.05], lean: [-0.25, 0.45] } : { a: [2.6, 1.15], e: [1.4, 0.1], w: [0.9, 1.15], lean: [-0.2, 0.5] };
@@ -233,7 +246,14 @@ G.Player = class {
     const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: this.look, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
     if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
     this.wingT = Math.max(0, (this.wingT || 0) - 1 / 60);
-    if ((this.gliding || this.wingT > 0) && this.air && G.drawPlayerWings) G.drawPlayerWings(ctx, this.x - this.facing * 6, o.y - 50, this.facing, this.wingT / 0.5, g.time, this.gliding && this.wingT <= 0);   // her wings, on your back
+    const wantW = (this.gliding || this.wingT > 0) && this.air ? 1 : 0;   // the wings unfold quickly and fold away gently
+    this.wingVis = (this.wingVis || 0) + (wantW - (this.wingVis || 0)) * (wantW ? 0.3 : 0.07);
+    if (wantW) this.wingGlide = this.gliding && this.wingT <= 0;
+    if (this.wingVis > 0.02 && G.drawPlayerWings) {
+      if (!wantW && this.wingVis > 0.3 && Math.random() < 0.5) G.fx.sparks.push({ x: this.x - this.facing * G.rand(10, 40), y: o.y - G.rand(40, 70), vx: G.rand(-20, 20), vy: G.rand(10, 40), t: 0.25 });   // a little moth-dust as they fold
+      G.drawPlayerWings(ctx, this.x - this.facing * 6, o.y - 50, this.facing, this.wingT / 0.5, g.time, this.wingGlide, this.wingVis);   // her wings, on your back
+    }
+    if (this.state === 'rip' && this.t > 1.15 && this.t < 1.45 && G.swamp) G.swamp.drawHeld(ctx, this.x + this.facing * 18, o.y - 58 - (this.t - 1.15) * 60, this.facing, g.time);   // her wing, in your fist
     G.drawHumanoid(ctx, o); this.headPos = o.out.head;
     // sword trail
     const swinging = (this.state === 'attack' && this.t >= this.atk.wind - 0.03 && this.t < this.atk.wind + this.atk.active + 0.06) || (this.state === 'execute' && this.t > 0.48 && this.t < 0.64);
@@ -384,7 +404,8 @@ G.Enemy = class {
     this.t += dt; this.flash -= dt; this.cd -= dt;
     if (this.leaving) {   // spared: it turns away and is gone
       this.leaving += dt; this.state = 'idle'; this.facing = this.x > g.player.x ? 1 : -1; this.vx = this.facing * 60; this.x += this.vx * dt;
-      if (this.def.fly) this.alt += 70 * dt;
+      if (this.def.fly && !this.grounded) this.alt += 70 * dt;
+      if (this.grounded) this.vx *= 0.5;   // on her hands, slowly
       if (this.leaving > 2.2) { this.dead = true; this.left = true; }
       return;
     }

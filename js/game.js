@@ -82,7 +82,7 @@
           return { x: e.x, y: G.GROUND - (e.crawling ? 50 : 105 * e.scale), label: canSpare ? 'Execute or spare' : 'Execute', hot: true, fn: () => {
             const kill = () => G.ui.dialogue(L.boss.lastWords, () => p.startExecute(e));
             if (!e.def.boss) p.startExecute(e);
-            else if (canSpare) { p.vx = 0; G.ui.choice(e.def.name.split(',')[0] + ' lies broken at your feet.', [{ label: 'Execute <small>— finish it</small>', fn: kill }, { label: 'Spare <small>— lower your blade</small>', fn: () => this.spareBoss(e) }]); }
+            else if (canSpare) { p.vx = 0; G.ui.choice(e.def.name.split(',')[0] + (e.wingless ? ' cowers at your feet, shaking.' : ' lies broken at your feet.'), [{ label: 'Execute <small>— finish it</small>', fn: kill }, { label: 'Spare <small>— lower your blade</small>', fn: () => this.spareBoss(e) }]); }
             else { p.vx = 0; kill(); }
           } };
         }
@@ -362,23 +362,29 @@
     },
     // The Lamplight Mother's wings: torn out before the end, and yours from then on.
     tearWings(e) {
-      const p = this.player, L = this.level; p.vx = 0; p.facing = e.x >= p.x ? 1 : -1;
+      const p = this.player, L = this.level; p.vx = 0;
       G.ui.dialogue(L.boss.wingsLines, () => {
-        e.wingless = true; e.grounded = true; e.alt = 0; e.flash = 0.4;
-        const [jx, jy] = e.joint('head'), y = jy + 40;
-        G.blood(e.x - 14, y, 60, -1, 420); G.blood(e.x + 14, y, 60, 1, 420); G.decal(e.x, 14, 50);
-        G.sfx('sever'); G.sfx('scream'); G.sfx('exec'); this.shake = 16; this.hitstop = 0.16; this.slow = 0.5;
-        G.text(e.x, G.GROUND - 150, 'HER WINGS ARE TORN AWAY', '#e0222c', 20);
-        G.swamp.dropWings(this, e.x, y);
-        this.gainAbility('dj');
-        this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.wings)); this.save();
+        // step in beside her, then the animation does the rest (see the player's 'rip' state)
+        let side = p.x < e.x ? -1 : 1; const [lo, hi] = this.bounds; if (e.x + side * 60 < lo + 10 || e.x + side * 60 > hi - 10) side = -side; p.x = e.x + side * 60;   /* whichever side has room for him */ p.facing = -side; p.ripped = false; p.target = e; p.set('rip'); G.sfx('step');
       });
+    },
+    // The moment of the tear.
+    ripWings(e, p) {
+      if (!e) return;
+      e.wingless = true; e.grounded = true; e.alt = 0; e.flash = 0.12; e.ripPull = 0;
+      const [, jy] = e.joint('head'), y = jy + 40, d = p.facing;
+      G.blood(e.x - d * 6, y, 80, d, 480); G.blood(e.x + d * 10, y, 50, -d, 300); G.decal(e.x, 14, 50); G.decal(e.x - d * 30, 10, 30);
+      G.sfx('sever'); G.sfx('scream'); G.sfx('exec'); this.shake = 18; this.hitstop = 0.18; this.slow = 0.5;
+      G.text(e.x, G.GROUND - 150, 'HER WINGS ARE TORN AWAY', '#e0222c', 20);
+      G.swamp.throwWings(this, p.x + d * 18, G.GROUND - 110, -d, e.x, y);
+      this.gainAbility('dj'); this.save();
+      setTimeout(() => { this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.wings)); }, 900);
     },
     // Mercy. Some take it and go; some cannot bear it, and get up again.
     spareBoss(e) {
       const B = this.level.boss, S = B.spare, p = this.player;
-      G.ui.dialogue(S.lines, () => {
-        if (S.kind === 'enrage') {
+      G.ui.dialogue(e.wingless && B.spareWingless ? B.spareWingless : S.lines, () => {
+        if (S.kind === 'enrage' && !e.wingless) {
           e.enraged = true; e.wasBroken = false; e.hp = e.maxHp * (S.hp || 0.45); e.phase2 = true; e.frenzy = true; e.set('chase'); e.cd = 0.2; e.flash = 0.3;
           G.text(e.x, G.GROUND - 170 * e.scale, 'ENRAGED', '#ff2a2a', 22); G.sfx('roar'); G.sfx('bell'); this.shake = 16; p.vx = -p.facing * 200;
           this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.enraged));

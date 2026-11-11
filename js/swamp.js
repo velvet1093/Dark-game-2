@@ -103,22 +103,25 @@
     const sc = (e.def && e.def.scale) || 1.6, lm = e.limbs || { head: {}, armF: {}, armB: {} };
     const beat = down ? 0 : wind ? 1 : 0.5 + Math.sin(time * 9 + (e.id || 0)) * 0.5;
     const WG = T('#8a6478'), WD = T('#5a3c4e'), BAND = '#d8c4b4', EDGE = '#3a2432', FUR = T('#efe6d6'), SK = T('#e8d6c8'), DR = T('#2e2030'), HAIR = T('#e6d8b4'), GOLD = '#d8b860';
-    const by = down ? 6 : 0;
+    const cower = e.wingless && down && !e.dead, by = cower ? 11 : down ? 6 : 0;   // without her wings she curls up small
+    const pull = e.ripPull || 0, pside = e.ripSide || 1;                          // a wing being dragged out toward the knight
     // ---- wings: forewing with a pale band and a dark scalloped edge; rounded hindwing below; a wing-eye on each
     const lift = down ? -8 : Math.round(beat * 10);
     const wing = (gone, side) => {
-      if (gone) { R(side * 6, -26 + by, 3, 3, '#7a0509'); return; }
+      if (gone) { R(side * 5, -26 + by, 3, 3, '#7a0509'); R(side * 5 + (side > 0 ? 1 : 0), -23 + by, 1, 2 + Math.round((time * 3) % 3), '#a00a12'); return; }   // torn stumps, still dripping
+      const ox = side === pside ? Math.round(pull * 12 + (pull > 0 ? Math.sin(time * 40) * pull * 1.5 : 0)) * side : 0;
       for (let i = 0; i < 24; i++) {
-        const k = i / 24, x = side > 0 ? 4 + i : -4 - i;
+        const k = i / 24, x = (side > 0 ? 4 + i : -4 - i) + ox;
         const top = -30 - Math.round(lift * Math.sin(k * 2.4)) - Math.round(11 * Math.sin(k * 2.6)) + by + (i % 3 === 2 && i > 14 ? 1 : 0), bot = -21 + Math.round(3 * k) + by + (down ? Math.round(k * 6) : 0);
         R(x, top, 1, bot - top, WG.b); R(x, top, 1, 2, EDGE);
         const band = top + Math.round((bot - top) * 0.45); R(x, band, 1, 2, i > 3 ? BAND : WG.b);       // the pale band
         if (i > 18) R(x, top, 1, bot - top, WG.s);                                                     // dark tip
         if (i > 2 && i < 19) { const ht = bot, hb = bot + Math.round(11 * Math.sin(Math.PI * (i - 2) / 17)); R(x, ht, 1, hb - ht, WD.b); R(x, hb - 1, 1, 1, EDGE); if (i % 4 === 1) R(x, ht + 1, 1, hb - ht - 2, WD.s); }
       }
-      const ex = side * 13, ey = -36 - Math.round(lift * 0.7) + by;
+      if (ox) for (let y = -28; y < -20; y += 2) R(side > 0 ? 3 : -4 + ox, y + by, ox * side > 0 ? Math.abs(ox) : 1, 1, '#c03040');   // the wing-root, stretched raw
+      const ex = side * 13 + ox, ey = -36 - Math.round(lift * 0.7) + by;
       E(ex, ey, 2, 2, '#efe6d6'); R(ex - 1, ey - 1, 3, 3, '#1a100c'); R(ex, ey, 1, 1, '#e0b040');                   // wing-eye
-      const hx = side * 10, hy = -14 + by + (down ? 4 : 0); R(hx - 1, hy, 3, 2, '#1a100c'); R(hx, hy, 1, 1, '#ff3b2f'); // a smaller eye on the hindwing
+      const hx = side * 10 + ox, hy = -14 + by + (down ? 4 : 0); R(hx - 1, hy, 3, 2, '#1a100c'); R(hx, hy, 1, 1, '#ff3b2f'); // a smaller eye on the hindwing
     };
     wing((lm.armB && lm.armB.gone) || e.wingless, -1); wing((lm.armF && lm.armF.gone) || e.wingless, 1);
     // ---- legs: dark stockings, dangling (kneeling when down)
@@ -132,7 +135,7 @@
     const arm = (side, gone) => {
       if (gone) return;
       const sx = side * 4, sy = -24 + by; let hx, hy;
-      if (wind) { hx = side * 13; hy = -33 + by; } else if (strike) { hx = 10 + (side < 0 ? 2 : 0); hy = -19 + by; } else if (down) { hx = side * 4; hy = -12 + by; } else { hx = side * 7; hy = -16 + by; }
+      if (cower) { hx = side * 3; hy = -44 + by; } else if (wind) { hx = side * 13; hy = -33 + by; } else if (strike) { hx = 10 + (side < 0 ? 2 : 0); hy = -19 + by; } else if (down) { hx = side * 4; hy = -12 + by; } else { hx = side * 7; hy = -16 + by; }
       line(sx, sy, hx, hy, DR.b, 2); R(hx - 1, hy - 1, 3, 3, SK.b); R(hx + (side > 0 ? 1 : -1), hy + 2, 1, 1, '#2a1a1a');
     };
     arm(-1, lm.armB && lm.armB.gone);
@@ -141,11 +144,12 @@
     // ---- head: soft lilac-grey hair, big dark moth eyes with a highlight, red tears
     if (lm.head && lm.head.gone) { R(-2, -30 + by, 5, 3, '#7a0509'); R(0, -29 + by, 1, 1, '#d9c9b0'); }
     else {
-      const hy = -36 + by + (down ? 2 : 0);
+      const hy = -36 + by + (down ? 2 : 0) + (cower ? 2 : 0);
       E(0, hy - 1, 8, 7, HAIR.b); R(-8, hy, 3, 9, HAIR.b); R(6, hy, 3, 9, HAIR.b); R(-8, hy + 4, 1, 5, HAIR.s); R(8, hy + 4, 1, 5, HAIR.s);   // fluffy bob
       E(0, hy + 2, 5, 5, SK.b); R(-4, hy + 6, 9, 1, SK.s);                                                                                 // face
       R(-6, hy - 5, 13, 3, HAIR.b); R(-4, hy - 6, 8, 1, HAIR.l); R(-5, hy - 2, 2, 2, HAIR.b); R(-1, hy - 2, 2, 1, HAIR.b); R(4, hy - 2, 2, 2, HAIR.b);   // fringe
-      R(-4, hy + 1, 3, 3, '#1a0e16'); R(2, hy + 1, 3, 3, '#1a0e16'); R(-4, hy + 1, 1, 1, '#ffffff'); R(2, hy + 1, 1, 1, '#ffffff');     // big moth eyes
+      if (cower) { R(-4, hy + 2, 3, 1, '#1a0e16'); R(-3, hy + 1, 1, 1, '#1a0e16'); R(2, hy + 2, 3, 1, '#1a0e16'); R(3, hy + 1, 1, 1, '#1a0e16'); }   // eyes squeezed shut
+      else { R(-4, hy + 1, 3, 3, '#1a0e16'); R(2, hy + 1, 3, 3, '#1a0e16'); R(-4, hy + 1, 1, 1, '#ffffff'); R(2, hy + 1, 1, 1, '#ffffff'); }     // big moth eyes
       R(-2, hy + 3, 1, 1, '#c03040'); R(4, hy + 3, 1, 1, '#c03040');                                                                    // red glint
       R(-5, hy + 4, 1, 1, '#e8a0a8'); R(5, hy + 4, 1, 1, '#e8a0a8');                                                                    // blush
       if (!e.dead) { R(-3, hy + 4, 1, 3, '#a00a12'); R(3, hy + 4, 1, 2, '#a00a12'); } else { R(-4, hy + 2, 3, 1, '#1a0e16'); R(2, hy + 2, 3, 1, '#1a0e16'); }
@@ -153,8 +157,13 @@
       for (let i = 0; i < 9; i++) { const ax = 2 + Math.round(i * 0.7), ay = hy - 7 - i; R(ax, ay, 1, 1, GOLD); R(-ax, ay, 1, 1, GOLD); if (i % 2 === 0 && i > 1) { R(ax + 1, ay, 2, 1, sh(GOLD, 0.7)); R(-ax - 2, ay, 2, 1, sh(GOLD, 0.7)); } }   // feathered antennae
     }
     arm(1, lm.armF && lm.armF.gone);
+    if (cower) {   // hands clutched over her head, knees drawn up
+      for (const sd of [-1, 1]) { line(sd * 6, -24 + by, sd * 7, -36 + by, DR.b, 2); line(sd * 7, -36 + by, sd * 2, -42 + by, DR.b, 2); R(sd * 2 - 1, -43 + by, 3, 3, SK.b); }
+      R(-7, -12 + by, 5, 3, '#2a1e2a'); R(3, -12 + by, 5, 3, '#2a1e2a');
+    }
     if (!e.dead && Math.random() < 0.5) R(-10 + Math.random() * 20, -2 + Math.random() * 6, 1, 1, '#d8c8f0');   // dust
-    G.spr.close(ctx, e.x, G.GROUND - 4 * sc - e.alt, { facing: e.facing, flash: e.flash > 0, scale: sc, rot: strike ? 0.32 : e.dead ? 0.5 : 0 });
+    const shiver = cower ? (Math.floor(time * 28) % 2 ? 2 : -2) : pull > 0 ? Math.round(Math.sin(time * 50) * 2) : 0;   // she trembles
+    G.spr.close(ctx, e.x + shiver, G.GROUND - 4 * sc - e.alt, { facing: e.facing, flash: e.flash > 0, scale: sc, rot: strike ? 0.32 : e.dead ? 0.5 : 0 });
     e.out = { head: [e.x, G.GROUND - e.alt - 4 * sc - 36 * 2 * sc], sh: [e.x, G.GROUND - e.alt - 24 * 2 * sc], hip: [e.x, G.GROUND - e.alt - 12 * 2 * sc] };
   }
   const prev = G.drawBeast;
@@ -224,6 +233,11 @@
     pits: [{ x: 2790, w: 70 }],
     boss: {
       type: 'mothmother', gate: 5450, x: 5680, end: 5860, wings: true,
+      spareWingless: [
+        ['The Lamplight Mother', '...don\'t... don\'t... Mother is sorry... Mother is sorry...'],
+        ['Knight', 'Go.'],
+        ['The Lamplight Mother', 'She drags herself away into the reeds on her hands, without looking back. The moths go with her, the way they always went with her light.'],
+      ],
       wingsLines: [['Misery', 'Her wings. Corin. Knight. Whoever you are. Take her WINGS.'], ['The Lamplight Mother', '...no... no, not the wings... Mother needs them for the light...'], ['Knight', 'You will not need them now.']],
       intro: [
         ['Misery', 'Oh. Oh no. She is looking at me. Why is she looking at ME?'],
@@ -272,10 +286,15 @@
     if (!far) { const ei = 12, ex = x - dir * ei * 2, ey = y - Math.round(ei * slope) * 2; px(ctx, ex - 2, ey - 2, 3, 3, '#1a100c'); px(ctx, ex, ey, 1, 1, '#e0b040'); px(ctx, ex - 2, ey - 2, 1, 1, '#efe6d6'); }   // the eye on the wing
   };
   // gliding: held out wide and nearly flat, trembling; double jump (k 1 -> 0): one hard downward beat
-  G.drawPlayerWings = (ctx, x, y, facing, k, t, glide) => {
-    const slope = glide ? 0.42 + Math.sin(t * 18) * 0.03 : -0.25 + k * 1.35;
-    wingShape(ctx, x + facing * 4, y - 6, facing, slope + 0.3, true, t + 0.3);   // the far wing, a little higher
-    wingShape(ctx, x, y, facing, slope, false, t);
+  // vis 0..1: the wings unfold as they appear and fold down and fade as they go, never just vanish
+  G.drawPlayerWings = (ctx, x, y, facing, k, t, glide, vis = 1) => {
+    if (vis <= 0.02) return;
+    const open = glide ? 0.42 + Math.sin(t * 18) * 0.03 : -0.25 + k * 1.35, folded = 1.6;   // folded: tucked up tight behind the shoulders
+    const slope = folded + (open - folded) * vis, span = Math.max(4, Math.round(22 * (0.35 + 0.65 * vis)));
+    ctx.save(); ctx.globalAlpha = Math.min(1, vis * 1.3);
+    wingShape(ctx, x + facing * 4, y - 6, facing, slope + 0.3, true, t + 0.3, span);
+    wingShape(ctx, x, y, facing, slope, false, t, span);
+    ctx.restore();
   };
   const fallen = [];
   // ---- slowing water
@@ -283,6 +302,9 @@
   G.swamp = {
     inWater,
     dropWings(g, x, y) { fallen.length = 0; for (const d of [-1, 1]) fallen.push({ x: x + d * 10, y, vx: d * 90, vy: -120, dir: d, t: 0, lv: g.levelIdx }); },
+    // the wing in the knight's fist, flung away; and the other, torn loose and falling
+    throwWings(g, hx, hy, dir, bx, by) { fallen.length = 0; fallen.push({ x: hx, y: hy, vx: dir * 220, vy: -200, dir: -dir, t: 0, lv: g.levelIdx }); fallen.push({ x: bx - dir * 14, y: by, vx: -dir * 60, vy: -60, dir, t: 0, lv: g.levelIdx }); },
+    drawHeld(ctx, x, y, dir, t) { wingShape(ctx, x, y, -dir, 0.9 + Math.sin(t * 30) * 0.1, false, t, 16); },
     afterPlayer(g, px0, wasAir, dt) {
       const p = g.player, L = g.level, w = !g.inside && inWater(L, p.x), un = G.unfair();
       if (!w || p.dead) { g.wadeT = 0; return; }
