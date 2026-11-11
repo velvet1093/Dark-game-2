@@ -336,7 +336,7 @@ The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen
 
 ## Weapon Arts
 
-Every weapon has its own skill tree, bought at a vigil candle (**Weapon arts**) with **Marks of Martyrdom**. A meter under your weapon name fills with every death you cause; a full meter is a mark, and every boss gives one outright. Skills belong to the weapon they were bought for. Switch weapons with the arrows at the bottom of the screen.
+Every weapon has its own skill tree, bought at a vigil candle (**Weapon arts**) with **Marks of Martyrdom**. The screen shows the weapon itself painted at the root of its tree, two branches of skills growing up from it, and its art at the crown. Gold lines light up as you learn, and the next skills you can afford pulse. Move between nodes with the arrow keys or the mouse; the panel beside the tree describes the one you are on. A meter under your weapon name fills with every death you cause; a full meter is a mark, and every boss gives one outright. Skills belong to the weapon they were bought for. Switch weapons with the arrows at the bottom of the screen.
 
 | | Left branch | Right branch |
 | --- | --- | --- |

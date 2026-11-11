@@ -15,7 +15,7 @@
 
   const ui = G.ui = {
     blocking: false, advance: null, options: null, sel: 0, openT: 0, grace: 0.45,
-    clear() { el().innerHTML = ''; this.blocking = false; this.advance = null; this.options = null; },
+    clear() { el().innerHTML = ''; this.blocking = false; this.advance = null; this.options = null; this.onSel = null; },
     // Called once per frame while an overlay is up.
     handle() {
       const I = G.input;
@@ -37,9 +37,10 @@
       const bs = this.btns(), n = bs.length; if (!n) return;
       for (let k = 0; k < n; k++) { const j = ((i + k * d) % n + n) % n; if (!bs[j].disabled) { this.sel = j; break; } }
       bs.forEach((bt, j) => bt.classList.toggle('sel', j === this.sel));
+      if (this.onSel) this.onSel(this.sel);   // screens that show details for the highlighted option
     },
     show(html, advance, options) {
-      el().innerHTML = html; this.blocking = true; this.advance = advance || null; this.options = options || null; this.escAdvance = false;
+      el().innerHTML = html; this.blocking = true; this.advance = advance || null; this.options = options || null; this.escAdvance = false; this.onSel = this.nextOnSel || null; this.nextOnSel = null;
       el().querySelectorAll('[data-opt]').forEach((b, j) => { b.addEventListener('click', e => { e.stopPropagation(); G.audioInit(); options[+b.dataset.opt](); }); b.addEventListener('mouseenter', () => this.select(j)); });
       if (options) { this.openT = G.game ? G.game.time : 0; this.grace = 0.45; this.select(Math.min(this.keepSel || 0, this.btns().length - 1)); this.keepSel = 0; }
       if (advance) el().firstElementChild.addEventListener('click', () => { G.audioInit(); if (this.advance) this.advance(); });
