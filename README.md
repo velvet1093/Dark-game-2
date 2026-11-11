@@ -94,7 +94,7 @@ An archway at the near end of each side area climbs back to the stair you came d
 
 ## Collectables and tools
 
-**Weeping icons** — thirty-eight small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 38 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — forty-three small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 43 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
