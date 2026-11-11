@@ -43,8 +43,9 @@ G.FAIRY = {
   clueHow: { high: 'Not down here, though. Look up.', bars: 'Someone shut it behind iron.', veil: 'It is sitting in that red mist. Lovely colour.', plain: 'It is not even hidden properly.', inside: 'It is indoors. Knock, why not.' },
   clueNone: ['Nothing left to steal here. You have been thorough. How dull.'],
   perch: ['Comfy. Your helmet is warm.', 'Do not move. I can see every way you might die from up here.', 'Your head makes a lovely chair. Empty, mostly.', 'Hum hum. Nobody comes. Hum hum.', 'If you stand still long enough, they will think you are one of them.'],
-  ringWarn: 'Nothing over there. Mushrooms. Walk on. WALK ON.',
-  backFromCourt: ['You smell of honey. You went to THEM.', 'Did they tell you my old name? They love telling it. Do not say it.', 'Fine. Go and sit with the little lanterns. See if they come when you are dying. I will.'],
+  ringWarn: 'Mushrooms. Just mushrooms. If you stand in that ring, I am coming in with you, and they will HATE it.',
+  backFromCourt: ['Four hundred years, and they still say my old name like it is a sweet. Never again.', 'Did you see Bramble\'s face when I sat on her moss? Worth the whole visit.', 'They let me in because of you. Do not think I am grateful.', 'Go and sit with the little lanterns whenever you like. See if they come when you are dying. I will.'],
+  inCourt: ['Do not touch anything. It is all honey and good intentions. Sticky.', 'They are all looking at me. Let them look.', 'I used to sit there, by the pool. Do not ask.', 'If one more of them says Mercy, I will bite it.', 'Nothing weeps in here. Nothing bleeds. How do they stand it?'],
   idleCourt: ['Mercy. Ugh. Nobody has called me that in four hundred years. Do not start.', 'They hide in a ring of mushrooms and call it a court. I sit on a knight. Who is winning?'],
   rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
@@ -67,7 +68,8 @@ G.Fairy = class {
   // Say a random line of the given kind in a speech bubble.
   bark(kind, force, chance = 1) {
     if ((!force && (this.cd > 0 || Math.random() > chance)) || G.ui.blocking || G.game.fairyAway) return;
-    if (kind === 'idle' && G.game.flags.court_met && Math.random() < 0.35) kind = 'idleCourt';   // since you met the Court, she brings it up
+    if (kind === 'idle' && G.game.inside && G.game.inside.id === 'court') kind = 'inCourt';   // sulking in the ring
+    else if (kind === 'idle' && G.game.flags.court_met && Math.random() < 0.35) kind = 'idleCourt';   // since you met the Court, she brings it up
     const lines = G.FAIRY[kind]; let s;
     do s = G.pick(lines); while (lines.length > 1 && s === this.last[kind]);
     this.last[kind] = s; this.say = s; this.sayT = 2.6 + s.length * 0.045; this.cd = this.sayT + 3;

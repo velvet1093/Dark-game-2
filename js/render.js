@@ -315,6 +315,8 @@ const THEMES = {
   town: { sky: ['#08070c', '#17101a', '#3a1c1a'], moon: true, mid: ['house', 'house', 'wall', 'house', 'chapel', 'wall'], near: ['lamp', 'stall', 'fence', 'lamp', 'cart', 'lamp'], ground: '#12100f', edge: '#2e2420', weather: 'ash' },
   fen: { sky: ['#040706', '#0b1512', '#1b2c24'], moon: true, mid: ['tree', 'tree', 'tree', 'gallows', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#080d0b', edge: '#1d2c22', weather: 'rain', water: true },
   cathedral: { sky: ['#060406', '#0b0709', '#12090b'], mid: ['window', 'pillar'], near: ['pew', 'candles', 'pew', 'candles'], ground: '#0c090b', edge: '#2a2226', weather: 'ash', indoor: true },
+  harbour: { sky: ['#05060b', '#0f0c18', '#2e1420'], moon: true, mid: ['hull', 'mast', 'tree', 'mast', 'hull'], near: ['anchor', 'bollard', 'net', 'crate', 'bollard', 'grave'], ground: '#0c0b0d', edge: '#22202a', weather: 'rain', water: true, sea: true },
+  crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
 
 G.buildProps = level => {
@@ -596,7 +598,7 @@ Object.assign(PROPS, {
 // A distant skyline, far behind the playfield.
 G.drawFar = (ctx, level, cam, t) => {
   const W = G.W, gy = G.GROUND, th = level.theme, off = cam * 0.25;
-  ctx.save(); ctx.fillStyle = th === 'cathedral' ? '#0c080b' : th === 'fen' ? '#0b1210' : '#150b0f';
+  ctx.save(); ctx.fillStyle = th === 'cathedral' || th === 'crypt' ? '#0c080b' : th === 'fen' ? '#0b1210' : '#150b0f';
   const each = (step, fn) => { for (let i = Math.floor(off / step) - 1; i * step - off < W + step; i++) fn(Math.round((i * step - off) / 2) * 2, Math.imul(i + 7, 2654435761) >>> 0, i); };
   if (th === 'road') each(760, (x, h) => {           // a ruined keep on the ridge
     const y = gy - 60 - h % 30; ctx.fillRect(x, y - 120, 46, 120); ctx.fillRect(x - 6, y - 132, 14, 14); ctx.fillRect(x + 16, y - 128, 12, 10); ctx.fillRect(x + 46, y - 60, 90, 60); ctx.fillRect(x + 136, y - 34, 40, 34);
@@ -614,6 +616,15 @@ G.drawFar = (ctx, level, cam, t) => {
   else if (th === 'fen') each(150, (x, h) => {        // a drowned tree line
     const hh = 70 + h % 90; ctx.fillRect(x, gy - hh, 5, hh); ctx.fillRect(x - 16, gy - hh * 0.7, 20, 3); ctx.fillRect(x + 4, gy - hh * 0.85, 22, 3); ctx.fillRect(x - 10, gy - hh * 0.45, 12, 3); ctx.fillRect(x + 22, gy - hh * 0.85 - 12, 3, 14);
   });
+  else if (th === 'harbour') {                        // the open sea, and the wrecks of other ships out on it
+    ctx.fillStyle = '#0c0a14'; ctx.fillRect(0, gy - 70, W, 70);
+    ctx.fillStyle = 'rgba(160,60,70,0.14)'; for (let k = 0; k < 12; k++) ctx.fillRect(((k * 173 - off * 0.6) % W + W) % W, gy - 60 + (k % 4) * 14, 40 + k % 3 * 20, 2);
+    ctx.fillStyle = '#100c16'; each(900, (x, h) => { const y = gy - 66; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 120, y); ctx.lineTo(x + 100, y - 18); ctx.lineTo(x + 14, y - 16); ctx.fill(); ctx.fillRect(x + 50, y - 90 - h % 30, 4, 80); ctx.fillRect(x + 30, y - 70 - h % 30, 44, 3); });
+  }
+  else if (th === 'crypt') each(260, (x, h) => {     // low vaults, receding
+    ctx.fillRect(x, 0, 30, gy); ctx.beginPath(); ctx.moveTo(x + 30, 230); ctx.quadraticCurveTo(x + 145, 120, x + 260, 230); ctx.lineTo(x + 260, 0); ctx.lineTo(x + 30, 0); ctx.fill();
+    ctx.fillStyle = '#060405'; for (let k = 0; k < 4; k++) ctx.fillRect(x + 6, gy - 60 - k * 70, 18, 30); ctx.fillStyle = '#0c080b';
+  });
   else each(340, (x) => {                              // the far arcade of the nave
     ctx.fillRect(x, 0, 26, gy); ctx.beginPath(); ctx.moveTo(x + 26, 150); ctx.quadraticCurveTo(x + 183, -40, x + 340, 150); ctx.lineTo(x + 340, 0); ctx.lineTo(x + 26, 0); ctx.fill();
   });
@@ -624,6 +635,55 @@ G.drawFar = (ctx, level, cam, t) => {
 // Detail for the last plain props: moonlit bark, wood grain, rope, nails, rags.
 // Each keeps the silhouette it had and adds a few tones on top.
 // ---------------------------------------------------------------------------
+// ---- the harbour where the Sun ran aground, and the bone vaults under Saint Avaric
+Object.assign(PROPS, {
+  hull(c, x, y, s, seed) {   // a wreck lying on her side in the shallows
+    const w = 260 * s, h = 90 * s;
+    c.beginPath(); c.moveTo(x, y - h * 0.3); c.quadraticCurveTo(x + w * 0.1, y + 6, x + w * 0.5, y + 6); c.lineTo(x + w, y - h * 0.2); c.lineTo(x + w * 0.96, y - h); c.lineTo(x + w * 0.12, y - h * 0.9); c.fill();
+    c.save(); c.fillStyle = D2; for (let k = 1; k < 5; k++) c.fillRect(x + w * 0.1, y - h * k / 5, w * 0.85, 2);
+    c.fillStyle = '#05030a'; for (let k = 0; k < 5; k++) c.fillRect(x + w * (0.2 + k * 0.14), y - h * 0.62, 10, 8);
+    c.restore(); c.save(); c.translate(x + w * 0.5, y - h); c.rotate(0.5); c.fillRect(-4, -170 * s, 8, 170 * s); c.fillRect(-50 * s, -130 * s, 100 * s, 5); c.restore();
+  },
+  mast(c, x, y, s, seed, t) {   // a broken mast stuck in the sand, a rag of sail still on it
+    const h = 210 * s, sw = Math.sin(t * 0.9 + seed) * 6;
+    c.save(); c.translate(x, y); c.rotate(((seed % 7) - 3) * 0.04); c.fillRect(-5, -h, 10, h); c.fillRect(-60 * s, -h * 0.8, 120 * s, 6); c.fillRect(-40 * s, -h * 0.5, 80 * s, 5);
+    c.beginPath(); c.moveTo(-56 * s, -h * 0.8 + 6); c.quadraticCurveTo(sw - 30 * s, -h * 0.62, -50 * s + sw, -h * 0.5); c.lineTo(-6, -h * 0.5); c.lineTo(-6, -h * 0.8); c.fill();
+    c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, -h); c.lineTo(70 * s, 0); c.moveTo(0, -h); c.lineTo(-80 * s, 0); c.stroke(); c.restore();
+  },
+  anchor(c, x, y, s) {
+    c.fillRect(x - 3, y - 64 * s, 6, 64 * s); c.fillRect(x - 18 * s, y - 56 * s, 36 * s, 5); c.beginPath(); c.arc(x, y - 70 * s, 7 * s, 0, 7); c.fill();
+    c.lineWidth = 5; c.beginPath(); c.arc(x, y - 22 * s, 24 * s, 0.2, Math.PI - 0.2); c.stroke(); c.save(); c.fillStyle = IRON; c.fillRect(x - 1, y - 64 * s, 2, 50 * s); c.restore();
+  },
+  bollard(c, x, y, s) { c.fillRect(x - 8 * s, y - 34 * s, 16 * s, 34 * s); c.fillRect(x - 12 * s, y - 38 * s, 24 * s, 6); c.save(); c.strokeStyle = ROPE; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y - 26 * s); c.quadraticCurveTo(x + 40, y + 4, x + 90, y - 4); c.stroke(); c.restore(); },
+  net(c, x, y, s) {
+    c.fillRect(x, y - 54 * s, 4, 54 * s); c.fillRect(x + 80 * s, y - 50 * s, 4, 50 * s);
+    c.save(); c.strokeStyle = ROPE; c.lineWidth = 1; c.beginPath(); for (let k = 0; k <= 8; k++) { c.moveTo(x + k * 10 * s, y - 50 * s); c.lineTo(x + k * 10 * s + 4, y - 10 * s); } for (let k = 0; k < 5; k++) { c.moveTo(x, y - 50 * s + k * 9 * s); c.quadraticCurveTo(x + 40 * s, y - 40 * s + k * 9 * s, x + 82 * s, y - 50 * s + k * 9 * s); } c.stroke(); c.restore();
+  },
+  crate(c, x, y, s) { const w = 34 * s; c.fillRect(x, y - w, w, w); c.fillRect(x + w * 0.6, y - w * 1.7, w * 0.8, w * 0.7); c.save(); c.fillStyle = GRAIN; c.fillRect(x + 2, y - w / 2, w - 4, 2); c.fillRect(x + w / 2, y - w + 2, 2, w - 4); c.restore(); },
+  bonewall(c, x, y, s, seed) {   // a wall laid with skulls, row on row
+    c.fillRect(x - 60, 0, 120, y); c.save();
+    for (let row = 0; row < 14; row++) for (let k = 0; k < 6; k++) {
+      const bx = x - 54 + k * 20 + (row & 1) * 10, by = y - 40 - row * 26; if (bx > x + 50) continue;
+      c.fillStyle = '#2a2420'; c.fillRect(bx, by, 14, 12); c.fillStyle = '#060404'; c.fillRect(bx + 3, by + 4, 3, 3); c.fillRect(bx + 8, by + 4, 3, 3); c.fillRect(bx + 6, by + 8, 2, 2);
+    }
+    c.fillStyle = '#1e1a18'; for (let row = 0; row < 14; row++) c.fillRect(x - 58, y - 46 - row * 26, 116, 4); c.restore();
+  },
+  niche(c, x, y, s, seed) {   // a burial niche: a long dark slot, a body wrapped inside
+    c.fillRect(x - 40, 60, 80, y - 60); c.save();
+    for (let k = 0; k < 3; k++) { const ny = y - 90 - k * 110; c.fillStyle = '#050304'; c.fillRect(x - 32, ny, 64, 40); c.fillStyle = '#2a2624'; c.fillRect(x - 28, ny + 24, 56, 12); c.fillStyle = '#3a3430'; c.fillRect(x - 28, ny + 24, 10, 10); }
+    c.restore();
+  },
+  coffin(c, x, y, s) {
+    c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8 * s, y - 22 * s); c.lineTo(x + 90 * s, y - 22 * s); c.lineTo(x + 100 * s, y - 12 * s); c.lineTo(x + 92 * s, y); c.fill();
+    c.save(); c.fillStyle = GRAIN; c.fillRect(x + 10, y - 16 * s, 78 * s, 2); c.fillStyle = IRON; c.fillRect(x + 40 * s, y - 22 * s, 3, 22 * s); c.fillRect(x + 32 * s, y - 14 * s, 18 * s, 3); c.restore();
+  },
+  skulls(c, x, y, s, seed) {
+    const r = G.rng(seed); c.save();
+    for (let k = 0; k < 9; k++) { const bx = x + (r() * 70 | 0), by = y - 6 - (k > 5 ? 10 : 0) - (r() * 4 | 0); c.fillStyle = '#3a342e'; c.fillRect(bx, by - 8, 12, 10); c.fillStyle = '#060404'; c.fillRect(bx + 2, by - 5, 3, 3); c.fillRect(bx + 7, by - 5, 3, 3); }
+    c.fillStyle = '#2e2924'; c.fillRect(x - 8, y - 4, 40, 3); c.fillRect(x + 40, y - 6, 34, 3); c.restore();
+  },
+});
+
 const MOON = 'rgba(160,96,108,0.34)', GRAIN = 'rgba(78,44,52,0.6)', ROPE = '#4a3a2a', IRON = '#4a4248', RAG = '#5a1014';
 Object.assign(PROPS, {
   tree(c, x, y, s, seed) {

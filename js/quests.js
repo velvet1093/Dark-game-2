@@ -227,10 +227,10 @@ G.questLog = {
     for (const id of this.ids('active')) {
       const d = G.QUESTS[id], q = this.state[id];
       // the story moves on even if an early step was walked past
-      if (d.main) for (let j = d.steps.length - 1; j > q.step; j--) { const f = d.steps[j]; if ((f.type === 'reach' && g.levelIdx >= f.level) || (f.type === 'flag' && g.flags[f.flag])) { q.step = j; break; } }
+      if (d.main) for (let j = d.steps.length - 1; j > q.step; j--) { const f = d.steps[j]; if ((f.type === 'reach' && g.reachedLv(f.level)) || (f.type === 'flag' && g.flags[f.flag])) { q.step = j; break; } }
       const s = this.cur(id);
       if (d.failIfDead && g.flags['dead_' + d.failIfDead]) { const n = G.LEVELS.flatMap(l => l.npcs).find(x => x.id === d.failIfDead); this.fail(id, (n ? n.name : 'They') + ' did not survive.'); continue; }
-      const done = s.type === 'reach' ? g.levelIdx >= s.level : s.type === 'read' ? !!g.read[s.lore] : s.type === 'flag' ? !!g.flags[s.flag]
+      const done = s.type === 'reach' ? g.reachedLv(s.level) : s.type === 'read' ? !!g.read[s.lore] : s.type === 'flag' ? !!g.flags[s.flag]
         : s.type === 'kill' ? q.count >= s.n : s.type === 'collect' ? (g.items[s.item] || 0) >= s.n : s.type === 'talk' ? !!(s.meet && g.flags['met_' + s.npc]) : false;
       if (done) this.advance(id);
     }

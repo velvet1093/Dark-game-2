@@ -394,7 +394,7 @@ G.Enemy = class {
 
     const sm = this.def.summon;   // some bosses call for help as their health falls
     if (sm && this.hp > 0 && this.state !== 'broken' && this.state !== 'executed' && (this.summoned || 0) < sm.at.length && this.hp < this.maxHp * sm.at[this.summoned || 0]) {
-      this.summoned = (this.summoned || 0) + 1; G.sfx('roar'); G.text(this.x, gy - 170, 'SHE CALLS HER HOUNDS', '#e0222c', 16); g.shake = 8;
+      this.summoned = (this.summoned || 0) + 1; G.sfx('roar'); G.text(this.x, gy - 170, sm.text || 'SHE CALLS HER HOUNDS', '#e0222c', 16); g.shake = 8;
       for (let k = 0; k < sm.n + (this.hard ? 1 : 0); k++) { const e = new G.Enemy(sm.type, clamp(this.x + (k ? -1 : 1) * rand(150, 210), g.level.boss.gate + 40, g.level.boss.end)); e.set('chase'); g.enemies.push(e); }
     }
     // ledges: walking off an edge, and flight through the air. Nothing fights in mid-air.

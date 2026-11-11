@@ -216,6 +216,12 @@
         for (let x = -7; x <= 7; x++) { if (x & 1) R(fx + x, fy - 8, 1, 1, WHITE.b); R(fx + x, fy - 7, 1, 1, (x & 1) ? WHITE.l : WHITE.b); R(fx + x, fy - 6, 1, 1, WHITE.s); }
         R(fx - 10, fy - 9, 3, 1, WHITE.l); R(fx - 9, fy - 10, 1, 3, WHITE.l); R(fx - 10, fy - 10, 1, 1, WHITE.b); R(fx - 8, fy - 8, 1, 1, WHITE.b); R(fx - 9, fy - 9, 1, 1, LAV);
         R(fx + 7, fy - 5, 1, 5, WHITE.s); R(fx + 8, fy - 4, 1, 3, WHITE.b);
+      } else if (L.helm === 'mitre') {   // a bishop's mitre: two tall white panels, gold banded, a red cross
+        for (let y = 0; y <= 13; y++) { const w = Math.max(1, Math.round((hr + 1) * (1 - y / 16))); R(fx - w, fy - hr - y, w * 2 + 1, 1, y & 4 ? HM.l : HM.b); }
+        R(fx - hr - 1, fy - hr, 1, 2, HM.s); R(fx, fy - hr - 13, 1, 13, HM.s);
+        R(fx - hr, fy - hr + 1, hr * 2 + 1, 2, '#c9a13b'); R(fx - hr, fy - hr + 1, hr * 2 + 1, 1, '#e8c860');
+        R(fx - 1, fy - hr - 10, 3, 8, '#8a1018'); R(fx - 3, fy - hr - 8, 7, 2, '#8a1018');
+        R(fx + hr - 1, fy - hr + 3, 1, 8, '#8a1018'); R(fx + hr, fy - hr + 6, 1, 8, '#6a0a12');   // lappets
       } else if (L.helm === 'sack') {
         E(fx, fy, hr + 1, hr + 1, HM.b); R(fx - hr - 1, fy - 3, 2, 8, HM.s); R(fx + 1, fy - hr - 1, 4, 1, HM.l); R(fx - 1, fy - hr - 3, 3, 2, HM.s);
         R(fx - 3, fy - 2, 3, 3, '#000000'); R(fx + 2, fy - 2, 3, 3, '#000000'); R(fx - 2, fy - 4, 1, 1, HM.s); R(fx + 4, fy - 4, 1, 1, HM.s);

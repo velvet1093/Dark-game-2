@@ -78,9 +78,18 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
+Two **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
+
+| Side area | Way in | Needs | |
+| --- | --- | --- | --- |
+| The Wreck of the Sun | a cliff path near the start of the Gallows Road | Wind-Step Greaves | the Long Battalion's ship, run aground in the shallows. Drowned deckhands and knights of your own battalion, the Bosun who rowed you home, the ship's log, and the battalion roll with your name torn out of it. Boss: **the Standard-Bearer**, who still guards the colours at the stern |
+| The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
+
+An archway at the near end of each side area climbs back to the stair you came down.
+
 ## Collectables and tools
 
-**Weeping icons** — twenty small gilt paintings of the Saint: three in every area, four inside buildings, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 20 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — twenty-six small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 26 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -115,7 +124,7 @@ Misery counts icons behind a door when she hints, and tells you when one is indo
 
 ## A secret
 
-There is a seventh place, behind no door. Somewhere in the game a child's rhyme says where to look and what to do; it takes no tool, only patience. What waits there are the other kind of fairy, who remember Misery by an older name. Misery will not go in, and she will not thank you for going.
+There is a seventh place, behind no door. Somewhere in the game a child's rhyme says where to look and what to do; it takes no tool, only patience. What waits there are the other kind of fairy, who remember Misery by an older name. The ring lets in whatever the still one carries, so Misery comes in with you. They are not pleased to see her, and she is not pleased to be seen; she has something to say to nearly all of them.
 
 ## Trade in Brannoc's Hold
 
@@ -162,6 +171,9 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 | Weeping Bloat | bursts over everyone nearby when killed — unless you execute it |
 | Rot-Pike | long spear thrust |
 | Pale Reaper | tall, wide scythe sweeps |
+| Drowned Deckhand, Drowned Knight of the Battalion | the crew and passengers of the Sun, in the Wreck |
+| **The Standard-Bearer of the Long Battalion** | boss of the Wreck of the Sun; a greatsword, long lunges and an overhead slam. His sword is yours when he falls |
+| **Malvern, the Unmade Bishop** | boss of the Ossuary; a crozier-spear, a censer that fills your infection bar, and flagellants he calls twice as he weakens. He leaves the Seventh Knife |
 | **Ser Garrick, the Oathkeeper** | the last boss |
 
 ## Misery
@@ -185,6 +197,7 @@ Progress saves at vigil candles (browser local storage).
 | `js/engine.js` | input, blood / gib particles |
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/interiors.js` | the buildings you can enter: rooms, furniture and street fronts |
+| `js/areas.js` | the two side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
 | `js/chibi.js` | chibi pixel sprites for every humanoid, pixel gibs, and the vector-to-pixel helper |
@@ -204,7 +217,7 @@ If that is too much, switch to **Fair** under Settings (from the title screen or
 
 ## Weapons
 
-You start with the longsword. Three more are lying in the world, each driven into the ground with a glow around it. Take one and it is yours for good; press `C` (or tap the weapon name on touch) to change between those you own.
+You start with the longsword. Five more are lying in the world, each driven into the ground with a glow around it. Take one and it is yours for good; press `C` (or tap the weapon name on touch) to change between those you own.
 
 | Weapon | Where | Character |
 | --- | --- | --- |
@@ -212,5 +225,7 @@ You start with the longsword. Three more are lying in the world, each driven int
 | Headsman's Greataxe | the Gallows Road, dropped by Gaunt | slow, heavy, every blow breaks poise and severs limbs easily |
 | Fen-Warden Spear | the Weeping Fen | long reach, thrusts only, weak at severing |
 | Penitent's Flail | Hollowmere | fast, light, builds bleeding quickly, rarely severs |
+| Battalion Greatsword | the Wreck of the Sun, left by the Standard-Bearer | long, heavy two-hit combo; severs well |
+| The Seventh Knife | the Ossuary, left by Malvern | very short and very fast four-hit combo; bleeds like nothing else |
 
 Weapons are plain data in `G.WEAPONS` (`js/data.js`): a light combo, a heavy attack, reach, bleed build-up and a sever multiplier per move. To add one, add an entry there, a pixel drawing for it in `js/chibi.js`, and an item with `weapon: '<id>'` in a level.

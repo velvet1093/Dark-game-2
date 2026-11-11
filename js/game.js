@@ -6,6 +6,8 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
+  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall' };
+  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
@@ -43,7 +45,7 @@
       this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.toldGate = {};
       // everything that can be stood on: ledges, and the tops of rubble walls
       this.surf = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h }))); this.fairy.place(this.player);
-      G.music({ fen: 'road' }[L.theme] || L.theme); G.ambience({ road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall' }[L.theme]);
+      G.music(musicFor(L)); G.ambience(AMB[L.theme]); this.flags['reached_' + idx] = 1;
       this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
@@ -99,7 +101,11 @@
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
       if (this.inside) { if (near(60, 50)) return { x: 60, y: G.GROUND - 130, label: L.exitLabel || 'Leave ' + this.level.name, fn: () => this.leaveBuilding() }; return null; }
       for (const d of L.doors || []) if (near(d.x, 36)) return { x: d.x, y: G.GROUND - 110, label: 'Enter ' + G.INTERIORS[d.to].name, fn: () => this.enterBuilding(d) };
-      if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
+      if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: L.backLabel || 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
+      for (const q of L.passages || []) if (near(q.x, 50)) {
+        const tool = this.hasTool(q.needs);
+        return { x: q.x, y: G.GROUND - 150, label: tool ? q.label : q.shut, fn: () => (tool ? this.travelTo(q.to, q.at, q.slides) : this.gateRefused(q)) };
+      }
       return null;
     },
     talk(n) {
@@ -187,6 +193,8 @@
     // ---- gates on the main path: chained bars, rubble walls, red veils
     gateKey(i, lv = this.levelIdx) { return 'gate_' + lv + '_' + i; },
     gateOpen(i) { const k = (this.level.gates || [])[i]; return k && k.kind !== 'wall' && !!this.flags[this.gateKey(i)]; },
+    // Main-road areas count as reached once you have been there (side areas do not move the story on).
+    reachedLv(lv) { return !!this.flags['reached_' + lv] || (this.levelIdx >= lv && this.levelIdx <= 4); },
     hasTool(need) { return need === 'axe' ? this.weapons.includes('greataxe') : !!this.abilities[need]; },
     // Stop a body moving from px to x if a closed gate stands between. Rubble walls only stop what is below their top.
     gateClamp(px, x, alt, fly) {
@@ -231,17 +239,18 @@
       const p = this.player; Object.assign(p, { x: B.entry, alt: 0, air: false, vy: 0, vx: 0, facing: 1 }); p.set('idle');
       this.cam = 0; this.fairy.place(p); this.toldGate = {}; this.card = 3; this.fade = 0.5; G.sfx('page'); G.sfx('thud'); G.ambience(B.style === 'glade' ? 'none' : 'hall');
       if (B.music) G.music(B.music);
-      if (B.noMisery) { this.fairy.say = null; this.fairyAway = true; }
+      if (B.arrival) { const first = !this.flags['arrived_' + d.to]; G.ui.dialogue(first || !B.arrivalAgain ? B.arrival : B.arrivalAgain, () => { this.flags['arrived_' + d.to] = 1; this.save(); }); }
     },
     leaveBuilding() {
       const o = this.outside; if (!o) return;
+      const fromCourt = this.inside && this.inside.id === 'court';
       Object.assign(this, { level: o.level, enemies: o.enemies, npcs: o.npcs, surf: o.surf, boss: o.boss, cam: o.cam, inside: null, outside: null });
       G.fx.decals.splice(0, G.fx.decals.length, ...o.decals); G.fx.gibs.splice(0, G.fx.gibs.length, ...o.gibs); G.fx.drops.length = 0;
       const p = this.player; Object.assign(p, { x: o.x, alt: 0, air: false, vy: 0, vx: 0 }); p.set('idle');
-      const fromCourt = this.fairyAway; this.fairyAway = false;
-      G.music({ fen: 'road' }[this.level.theme] || this.level.theme);
+      this.fairyAway = false;
+      G.music(musicFor(this.level));
       this.fairy.place(p); if (fromCourt) { this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.backFromCourt)); }
-      this.fade = 0.5; G.sfx('page'); G.ambience({ road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall' }[this.level.theme]);
+      this.fade = 0.5; G.sfx('page'); G.ambience(AMB[this.level.theme]);
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); if (this.inside && e.inIdx != null) (this.cleared[this.inside.id] || (this.cleared[this.inside.id] = {}))[e.inIdx] = 1; },
@@ -260,8 +269,13 @@
     },
     // Return to the far end of the previous area. Its enemies will have wandered back in.
     travelBack() {
-      const prev = this.levelIdx - 1, x = G.LEVELS[prev].exit.x - 100;
+      const b = this.level.back, prev = b ? b.to : this.levelIdx - 1, x = b ? b.at : G.LEVELS[prev].exit.x - 100;
       this.cp = { lv: prev, x }; this.loadLevel(prev, x); this.player.facing = -1; this.save();
+    },
+    // Down a side passage into an optional area (and the area's back arch returns you here).
+    travelTo(lv, x, slides) {
+      const go = () => { this.cp = { lv, x }; this.loadLevel(lv, x); this.save(); };
+      if (slides) G.ui.slides(slides, go); else go();
     },
     equip(id) { this.weaponId = id; this.player.weapon = G.WEAPONS[id]; this.player.combo = 0; },
     gainWeapon(id) {
@@ -296,7 +310,7 @@
       if (e.def.boss) {
         const B = this.level.boss; this.flags['boss_' + B.type + '_dead'] = 1; if (B.final) this.flags.bossDead = 1;
         if (B.grants) this.gainAbility(B.grants);
-        this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : ({ fen: 'road' }[this.level.theme] || this.level.theme)); this.save();
+        this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
       }
     },
 
@@ -397,7 +411,7 @@
         ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, px, by);
       }
       ctx.restore();
-      G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: this.inside ? 150 : 115 }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
+      G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: this.inside ? (this.inside.id === 'court' ? 280 : 150) : 115 }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
@@ -407,7 +421,7 @@
       const gy = G.GROUND, glow = (x, y, r, col) => { const g = ctx.createRadialGradient(x, y, 1, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); };
       // ledges: scaffolds outdoors, stone galleries in the cathedral. Solid from above only.
       for (const pl of L.platforms || []) {
-        const x = pl.x, y = gy - pl.h, w = pl.w, stone = L.theme === 'cathedral';
+        const x = pl.x, y = gy - pl.h, w = pl.w, stone = L.theme === 'cathedral' || L.theme === 'crypt';
         const dark = stone ? '#1c181c' : '#1c1210', mid = stone ? '#34303a' : '#3a2618', lite = stone ? '#55505c' : '#5e4028';
         ctx.fillStyle = dark;
         for (const px of [x + 8, x + w - 14]) ctx.fillRect(px, y + 8, 6, pl.h - 8);
@@ -419,7 +433,7 @@
       }
       // pits: stakes on the road and in the village, black water in the fen, a broken floor over the crypt
       for (const [pi, pk] of (L.pits || []).entries()) {
-        const x = pk.x, w = pk.w, th = L.theme, wall = th === 'cathedral' ? '#1c181c' : th === 'fen' ? '#0e1612' : '#1a1012';
+        const x = pk.x, w = pk.w, th = L.theme === 'crypt' ? 'cathedral' : L.theme, wall = th === 'cathedral' ? '#1c181c' : th === 'fen' ? '#0e1612' : '#1a1012';
         ctx.fillStyle = '#020102'; ctx.fillRect(x, gy - 3, w, G.H - gy + 3);
         ctx.fillStyle = wall; ctx.fillRect(x, gy - 3, 4, 70); ctx.fillRect(x + w - 4, gy - 3, 4, 70);
         ctx.fillStyle = th === 'cathedral' ? '#34303a' : '#2a1a1e'; for (const [ox, ww] of [[-6, 8], [w - 4, 10], [6, 4], [w - 14, 6]]) ctx.fillRect(x + ox, gy - 4, ww, 3);   // a crumbling lip
@@ -482,6 +496,13 @@
       };
       if (L.exit) arch(L.exit.x, 'rgba(150,40,30,0.28)');
       if (this.levelIdx > 0 && !this.inside) arch(BACK_X, 'rgba(90,90,120,0.22)');
+      if (!this.inside) for (const q of L.passages || []) {   // a stair going down, off the main road
+        const open = this.hasTool(q.needs);
+        arch(q.x, open ? 'rgba(120,150,190,0.24)' : 'rgba(70,70,80,0.16)');
+        for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? '#0d0a0c' : '#1a1416'; ctx.fillRect(q.x - 30 + k * 4, gy - 12 + k * 2, 60 - k * 8, 2); }
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(q.x - 30, gy - 130, 60, 118);
+        if (!open) { ctx.fillStyle = '#2a2224'; for (let k = 0; k < 4; k++) ctx.fillRect(q.x - 28 + k * 4, gy - 40 - k * 9, 56 - k * 8, 7); }
+      }
       if (!this.inside) for (const d of L.doors || []) {   // building fronts, with a marker if someone inside has a quest
         const B = G.INTERIORS[d.to], mk = (B.npcs || []).map(n => !this.flags['dead_' + n.id] && G.questLog.marker(n.id)).find(Boolean);
         G.drawFacade(ctx, d, t, mk);
@@ -547,9 +568,15 @@
         if (it.weapon) {
           const x = it.x, kind = G.WEAPONS[it.weapon].draw;
           glow(x, gy - 34, 46 + Math.sin(t * 3 + i) * 5, 'rgba(240,210,150,0.34)');
-          ctx.fillStyle = '#4a3426'; ctx.fillRect(x - 2, gy - 62, 4, 62);                              // shaft, driven into the ground
+          if (kind !== 'sword' && kind !== 'greatsword') ctx.fillStyle = '#4a3426', ctx.fillRect(x - 2, gy - 62, 4, 62);   // shaft, driven into the ground
           ctx.fillStyle = '#b9bcc6';
           if (kind === 'axe') { ctx.fillRect(x + 2, gy - 62, 16, 22); ctx.fillRect(x + 14, gy - 66, 6, 30); ctx.fillStyle = '#eef0f5'; ctx.fillRect(x + 18, gy - 64, 2, 26); }
+          else if (kind === 'sword' || kind === 'greatsword') {   // a blade driven point-first into the earth
+            const big = kind === 'greatsword', h = big ? 70 : 34, w = big ? 8 : 4;
+            ctx.fillStyle = '#b9bcc6'; ctx.fillRect(x - w / 2, gy - h, w, h);
+            ctx.fillStyle = '#eef0f5'; ctx.fillRect(x - w / 2, gy - h, 1, h); ctx.fillStyle = '#c9a13b'; ctx.fillRect(x - (big ? 12 : 7), gy - h - 4, big ? 24 : 14, 4);
+            ctx.fillStyle = '#4a3426'; ctx.fillRect(x - 2, gy - h - (big ? 20 : 12), 4, big ? 16 : 8); ctx.fillStyle = '#c9a13b'; ctx.fillRect(x - 3, gy - h - (big ? 24 : 15), 6, 4);
+          }
           else if (kind === 'spear') { ctx.fillRect(x - 4, gy - 74, 8, 12); ctx.fillRect(x - 2, gy - 82, 4, 8); }
           else { ctx.fillStyle = '#7d808c'; ctx.fillRect(x + 2, gy - 60, 2, 2); ctx.fillRect(x + 6, gy - 56, 2, 2); ctx.fillRect(x + 10, gy - 50, 2, 2); ctx.fillStyle = '#b9bcc6'; ctx.fillRect(x + 8, gy - 46, 12, 12); ctx.fillRect(x + 12, gy - 50, 4, 20); ctx.fillRect(x + 4, gy - 42, 20, 4); }
           return;
