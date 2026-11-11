@@ -470,7 +470,7 @@ G.Enemy = class {
         break;
       }
       case 'windup':
-        if (this.t >= this.atk.wind * m.speed * (this.windMul || 1)) { this.set('strike'); this.rolledChain = false; this.hitDone = false; this.vx = this.facing * this.atk.lunge * (this.crawling ? 0.4 : 1); G.sfx('swing'); }
+        if (this.t >= this.atk.wind * m.speed * (this.windMul || 1)) { this.set('strike'); if (this.atk.horn && G.wind) G.wind.horn(g, this); this.rolledChain = false; this.hitDone = false; this.vx = this.facing * this.atk.lunge * (this.crawling ? 0.4 : 1); G.sfx('swing'); }
         break;
       case 'strike': {
         const rel = (p.x - this.x) * this.facing;

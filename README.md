@@ -78,19 +78,20 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
-Three **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
+Four **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
 
 | Side area | Way in | Needs | |
 | --- | --- | --- | --- |
 | The Wreck of the Sun | a cliff path near the start of the Gallows Road | Wind-Step Greaves | the Long Battalion's ship, run aground in the shallows. Drowned deckhands and knights of your own battalion, the Bosun who rowed you home, the ship's log, and the battalion roll with your name torn out of it. Boss: **the Standard-Bearer**, who still guards the colours at the stern |
 | The Lily Convent | a chained causeway in the middle of the Weeping Fen | Headsman's Greataxe | the mother house of the Sisters, on an island of lilies. Weeping Novices, Sister Petra (she cleanses), the Rule of the House and the infirmary tally. Boss: **Abbess Severine, the Lily Rotted**, who drank the wash-water so her Sisters would not have to |
+| The Pilgrims' Pass | a goat path near Hollowmere's third candle | Wind-Step Greaves | a snowbound mountain road to the Windcallers' monastery, swept by **gusts that push you back down it** (see below). Frozen Pilgrims, White Wolves and Cairn Wardens; Sigrun the Guide, Bram the Woodcutter (who fights beside you) and Brother Aldous. Boss: **Brother Hask, the Windcaller** |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
 
 ## Collectables and tools
 
-**Weeping icons** — thirty-two small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 32 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — thirty-five small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 35 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -177,11 +178,30 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 | **Malvern, the Unmade Bishop** | boss of the Ossuary; a crozier-spear, a censer that fills your infection bar, and flagellants he calls twice as he weakens. He leaves the Seventh Knife |
 | Weeping Novice | a young Sister gone over; quick knife thrusts, and she weeps on you |
 | **Abbess Severine, the Lily Rotted** | boss of the Lily Convent; a long scythe, a lunging reap, tears that fill your infection bar, and novices she calls twice. Her scythe is yours when she falls |
+| Frozen Pilgrim | slow, heavy club blows; the wind barely moves it |
+| White Wolf | a fast pack hunter, low to the ground, so the wind hardly touches it |
+| Cairn Warden | a tall spearman of the pass; poise, long reach, rooted against the wind |
+| **Brother Hask, the Windcaller** | boss of the Pilgrims' Pass; an axe, a long lunge, and a horn that throws a gust straight at you. His hobnailed boots are yours when he falls |
 | **Ser Garrick, the Oathkeeper** | the last boss |
 
 ## Misery
 
 A small lavender fairy with white hair follows you as your "guide". She glows faintly and lights the dark around her, and if you stand still long enough she sits on your helm. She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
+
+## The wind on the Pass
+
+On the Pilgrims' Pass the wind comes in gusts. First it **howls** (snow thickens and the words THE WIND HOWLS appear), then for a few seconds it blows down the mountain and pushes you back the way you came. Then there is a lull.
+
+- **Standing stones** give shelter: stand on their downwind side and the gust cannot touch you.
+- **Raise your guard** and you are pushed less than half as far. Walking into a gust is slow; standing in the open you slide.
+- **In the air** you are pushed hardest, so never jump a crevasse in a gust. Wait for the lull.
+- Enemies are pushed too, but wolves, pilgrims and wardens are heavy or low and hardly move. Misery is very light.
+- **Brother Hask** has no wind of his own in his arena. He blows his horn for it, straight at you.
+- **Hobnailed Boots** (from Hask) halve the push, and more than halve it on the ground.
+
+On **Unfair** the howl is short and sometimes silent, gusts are stronger and longer, lulls are shorter, and one gust in three blows **up** the mountain, toward the next crevasse.
+
+Sigrun the Guide has a quest: her brother went up with a rope a year ago.
 
 ## Trials
 
@@ -241,6 +261,7 @@ Progress saves at vigil candles (browser local storage).
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/interiors.js` | the buildings you can enter: rooms, furniture and street fronts |
 | `js/traps.js` | the trials: crumbling, false and moving ledges, swinging blades, falling spikes |
+| `js/mountain.js` | the Pilgrims' Pass: its people, enemies, boss, quest and the wind |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -261,7 +282,7 @@ If that is too much, switch to **Fair** under Settings (from the title screen or
 
 ## Weapons
 
-You start with the longsword. Six more are lying in the world, each driven into the ground with a glow around it. Take one and it is yours for good; press `C` (or tap the weapon name on touch) to change between those you own.
+You start with the longsword. Seven more are lying in the world, each driven into the ground with a glow around it. Take one and it is yours for good; press `C` (or tap the weapon name on touch) to change between those you own.
 
 | Weapon | Where | Character |
 | --- | --- | --- |
@@ -271,6 +292,7 @@ You start with the longsword. Six more are lying in the world, each driven into 
 | Penitent's Flail | Hollowmere | fast, light, builds bleeding quickly, rarely severs |
 | Battalion Greatsword | the Wreck of the Sun, left by the Standard-Bearer | long, heavy two-hit combo; severs well |
 | The Abbess's Scythe | the Lily Convent, left by Abbess Severine | wide, long sweeps that bleed well |
+| Pilgrim's Ice-Axe | the Pilgrims' Pass, on a frozen climber | short, quick three-hit combo that severs well |
 | The Seventh Knife | the Ossuary, left by Malvern | very short and very fast four-hit combo; bleeds like nothing else |
 
 Weapons are plain data in `G.WEAPONS` (`js/data.js`): a light combo, a heavy attack, reach, bleed build-up and a sever multiplier per move. To add one, add an entry there, a pixel drawing for it in `js/chibi.js`, and an item with `weapon: '<id>'` in a level.

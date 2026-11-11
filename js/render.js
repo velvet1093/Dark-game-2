@@ -317,6 +317,7 @@ const THEMES = {
   cathedral: { sky: ['#060406', '#0b0709', '#12090b'], mid: ['window', 'pillar'], near: ['pew', 'candles', 'pew', 'candles'], ground: '#0c090b', edge: '#2a2226', weather: 'ash', indoor: true },
   harbour: { sky: ['#05060b', '#0f0c18', '#2e1420'], moon: true, mid: ['hull', 'mast', 'tree', 'mast', 'hull'], near: ['anchor', 'bollard', 'net', 'crate', 'bollard', 'grave'], ground: '#0c0b0d', edge: '#22202a', weather: 'rain', water: true, sea: true },
   convent: { sky: ['#07060c', '#141020', '#3a1c2a'], moon: true, mid: ['chapel', 'wall', 'tree', 'cloister', 'wall', 'cloister'], near: ['grave', 'lilies', 'candles', 'cross', 'lilies', 'grave'], ground: '#0d0b0e', edge: '#2c2632', weather: 'ash', water: true },
+  mountain: { sky: ['#0a0c14', '#1a2030', '#3a3c4e'], moon: true, mid: ['peak', 'pine', 'pine', 'peak', 'pine'], near: ['pine', 'rock', 'cross', 'pine', 'rock', 'stake'], ground: '#6a7080', edge: '#c0c8d8', weather: 'snow', snow: true },
   crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
 
@@ -472,7 +473,14 @@ G.drawAtmosphere = (ctx, level, cam, t, light, hurt, fever = 0) => {
   const T = level._theme, W = G.W, H = G.H;
   if (!ovBuf) { ovBuf = document.createElement('canvas'); ovBuf.width = W / 2; ovBuf.height = H / 2; ovCtx = ovBuf.getContext('2d', { willReadFrequently: true }); }
   const c = ovCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W / 2, H / 2); c.setTransform(0.5, 0, 0, 0.5, 0, 0);
-  if (T.weather === 'rain') {
+  if (T.weather === 'snow') {   // snow, driven sideways by the wind
+    const wv = (G.game && G.game.windNow) || 0, n = 70 + Math.round(Math.abs(wv) * 0.5);
+    c.fillStyle = 'rgba(225,230,240,0.75)';
+    for (let i = 0; i < n; i++) {
+      const sx = i * 137.5 - cam * 0.6 + t * (20 + wv * 2.2) + Math.sin(t * 1.3 + i) * 14, x = Math.round((((sx % W) + W) % W) / 2) * 2, y = Math.round(((i * 71.3 + t * (60 + i % 5 * 14)) % H) / 2) * 2;
+      if (Math.abs(wv) > 60) c.fillRect(x, y, 2 + Math.round(Math.abs(wv) / 60) * 2, 2); else c.fillRect(x, y, 2, 2);
+    }
+  } else if (T.weather === 'rain') {
     c.fillStyle = 'rgba(170,170,195,0.5)';
     for (let i = 0; i < 70; i++) {
       const x = Math.round(((((i * 137.5 + t * 300 - cam * 0.5) % W) + W) % W) / 2) * 2, y = Math.round(((i * 71.3 + t * 900) % H) / 2) * 2;
@@ -627,6 +635,14 @@ G.drawFar = (ctx, level, cam, t) => {
     ctx.fillRect(x + 40, y - 90, 160, 90); ctx.beginPath(); ctx.moveTo(x + 36, y - 90); ctx.lineTo(x + 120, y - 130); ctx.lineTo(x + 204, y - 90); ctx.fill();
     ctx.fillStyle = '#05030a'; ctx.fillRect(x + 14, y - 170, 12, 20); ctx.fillStyle = `rgba(200,120,150,${0.3 + Math.sin(t * 1.3 + h) * 0.1})`; for (let k = 0; k < 4; k++) ctx.fillRect(x + 60 + k * 34, y - 66, 8, 16); ctx.fillStyle = '#150b0f';
   });
+  else if (th === 'mountain') {                       // the range, white-capped, very far off
+    ctx.fillStyle = '#141826'; ctx.beginPath(); ctx.moveTo(0, gy);
+    for (let x = 0; x <= W; x += 24) { const wx = x + off * 0.5; ctx.lineTo(x, gy - 150 - Math.abs(Math.sin(wx * 0.0042)) * 150 - Math.sin(wx * 0.017) * 22); }
+    ctx.lineTo(W, gy); ctx.fill();
+    ctx.fillStyle = 'rgba(170,180,200,0.35)';
+    for (let x = 0; x <= W; x += 6) { const wx = x + off * 0.5, top = gy - 150 - Math.abs(Math.sin(wx * 0.0042)) * 150 - Math.sin(wx * 0.017) * 22; if (top < gy - 230) ctx.fillRect(x, top, 6, Math.min(30, gy - 230 - top + 6)); }
+    ctx.fillStyle = '#150b0f';
+  }
   else if (th === 'crypt') each(260, (x, h) => {     // low vaults, receding
     ctx.fillRect(x, 0, 30, gy); ctx.beginPath(); ctx.moveTo(x + 30, 230); ctx.quadraticCurveTo(x + 145, 120, x + 260, 230); ctx.lineTo(x + 260, 0); ctx.lineTo(x + 30, 0); ctx.fill();
     ctx.fillStyle = '#060405'; for (let k = 0; k < 4; k++) ctx.fillRect(x + 6, gy - 60 - k * 70, 18, 30); ctx.fillStyle = '#0c080b';
@@ -683,6 +699,16 @@ Object.assign(PROPS, {
     c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8 * s, y - 22 * s); c.lineTo(x + 90 * s, y - 22 * s); c.lineTo(x + 100 * s, y - 12 * s); c.lineTo(x + 92 * s, y); c.fill();
     c.save(); c.fillStyle = GRAIN; c.fillRect(x + 10, y - 16 * s, 78 * s, 2); c.fillStyle = IRON; c.fillRect(x + 40 * s, y - 22 * s, 3, 22 * s); c.fillRect(x + 32 * s, y - 14 * s, 18 * s, 3); c.restore();
   },
+  pine(c, x, y, s, seed) {   // a black fir, laden with snow
+    const h = 150 * s; c.fillRect(x - 3, y - h * 0.25, 6, h * 0.25);
+    for (let k = 0; k < 5; k++) { const w = (44 - k * 8) * s, ty = y - h * 0.2 - k * h * 0.16; c.beginPath(); c.moveTo(x - w, ty); c.lineTo(x, ty - h * 0.24); c.lineTo(x + w, ty); c.fill(); }
+    c.save(); c.fillStyle = 'rgba(200,210,226,0.55)'; for (let k = 0; k < 5; k++) { const w = (44 - k * 8) * s, ty = y - h * 0.2 - k * h * 0.16; c.fillRect(x - w * 0.7, ty - 3, w * 0.9, 3); } c.restore();
+  },
+  peak(c, x, y, s) {   // a nearer crag
+    const w = 260 * s, h = 230 * s; c.beginPath(); c.moveTo(x - w / 2, y); c.lineTo(x - w * 0.1, y - h); c.lineTo(x + w * 0.05, y - h * 0.86); c.lineTo(x + w / 2, y); c.fill();
+    c.save(); c.fillStyle = 'rgba(190,200,216,0.5)'; c.beginPath(); c.moveTo(x - w * 0.1, y - h); c.lineTo(x - w * 0.22, y - h * 0.7); c.lineTo(x - w * 0.08, y - h * 0.76); c.lineTo(x + w * 0.05, y - h * 0.86); c.fill(); c.restore();
+  },
+  rock(c, x, y, s) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8 * s, y - 26 * s); c.lineTo(x + 34 * s, y - 34 * s); c.lineTo(x + 56 * s, y - 14 * s); c.lineTo(x + 60 * s, y); c.fill(); c.save(); c.fillStyle = 'rgba(200,210,226,0.6)'; c.fillRect(x + 10 * s, y - 30 * s, 24 * s, 4); c.restore(); },
   cloister(c, x, y, s) {   // a run of round arches, the walk around the convent garth
     const w = 300 * s, h = 120 * s; c.fillRect(x, y - h - 30 * s, w, 30 * s); c.beginPath(); c.moveTo(x - 10, y - h - 30 * s); c.lineTo(x + w / 2, y - h - 80 * s); c.lineTo(x + w + 10, y - h - 30 * s); c.fill();
     for (let k = 0; k <= 5; k++) { const ax = x + k * w / 5; c.fillRect(ax - 5, y - h, 10, h); if (k < 5) { c.beginPath(); c.moveTo(ax + 5, y - h * 0.6); c.quadraticCurveTo(ax + w / 10, y - h - 10, ax + w / 5 - 5, y - h * 0.6); c.lineTo(ax + w / 5 - 5, y - h); c.lineTo(ax + 5, y - h); c.fill(); } }

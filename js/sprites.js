@@ -11,7 +11,7 @@
 
   // ------------------------------ hound ------------------------------------
   function hound(ctx, e) {
-    const { R, line } = G.spr.open(64, 92), L = e.def.look, B = T('#3b3236'), SK = T(L.skin), FAR = G.shade('#3b3236', 0.5), lm = e.limbs, st = e.state;
+    const { R, line } = G.spr.open(64, 92), L = e.def.look, B = T(e.def.coat || '#3b3236'), SK = T(L.skin), FAR = G.shade(e.def.coat || '#3b3236', 0.5), lm = e.limbs, st = e.state;
     const down = e.dead || st === 'broken' || st === 'executed';
     let by = 0, fd = 0, rd = 0, jaw = 1;
     if (down) by = 9;

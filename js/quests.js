@@ -202,6 +202,7 @@ G.questLog = {
     if (!q || q.status !== 'active') return;
     if (++q.step >= d.steps.length) {
       q.status = 'done'; const r = d.reward || {}, got = [];
+      if (r.thorns) { g.misery.thorns += r.thorns; got.push('+' + r.thorns + ' thorns for Misery'); }
       if (r.ichor) { g.ichor += r.ichor; got.push('+' + r.ichor + ' ichor'); }
       if (r.tinct) { g.player.stats.tinct = (g.player.stats.tinct || 0) + r.tinct; g.player.tinct = g.player.tinctMax; got.push('+1 lily tincture, for good'); }
       if (r.str) { g.player.stats.str += r.str; got.push('+1 Strength'); }

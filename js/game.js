@@ -6,7 +6,7 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
-  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind' };
+  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind' };
   const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
@@ -349,6 +349,7 @@
 
       G.traps.tick(this, dt);
       p.update(dt, this);
+      G.wind.tick(this, dt);
       for (const e of this.enemies) e.update(dt, this);
       for (const n of this.npcs) n.update(dt, this);
       G.questLog.tick(this, dt);
@@ -401,7 +402,7 @@
       // backdrop, props and ground blood go through the pixel buffer; characters are drawn over it
       const main = ctx; ctx = G.bgBegin();
       if (this.inside) G.drawInterior(ctx, L, cam, t); else G.drawBackdrop(ctx, L, cam, t);
-      ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.traps.draw(ctx, this, t); G.drawFx(ctx, 'ground'); ctx.restore();
+      ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.traps.draw(ctx, this, t); G.wind.draw(ctx, this, t); G.drawFx(ctx, 'ground'); ctx.restore();
       if (!this.inside) G.drawFog(ctx, L, cam, t);
       if (!this.fairyAway) {   // Misery gives off a little light of her own, more of it indoors
         const f = this.fairy, lx = f.x - cam, ly = f.y, r = this.inside ? 165 : 130, glee = f.glee > 0 || p.dead, lg = ctx.createRadialGradient(lx, ly, 4, lx, ly, r);
