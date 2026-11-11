@@ -51,6 +51,9 @@ G.FAIRY = {
   sting: ['Mine. MINE. Get your own knight.', 'Nobody kills him but the dark. Shoo.', 'Hee! Did that sting?', 'I am not helping. I am protecting my seat.', 'Not THAT one. That one is boring.', 'Hands off. I was here first.'],
   notYet: ['Not yet. Not by THEM.', 'No no no. You die when I say. Up.', 'Get up. That one did not count.'],
   gift: ['Oh, you are giving me things now? How sweet. How strange.', 'Mm. I feel sharper already. You will regret that.', 'Thorns. You brought me thorns. You do understand me.'],
+  trial: ['Oh, I LOVE this part.', 'Spikes all the way down. Do look before you leap. Or do not. Either is fun.', 'Some of those ledges are lying to you. I will not say which.', 'Go on. I will be right here. Watching.'],
+  trialFall: ['Hee! Again! Start again!', 'That one was not real. Did I not say? I did not say.', 'Down you go. Back you go. Up you come. Lovely.', 'The spikes say thank you.', 'You jumped like a sack of turnips.'],
+  trialDone: ['Tch. You made it. I had a whole speech ready.', 'Fine. FINE. Take your silly prize.', 'Across. How disappointing for everyone.'],
   rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
     'Hee hee hee! Oh, that was a good one.',

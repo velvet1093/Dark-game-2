@@ -244,4 +244,71 @@
       lastWords: [['Abbess Severine', 'Is it the ninth hour? I have to sing the ninth...'], ['Misery', 'Shh. I am here. Nobody goes alone. Do you remember that?'], ['Abbess Severine', '...Mercy?']],
     },
   });
+
+  // ---------------------------------------------------------------------------
+  // Trials: optional platforming gauntlets past each side area's boss (see traps.js).
+  // ---------------------------------------------------------------------------
+  const trial = (lv, len, t) => {
+    const L = G.LEVELS[lv]; L.length = len;
+    L.pits = (L.pits || []).concat(t.pits); L.platforms = (L.platforms || []).concat(t.platforms);
+    L.items = L.items.concat(t.items); L.blades = t.blades || []; L.droppers = t.droppers || []; L.trials = [t.trial];
+    L.enemies = L.enemies.concat(t.enemies || []);
+  };
+  G.ICON_NAMES.push('The Saint in the Rigging', 'The Saint over the Bones', 'The Saint in the Bell Tower');
+  // The Wreck: the Sun's broken rigging, over the ribs of her hull. Needs the double jump.
+  trial(5, 5700, {
+    trial: { x: 4440, end: 5460, name: 'The Rigging of the Sun' },
+    pits: [{ x: 4450, w: 1000 }],
+    platforms: [
+      { x: 4470, w: 70, h: 60 },
+      { x: 4620, w: 80, h: 90, move: 60, period: 3.2 },
+      { x: 4800, w: 60, h: 130, crumble: true },
+      { x: 4930, w: 54, h: 160, crumble: true },
+      { x: 5070, w: 60, h: 170, fake: true },
+      { x: 5090, w: 60, h: 100 },
+      { x: 5220, w: 70, h: 120 },
+      { x: 5350, w: 56, h: 80, crumble: true, cruel: true },
+    ],
+    blades: [{ x: 5255, top: 330, len: 180, period: 2.4 }],
+    enemies: [['crow', 5000, 'unfair'], ['crow', 5300, 'unfair']],
+    items: [{ x: 5560, icon: 1 }, { x: 5620, thorns: 3 }],
+  });
+  // The Ossuary: a bridge of hung slabs over the bone pit; spikes in the vault, scythes on chains.
+  trial(6, 6000, {
+    trial: { x: 4690, end: 5770, name: 'The Bone Bridge' },
+    pits: [{ x: 4700, w: 1060 }],
+    platforms: [
+      { x: 4720, w: 80, h: 50 },
+      { x: 4880, w: 60, h: 90, crumble: true },
+      { x: 5020, w: 60, h: 120 },
+      { x: 5160, w: 60, h: 120, fake: true },
+      { x: 5240, w: 60, h: 100 },
+      { x: 5390, w: 50, h: 140, crumble: true },
+      { x: 5520, w: 60, h: 110 },
+      { x: 5660, w: 50, h: 70, crumble: true, cruel: true },
+    ],
+    droppers: [{ x: 4910, h: 330 }, { x: 5280, h: 330 }, { x: 5545, h: 340 }],
+    blades: [{ x: 5050, top: 360, len: 200, period: 2.0 }, { x: 5550, top: 360, len: 210, period: 1.7, phase: 1.3 }],
+    enemies: [['crow', 5300, 'unfair']],
+    items: [{ x: 5880, icon: 1 }, { x: 5940, thorns: 3 }],
+  });
+  // The Convent: stepping stones across the drowned garth, under the swinging bells. One jump only.
+  trial(7, 5700, {
+    trial: { x: 4640, end: 5560, name: 'The Drowned Garth' },
+    pits: [{ x: 4650, w: 900 }],
+    platforms: [
+      { x: 4665, w: 60, h: 40 },
+      { x: 4800, w: 50, h: 60, crumble: true },
+      { x: 4930, w: 60, h: 80 },
+      { x: 5080, w: 70, h: 60, move: 50, period: 2.8 },
+      { x: 5250, w: 50, h: 60, fake: true },
+      { x: 5262, w: 50, h: 22 },
+      { x: 5360, w: 50, h: 60, crumble: true },
+      { x: 5466, w: 64, h: 40, crumble: true },
+    ],
+    blades: [{ x: 4960, top: 320, len: 200, period: 2.6 }, { x: 5385, top: 320, len: 220, period: 2.2, phase: 2 }],
+    droppers: [{ x: 5110, h: 320 }],
+    enemies: [['crow', 5200, 'unfair']],
+    items: [{ x: 5610, icon: 1 }, { x: 5650, thorns: 3 }],
+  });
 })();

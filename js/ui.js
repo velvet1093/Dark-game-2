@@ -68,8 +68,8 @@
       this.setFrom = from;
       const u = G.unfair(), back = () => (from === 'title' ? this.title(this.hasSave) : this.pause());
       const items = [
-        { label: u ? 'Difficulty: Unfair <small>— bosses take more, hit harder, feint, chain blows, punish a drink and turn light hits aside</small>'
-                   : 'Difficulty: Fair <small>— bosses fight as they always did</small>', fn: () => { G.setDifficulty(u ? 'fair' : 'unfair'); this.keepSel = 0; this.settings(from); } },
+        { label: u ? 'Difficulty: Unfair <small>— bosses take more, hit harder, feint, chain blows, punish a drink and turn light hits aside; trials give no warnings</small>'
+                   : 'Difficulty: Fair <small>— bosses fight as they always did; trials show their tells</small>', fn: () => { G.setDifficulty(u ? 'fair' : 'unfair'); this.keepSel = 0; this.settings(from); } },
         { label: `Sound: ${G.isMuted() ? 'Off' : 'On'}`, fn: () => { G.toggleMute(); this.keepSel = 1; this.settings(from); } },
         { label: 'Controls', fn: () => this.controls() },
         { label: 'Back', fn: back },

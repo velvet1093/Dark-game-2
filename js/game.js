@@ -46,13 +46,14 @@
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
       this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.toldGate = {};
       // everything that can be stood on: ledges, and the tops of rubble walls
-      this.surf = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h }))); this.fairy.place(this.player);
+      this.surfAll = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h })));
+      G.traps.init(this, L); this.surf = this.surfAll.filter(pl => !pl.fake && !pl.off); this.fairy.place(this.player);
       G.music(musicFor(L)); G.ambience(AMB[L.theme]); this.flags['reached_' + idx] = 1;
       this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
       const L = this.level;
-      this.enemies = L.enemies.map(([t, x, tag]) => new G.Enemy(t, x, tag)); this.boss = null; this.bossFight = false;
+      this.enemies = L.enemies.filter(([, , tag]) => tag !== 'unfair' || G.unfair()).map(([t, x, tag]) => new G.Enemy(t, x, tag)); this.boss = null; this.bossFight = false;   // some only come on Unfair
       if (L.boss && !this.flags['boss_' + L.boss.type + '_dead']) { this.boss = new G.Enemy(L.boss.type, L.boss.x); this.enemies.push(this.boss); }
     },
     respawn() {
@@ -171,6 +172,7 @@
         }) };
       }
       if (it.ability) return { x: it.x, y: y - 60, label: 'Take the ' + G.ABILITIES[it.ability].name, fn: take(() => this.gainAbility(it.ability)) };
+      if (it.thorns) return { x: it.x, y: y - 54, label: 'Take the bundle of thorns', fn: take(() => { this.misery.thorns += it.thorns; G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.thorns + ' thorns for Misery', '#b89ae0', 16); }) };
       if (it.cache) return { x: it.x, y: y - 54, label: 'Open the reliquary', fn: take(() => { this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); }) };
       if (it.weapon) return { x: it.x, y: y - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: take(() => this.gainWeapon(it.weapon)) };
       return { x: it.x, y: y - 40, label: 'Gather the white lily', fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, 'White lily', '#efeaf2', 13); }) };
@@ -235,7 +237,7 @@
       G.text(p.x, G.GROUND - 70, 'IMPALED', '#e0222c', 16);
       if (pk) p.x = (p.safeX != null ? p.safeX : pk.x - 30) < pk.x + pk.w / 2 ? pk.x - 24 : pk.x + pk.w + 24;   // climb out the side you fell from
       p.alt = 0; p.vy = 0; p.vx = 0; p.air = false; p.pitRef = null; p.pitInv = 0.7;
-      this.fairy.bark('hurt', true);
+      if (!G.traps.onImpale(this)) this.fairy.bark('hurt', true);
     },
     // ---- buildings: step through a door into a room; the street waits as you left it
     lvKey() { return this.inside ? 'in_' + this.inside.id : this.levelIdx; },
@@ -345,6 +347,7 @@
       this.prompt = (p.state === 'idle' || p.state === 'block') && !p.air ? this.findInteract() : null;
       if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); return; }   // the world may have changed under us; pick up next frame
 
+      G.traps.tick(this, dt);
       p.update(dt, this);
       for (const e of this.enemies) e.update(dt, this);
       for (const n of this.npcs) n.update(dt, this);
@@ -398,7 +401,7 @@
       // backdrop, props and ground blood go through the pixel buffer; characters are drawn over it
       const main = ctx; ctx = G.bgBegin();
       if (this.inside) G.drawInterior(ctx, L, cam, t); else G.drawBackdrop(ctx, L, cam, t);
-      ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.drawFx(ctx, 'ground'); ctx.restore();
+      ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.traps.draw(ctx, this, t); G.drawFx(ctx, 'ground'); ctx.restore();
       if (!this.inside) G.drawFog(ctx, L, cam, t);
       if (!this.fairyAway) {   // Misery gives off a little light of her own, more of it indoors
         const f = this.fairy, lx = f.x - cam, ly = f.y, r = this.inside ? 165 : 130, glee = f.glee > 0 || p.dead, lg = ctx.createRadialGradient(lx, ly, 4, lx, ly, r);
@@ -434,8 +437,16 @@
       const gy = G.GROUND, glow = (x, y, r, col) => { const g = ctx.createRadialGradient(x, y, 1, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); };
       // ledges: scaffolds outdoors, stone galleries in the cathedral. Solid from above only.
       for (const pl of L.platforms || []) {
+        const lk = G.traps.ledgeLook(pl, t); if (!lk) continue;
+        ctx.save(); ctx.globalAlpha = lk.alpha; ctx.translate(lk.sx || 0, lk.dy);
         const x = pl.x, y = gy - pl.h, w = pl.w, stone = L.theme === 'cathedral' || L.theme === 'crypt';
         const dark = stone ? '#1c181c' : '#1c1210', mid = stone ? '#34303a' : '#3a2618', lite = stone ? '#55505c' : '#5e4028';
+        if (pl.float) {   // a slab hung over a pit on chains, not stood on posts
+          ctx.fillStyle = '#2a2428'; for (const cx of [x + 6, x + w - 8]) for (let cy = y - 4; cy > 0; cy -= 8) ctx.fillRect(cx, cy, 2, 5);
+          ctx.fillStyle = mid; ctx.fillRect(x, y, w, 10); ctx.fillStyle = lite; ctx.fillRect(x, y, w, 2); ctx.fillStyle = dark; ctx.fillRect(x, y + 8, w, 4);
+          if (pl.crumble && !G.unfair()) { ctx.fillStyle = '#0a0607'; ctx.fillRect(x + w * 0.3, y + 1, 2, 7); ctx.fillRect(x + w * 0.3 + 2, y + 4, 4, 2); ctx.fillRect(x + w * 0.7, y + 2, 2, 8); }   // cracks: the tell, on Fair
+          ctx.restore(); continue;
+        }
         ctx.fillStyle = dark;
         for (const px of [x + 8, x + w - 14]) ctx.fillRect(px, y + 8, 6, pl.h - 8);
         if (!stone && !L.interior) { ctx.strokeStyle = dark; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x + 11, y + 10); ctx.lineTo(x + w - 11, y + Math.min(pl.h, 70)); ctx.moveTo(x + w - 11, y + 10); ctx.lineTo(x + 11, y + Math.min(pl.h, 70)); ctx.stroke(); }
@@ -443,6 +454,7 @@
         ctx.fillStyle = mid; ctx.fillRect(x, y, w, 10); ctx.fillStyle = lite; ctx.fillRect(x, y, w, 2);
         ctx.fillStyle = dark; for (let a = x + (stone ? 22 : 26); a < x + w - 6; a += stone ? 22 : 26) ctx.fillRect(a, y + 2, 2, 8);
         if (stone) { ctx.fillStyle = mid; for (let a = x + 4; a < x + w - 4; a += 12) ctx.fillRect(a, y - 14, 4, 14); ctx.fillStyle = lite; ctx.fillRect(x, y - 16, w, 4); }
+        ctx.restore();
       }
       // pits: stakes on the road and in the village, black water in the fen, a broken floor over the crypt
       for (const [pi, pk] of (L.pits || []).entries()) {
@@ -569,6 +581,14 @@
           ctx.fillStyle = '#3a342c'; ctx.fillRect(x - 2, y - 40, 4, 8); ctx.fillRect(x - 8, y - 32, 16, 4); ctx.fillRect(x - 8, y - 8, 16, 6);
           ctx.fillStyle = `rgba(230,215,255,${0.85 + Math.sin(t * 6) * 0.1})`; ctx.fillRect(x - 6, y - 28, 12, 20); ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 2, y - 24, 4, 10);
           ctx.fillStyle = '#3a342c'; ctx.fillRect(x - 8, y - 28, 2, 20); ctx.fillRect(x + 6, y - 28, 2, 20);
+          return;
+        }
+        if (it.thorns) {   // a bundle of black thorns, for Misery
+          const x = it.x, y = gy - (it.alt || 0);
+          glow(x, y - 14, 40 + Math.sin(t * 3 + i) * 5, 'rgba(180,140,240,0.4)');
+          ctx.fillStyle = '#2a1a30'; for (let k = -2; k <= 2; k++) ctx.fillRect(x + k * 4, y - 22 + Math.abs(k) * 3, 2, 22 - Math.abs(k) * 3);
+          ctx.fillStyle = '#b89ae0'; for (let k = -2; k <= 2; k++) ctx.fillRect(x + k * 4 + (k & 1 ? 2 : -2), y - 16 + Math.abs(k) * 3, 2, 2);
+          ctx.fillStyle = '#7a0509'; ctx.fillRect(x - 6, y - 8, 14, 2);
           return;
         }
         if (it.cache) {   // a reliquary left on a high ledge

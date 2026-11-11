@@ -90,7 +90,7 @@ An archway at the near end of each side area climbs back to the stair you came d
 
 ## Collectables and tools
 
-**Weeping icons** — twenty-nine small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 29 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — thirty-two small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 32 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -183,6 +183,26 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 
 A small lavender fairy with white hair follows you as your "guide". She glows faintly and lights the dark around her, and if you stand still long enough she sits on your helm. She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
 
+## Trials
+
+Past the boss of each side area there is an optional **trial**: a long spike pit crossed on hanging ledges that do not all behave. Fall in and you are impaled and put back at the start. Misery counts your falls and enjoys every one. At the far side wait a weeping icon and a bundle of three thorns for Misery.
+
+| Trial | Where | Needs | What is in it |
+| --- | --- | --- | --- |
+| The Rigging of the Sun | past the Standard-Bearer, in the Wreck | double jump | a moving yard, crumbling planks, a false plank, a swinging block, a plank that gives way the moment you land (Unfair) |
+| The Bone Bridge | past Malvern, in the Ossuary | double jump | the longest jumps, falling bone spikes, two scythes on chains, a false slab |
+| The Drowned Garth | past the Abbess, in the Lily Convent | single jumps only | stepping stones, a moving stone, swinging bells, a falling spike, a false stone over a low one |
+
+What waits in the pits:
+
+- **Crumbling ledges** give way a moment after you land on them, and come back a few seconds later.
+- **False ledges** are not there at all.
+- **Moving ledges** carry you with them.
+- **Swinging blades and bells** knock you off whatever you are standing on.
+- **Bone spikes** drop when you pass beneath.
+
+The difficulty setting decides how fair they are. **Fair (hard):** false ledges shimmer, crumbling ledges show cracks and settle again if you step off, spikes shake before they drop, and blades keep a steady beat. **Unfair:** none of those tells. Ledges crumble twice as fast, blades change speed, spikes drop just ahead of you as you run, one last ledge in two of the trials gives way the instant you touch it (jump over it), and crows come for you mid-jump.
+
 ## Resting
 
 At a vigil candle the knight lowers himself to the ground beside the flame, sword held upright, before the candle's menu opens. He stays seated after you close it, and Misery soon settles on his helmet. Move, attack, roll or jump to get up. After a death you wake already sitting at the last candle you rested at.
@@ -220,6 +240,7 @@ Progress saves at vigil candles (browser local storage).
 | `js/engine.js` | input, blood / gib particles |
 | `js/audio.js` | synthesised sound effects, ambience and music |
 | `js/interiors.js` | the buildings you can enter: rooms, furniture and street fronts |
+| `js/traps.js` | the trials: crumbling, false and moving ledges, swinging blades, falling spikes |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
