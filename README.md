@@ -308,6 +308,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/nell.js` | after the Lamplight Mother: Nell, the root scene, Saint Hild's Undercroft and the Seven Hundred Names |
 | `js/skills.js` | Weapon Arts: marks, the per-weapon trees, the new moves and each weapon's art |
 | `js/optional.js` | the Under-Hold and the Ashfall Orchard, and the relics in the trials |
+| `js/wardrobe.js` | the Wardrobe: knight, weapon, wing and Misery skins, their unlocks and the screen |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -333,6 +334,19 @@ The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen
 **At the door**, choose *Call the moths to the roots*. Misery refuses, then gives in. If you took her to the Lantern Court, she tells you why Mercy stopped leading the dying into the dark: *"Because they always went."* Then she drifts to the roots, and the moths follow her in a white storm and eat the door open. **If you executed Nell**, her orphaned moths can still be led; it is only colder.
 
 **Beneath it** is **Saint Hild's Undercroft**, and **Saint Hild** herself: the *first* well. Three hundred years ago she drank the spring so it would not reach Hildsmere. She wept once, and that tear is the Saint's Tear. She says the Tear only moves the weeping from one well to the next, and that the spring is **grief**: the weeping of every dead thing nobody named. The Long Battalion's seven hundred struck-out names have fed it like a river. To end the weeping, **name them**. The priests wrote every name in a muster book before they struck them out. This starts the quest **Seven Hundred Names**, the road toward cleansing the infection for good. Its next step is still to come.
+
+## Wardrobe
+
+Skins, chosen at any vigil candle or from the pause menu. Each tab shows a live preview. Locked skins appear as silhouettes with the way to earn them.
+
+| | Skins (how to unlock) |
+| --- | --- |
+| **Knight** | Harness of the Long Battalion · Headsman's Black (Gaunt) · Gilded Sun of Osric (Standard-Bearer) · Knight of the Lily (the lily quest) · Pilgrim of the Pass (Windcaller) · Moth-Knight (Lamplight Mother) · The Weeping Knight (die ten times) · Corin, Bareheaded (remember your name) |
+| **Weapon** (chosen per weapon) | Plain Steel · Bloodied (a hundred kills) · Gilded (fifteen icons) · Bone (Malvern) · Rimed (Windcaller) · Moth-Dust (Lamplight Mother) · Oathkeeper's Black (Ser Garrick) |
+| **Wings** | Lamplight · Luna (find Nell) · Ghost (the Lantern Court) · Ember (Charcoal Widow) · Death's-Head (Gravewarden) · Seraph (thirty icons) |
+| **Misery** | Misery · Mercy, As She Was (the Court, and your name) · Crimson (die twenty-five times) · Moonmoth (lead the moths to the roots) · Thorned (give her every gift) |
+
+Defeating or sparing a boss both count.
 
 ## Weapon Arts
 

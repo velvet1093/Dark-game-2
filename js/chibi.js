@@ -16,7 +16,8 @@
   let buf = null, b = null;
   const cache = new Map();
   const tones = hex => { let t = cache.get(hex); if (!t) { t = { b: hex, s: G.shade(hex, 0.66), l: G.shade(hex, 1.24) }; cache.set(hex, t); } return t; };
-  const WHITE = { b: '#f1ece5', s: '#bdb4c2', l: '#ffffff' }, STEEL = { b: '#b9bcc6', s: '#7d808c', l: '#eef0f5' };
+  const WHITE = { b: '#f1ece5', s: '#bdb4c2', l: '#ffffff' }, STEEL0 = { b: '#b9bcc6', s: '#7d808c', l: '#eef0f5' };
+  let STEEL = STEEL0;   // a weapon finish (Wardrobe) swaps this for the length of one figure
   const BOOT = '#130e13', BLOOD = '#8f0810', LAV = '#9a70e0', WOOD = { b: '#5a4030', s: '#3a2a1e' };
   const ensure = () => { if (!buf) { buf = document.createElement('canvas'); buf.width = BW; buf.height = BH; b = buf.getContext('2d', { willReadFrequently: true }); } };
 
@@ -69,6 +70,7 @@
 
   // o: the same object the vector rig took — {x,y,facing,scale,pose,look,limbs,weapon,wlen,shield,flash,bloody,alpha,time,weeping}
   function chibi(ctx, o) {
+    STEEL = o.steel || STEEL0;
     ensure(); b.setTransform(1, 0, 0, 1, 0, 0); b.clearRect(0, 0, BW, BH);
     const p = o.pose, L = o.look, lm = o.limbs || {}, gone = k => lm[k] && lm[k].gone, time = o.time || 0;
     const big = Math.max(0, (o.scale || 1) - 1.05), tl = Math.round(big * 9), tt = Math.round(big * 8), wd = Math.round(big * 5), hr = 6 + (big > 0.2 ? 1 : 0);

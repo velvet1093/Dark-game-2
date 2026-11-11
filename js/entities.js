@@ -273,7 +273,7 @@ G.Player = class {
     const pose = this.pose();
     if (this.air && (this.state === 'idle' || this.state === 'block')) { pose.footF = 9; pose.footB = -3; pose.liftF = 7; pose.liftB = 3; pose.crouch = 2; pose.lean = 0.15; }
     if (this.air && this.alt > 0) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
-    const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: this.look, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
+    const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: G.wardrobe ? G.wardrobe.look(g) : this.look, steel: G.wardrobe ? G.wardrobe.steel(g, g.weaponId) : null, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
     if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
     this.wingT = Math.max(0, (this.wingT || 0) - 1 / 60);
     const wantW = (this.gliding || this.wingT > 0) && this.air ? 1 : 0;   // the wings unfold quickly and fold away gently

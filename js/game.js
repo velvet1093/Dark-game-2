@@ -18,7 +18,7 @@
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false, kills: {}, seen: {}, wskills: {}, marks: 0, markXP: 0, marksEarned: 0, relics: 0 });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false, kills: {}, seen: {}, wskills: {}, marks: 0, markXP: 0, marksEarned: 0, relics: 0, cos: null });
       G.questLog.reset(); this.memQ = [];
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -36,6 +36,7 @@
       this.npcInf = s.npcInf || {}; this.weaponLv = s.weaponLv || {}; this.bought = s.bought || {};
       // saves from before Misery took gifts: a thorn for each boss already put down
       this.misery = s.misery || { thorns: Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length * 3, got: {} }; this.watchUsed = !!s.watchUsed; this.kills = s.kills || {}; this.seen = s.seen || {};
+      this.cos = s.cos || null;
       this.wskills = s.wskills || {}; this.marks = s.marks || 0; this.markXP = s.markXP || 0; this.relics = s.relics || 0;
       this.marksEarned = s.marksEarned != null ? s.marksEarned : Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length;   // saves from before Weapon Arts: a mark for each boss already beaten
       if (s.marks == null) this.marks = this.marksEarned;
@@ -44,7 +45,7 @@
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x); this.memQ = [];
       if (this.flags.boss_malvern_dead) this.remember('blessing'); if (this.flags.boss_abbess_dead) this.remember('letter'); if (this.flags.boss_windcaller_dead) this.remember('sun'); if (this.read['5:2']) this.remember('muster');
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, kills: this.kills, seen: this.seen, wskills: this.wskills, marks: this.marks, markXP: this.markXP, marksEarned: this.marksEarned, relics: this.relics, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, kills: this.kills, seen: this.seen, wskills: this.wskills, cos: this.cos, marks: this.marks, markXP: this.markXP, marksEarned: this.marksEarned, relics: this.relics, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx; this.inside = null; this.outside = null; this.cleared = {};
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;

@@ -272,7 +272,8 @@
   };
 
   // ---- moth wings: on the knight's back when he double-jumps or glides, and the torn pair fluttering down
-  const MW = { b: '#8a6478', s: '#5a3c4e', band: '#d8c4b4', edge: '#3a2432' };
+  const MW0 = { b: '#8a6478', s: '#5a3c4e', band: '#d8c4b4', edge: '#3a2432', eye: '#e0b040' };
+  let MW = MW0;   // the Wardrobe can dye the knight's pair
   const px = (ctx, x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, w * 2, h * 2); };
   // one wing from the shoulder (x, y), swept back (dir = which way the body faces) and up; open 0..1
   const wingShape = (ctx, x, y, dir, slope, far, t, span = 22) => {   // slope: how steeply the forewing rises (0 = straight out behind)
@@ -284,18 +285,19 @@
       if (i > 0 && i < 13) { const hk = i / 13, ht = mid + half, hb = Math.round(4 + 9 * Math.sin(Math.PI * hk)) - Math.round(i * slope * 0.25);   // hindwing below
         if (hb > ht) { px(ctx, cx, y + ht * 2, 1, hb - ht, far ? MW.edge : MW.s); px(ctx, cx, y + hb * 2, 1, 1, MW.edge); } }
     }
-    if (!far) { const ei = 12, ex = x - dir * ei * 2, ey = y - Math.round(ei * slope) * 2; px(ctx, ex - 2, ey - 2, 3, 3, '#1a100c'); px(ctx, ex, ey, 1, 1, '#e0b040'); px(ctx, ex - 2, ey - 2, 1, 1, '#efe6d6'); }   // the eye on the wing
+    if (!far) { const ei = 12, ex = x - dir * ei * 2, ey = y - Math.round(ei * slope) * 2; px(ctx, ex - 2, ey - 2, 3, 3, '#1a100c'); px(ctx, ex, ey, 1, 1, MW.eye || '#e0b040'); px(ctx, ex - 2, ey - 2, 1, 1, '#efe6d6'); }   // the eye on the wing
   };
   // gliding: held out wide and nearly flat, trembling; double jump (k 1 -> 0): one hard downward beat
   // vis 0..1: the wings unfold as they appear and fold down and fade as they go, never just vanish
-  G.drawPlayerWings = (ctx, x, y, facing, k, t, glide, vis = 1) => {
+  G.drawPlayerWings = (ctx, x, y, facing, k, t, glide, vis = 1, pal) => {
     if (vis <= 0.02) return;
+    MW = pal || (G.wardrobe && G.game && G.wardrobe.wingPal(G.game)) || MW0;
     const open = glide ? 0.42 + Math.sin(t * 18) * 0.03 : -0.25 + k * 1.35, folded = 1.6;   // folded: tucked up tight behind the shoulders
     const slope = folded + (open - folded) * vis, span = Math.max(4, Math.round(22 * (0.35 + 0.65 * vis)));
     ctx.save(); ctx.globalAlpha = Math.min(1, vis * 1.3);
     wingShape(ctx, x + facing * 4, y - 6, facing, slope + 0.3, true, t + 0.3, span);
     wingShape(ctx, x, y, facing, slope, false, t, span);
-    ctx.restore();
+    ctx.restore(); MW = MW0;
   };
   const fallen = [];
   // ---- slowing water

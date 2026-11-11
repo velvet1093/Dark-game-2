@@ -187,7 +187,7 @@ G.Fairy = class {
     const t = this.t, glee = this.glee > 0 || g.player.dead;
     // motes
     for (const m of this.motes) { ctx.fillStyle = `rgba(214,190,255,${0.8 * (1 - m.t / 1.1)})`; ctx.fillRect(Math.round(m.x / 2) * 2, Math.round(m.y / 2) * 2, 2, 2); }
-    G.drawMisery(ctx, this.x, this.y, this.facing, t, glee, this.near, this.sitting && this.sitT > 0.1);
+    G.drawMisery(ctx, this.x, this.y, this.facing, t, glee, this.near, this.sitting && this.sitT > 0.1, G.wardrobe ? G.wardrobe.miseryPal(g) : undefined);
     // speech bubble
     if (this.say) {
       ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left';

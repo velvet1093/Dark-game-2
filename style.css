@@ -214,3 +214,16 @@ body.on-ledge #t-down { display: block; }
 .wa-navs { display: flex; gap: .6em; margin-top: .6em; }
 .wa-navs .btn { width: auto; margin: 0; padding: .3em .9em; font-size: .66em; }
 @media (max-width: 700px) { .wa-body { flex-direction: column; } .wa-tree { height: 12em; } .wa-detail { min-height: 6em; } }
+
+/* ---- the wardrobe ---- */
+.screen.wardrobe { justify-content: flex-start; padding-top: 2.5%; background: rgba(4, 2, 3, .95); }
+.wd-body { display: flex; gap: 1.2em; width: 90%; max-width: 48em; height: 58%; }
+.wd-prev { flex: 1; background: radial-gradient(ellipse at 50% 70%, rgba(120, 40, 50, .35), rgba(0, 0, 0, 0) 70%), #0c0607; border: 2px solid #2a1a14; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .6em; }
+.wd-prev img { width: 11em; height: 11em; image-rendering: pixelated; object-fit: contain; }
+.wd-prev img.locked { filter: brightness(0) drop-shadow(0 0 2px rgba(200, 160, 160, .6)); opacity: .8; }
+.wd-name { color: #e0b84a; margin-top: .3em; }
+.wd-need { font-size: .7em; color: #8d8177; margin-top: .2em; text-align: center; }
+.opts.wd-list { width: 45%; flex: none; }
+.wd-list .btn small { display: block; font-size: .85em; }
+.wd-nav { width: auto !important; }
+@media (max-width: 700px) { .wd-body { flex-direction: column; height: 66%; } .opts.wd-list { width: 100%; } .wd-prev img { width: 7em; height: 7em; } }

@@ -93,6 +93,7 @@
   // About twenty sprite pixels tall: a small thing, next to the knight.
   const LV = { b: '#b79be8', s: '#8a6ad0', l: '#e3d6ff' }, HR = { b: '#f3f0fa', s: '#c6bedb', l: '#ffffff' }, DR = { b: '#2a1838', s: '#170c22', l: '#4a3260' }, SKN = { b: '#f4e8ec', s: '#d6bfca' };
   const MISERY = { LV, HR, DR, SKN, band: '#1c1026', eye: '#6a48b8', mote: 'rgba(214,190,255,0.8)' };
+  G.MISERY_PAL = MISERY;
   // the good fairies of the Lantern Court: same small shape, their own colours
   G.FAIRY_PALS = {
     queen: { LV: { b: '#f0d27a', s: '#c9a13b', l: '#fff4c8' }, HR: { b: '#f6e7b0', s: '#d8c080', l: '#fffbe8' }, DR: { b: '#f2ece0', s: '#c8bfae', l: '#ffffff' }, SKN, band: '#c9a13b', eye: '#3a8a5a', mote: 'rgba(255,230,150,0.9)', crown: true },

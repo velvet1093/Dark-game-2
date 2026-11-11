@@ -62,11 +62,11 @@
   };
 
   // ---- weapon portraits: each weapon painted large, in pixels, laid across the root of its tree
-  const paint = (wid) => {
+  const paint = (wid, fin) => {
     const c = document.createElement('canvas'); c.width = 200; c.height = 200; const x = c.getContext('2d');
     const u = 4, R = (px, py, w, h, col) => { x.fillStyle = col; x.fillRect(px * u, py * u, w * u, h * u); };
     x.translate(100, 100); x.rotate(-Math.PI / 4); x.translate(-100, -100);   // laid on the diagonal, point up and right
-    const STEEL = ['#5a5e6a', '#9a9eaa', '#d8dce6', '#f4f6fa'], GOLD = ['#7a5a1a', '#c9a13b', '#f0d680'], WOOD = ['#3a2416', '#5e3a20', '#8a5a30'], RED = '#8a1018';
+    const STEEL = fin ? [G.shade(fin.s, 0.8), fin.b, fin.l, '#ffffff'] : ['#5a5e6a', '#9a9eaa', '#d8dce6', '#f4f6fa'], GOLD = ['#7a5a1a', '#c9a13b', '#f0d680'], WOOD = ['#3a2416', '#5e3a20', '#8a5a30'], RED = '#8a1018';
     const blade = (x0, y0, len, w, tip) => { for (let i = 0; i < len; i++) { const ww = i > len - tip ? Math.max(1, Math.round(w * (len - i) / tip)) : w; const cx = 25 - Math.floor(ww / 2); R(cx, y0 - i, ww, 1, STEEL[1]); R(cx, y0 - i, 1, 1, STEEL[2]); R(cx + ww - 1, y0 - i, 1, 1, STEEL[0]); if (ww > 2) R(25, y0 - i, 1, 1, STEEL[3]); } };
     const grip = (y0, len, col = WOOD) => { for (let i = 0; i < len; i++) { R(24, y0 + i, 2, 1, i % 2 ? col[1] : col[0]); } };
     switch (wid) {
@@ -82,7 +82,7 @@
     return c.toDataURL();
   };
   const PORTRAITS = {};
-  G.weaponPortrait = wid => PORTRAITS[wid] || (PORTRAITS[wid] = paint(wid));
+  G.weaponPortrait = (wid, finId) => { const fin = finId !== undefined ? finId : G.wardrobe && G.game ? G.wardrobe.finishOf(G.game, wid) : null, k = wid + ':' + (fin || ''); return PORTRAITS[k] || (PORTRAITS[k] = paint(wid, fin && G.wardrobe ? G.wardrobe.FIN[fin].pal : null)); };
 
   // node icons, small inline drawings
   const ICON = {

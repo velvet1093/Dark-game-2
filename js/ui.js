@@ -60,6 +60,7 @@
       this.menu('dim', '<h2>Paused</h2>', [
         { label: 'Return to the road', fn: () => this.clear() },
         { label: 'Bestiary', fn: () => this.bestiary() },
+        { label: 'Wardrobe', fn: () => this.wardrobe('knight', null, null, 'pause') },
         { label: 'Settings', fn: () => this.settings('pause') },
         { label: 'Abandon to title', fn: () => G.game.toTitle() },
       ], keysHtml());
@@ -126,6 +127,7 @@
         { label: `Vigor ${s.vig} <small>— more life</small>`, fn: up('vig'), off: poor },
         { label: `Strength ${s.str} <small>— deeper cuts</small>`, fn: up('str'), off: poor },
         { label: `Endurance ${s.end} <small>— more stamina</small>`, fn: up('end'), off: poor },
+        { label: 'Wardrobe <small>— skins for the knight, weapons, wings and Misery</small>', fn: () => this.wardrobe('knight', null, null, 'shrine') },
         { label: `Weapon arts <small>— ${g.marks || 0} mark${(g.marks || 0) === 1 ? '' : 's'} to spend</small>`, fn: () => this.weaponArts() },
         { label: `Misery's gifts <small>— ${g.misery.thorns} thorn${g.misery.thorns === 1 ? '' : 's'} to give</small>`, fn: () => this.miseryTree() },
         { label: 'Rise', fn: () => this.clear() },
