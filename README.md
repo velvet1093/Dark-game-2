@@ -303,6 +303,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/story.js` | the Remembrances, the knight's name, and the third ending |
 | `js/swamp.js` | the Gloamwater: slowing water, the flying enemies and their sprites, its people, boss and quests |
 | `js/bestiary.js` | the in-game Bestiary: entries, sprite portraits and the screen |
+| `js/nell.js` | after the Lamplight Mother: Nell, the root scene, Saint Hild's Undercroft and the Seven Hundred Names |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -320,6 +321,14 @@ The journal counts them. With all five you remember your name. After that Garric
 When the Lamplight Mother breaks, the first prompt is **Tear out her wings**. It always comes before the choice to execute or spare, so the wings are always yours. The knight steps out to her wingtip, takes it in both hands and hauls on it in jerks while she shakes and the wing-root stretches. Then it tears. He flings it away, the other one falls loose, and he steps back. Without her wings she **cowers**: curled up in the mud with her hands over her head, eyes shut, trembling. They give you the **Moth Wings**: a second jump in mid-air, and a **glide** (hold jump while falling, and you drift down slowly). Her wings show on your back while you glide or double-jump. They unfold as they appear and fold up and fade, shedding a little moth-dust, when you land or let go. If you spare her she **does not fight back**: she drags herself away into the reeds on her hands, and the moths go with her.
 
 The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen, go east before going on to Hollowmere. (The Drowned Matron no longer carries the old Wind-Step Greaves. Saves that already have the double jump keep it, glide included.)
+
+## After the Lamplight Mother: Nell, the roots and the first well
+
+**If you spared her**, she is waiting at Hagge Wren's hut in the Gloamwater, wingless, wrapped in a blanket. Her name is **Nell**: a girl of drowned Hildsmere, nine years old the summer the water came up warm. She cowers until you speak to her. She tells you the spring is not water but crying, and that her moths could eat the black roots off Saint Hild's door, if a light went in front of them. Misery glows. Misery says no. (Quest: *The Moths and the Light*.)
+
+**At the door**, choose *Call the moths to the roots*. Misery refuses, then gives in. If you took her to the Lantern Court, she tells you why Mercy stopped leading the dying into the dark: *"Because they always went."* Then she drifts to the roots, and the moths follow her in a white storm and eat the door open. **If you executed Nell**, her orphaned moths can still be led; it is only colder.
+
+**Beneath it** is **Saint Hild's Undercroft**, and **Saint Hild** herself: the *first* well. Three hundred years ago she drank the spring so it would not reach Hildsmere. She wept once, and that tear is the Saint's Tear. She says the Tear only moves the weeping from one well to the next, and that the spring is **grief**: the weeping of every dead thing nobody named. The Long Battalion's seven hundred struck-out names have fed it like a river. To end the weeping, **name them**. The priests wrote every name in a muster book before they struck them out. This starts the quest **Seven Hundred Names**, the road toward cleansing the infection for good. Its next step is still to come.
 
 ## Execute or spare
 

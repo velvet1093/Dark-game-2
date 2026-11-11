@@ -112,7 +112,8 @@
       }
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
       if (this.inside) { if (near(60, 50)) return { x: 60, y: G.GROUND - 130, label: L.exitLabel || 'Leave ' + this.level.name, fn: () => this.leaveBuilding() }; return null; }
-      for (const d of L.doors || []) if (near(d.x, 36)) return { x: d.x, y: G.GROUND - 110, label: 'Enter ' + G.INTERIORS[d.to].name, fn: () => this.enterBuilding(d) };
+      for (const h of L.hooks || []) if (near(h.x, h.r || 50) && (!h.when || h.when(this))) return { x: h.x, y: G.GROUND - 120, label: h.label, fn: () => h.fn(this) };   // one-off things that happen at a place
+      for (const d of L.doors || []) if (near(d.x, 36) && (!d.needs || this.flags[d.needs])) return { x: d.x, y: G.GROUND - 110, label: 'Enter ' + G.INTERIORS[d.to].name, fn: () => this.enterBuilding(d) };
       if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: L.backLabel || 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
       for (const q of L.passages || []) if (near(q.x, 50)) {
         const tool = !q.needs || this.hasTool(q.needs);
@@ -607,6 +608,7 @@
         if (!open) { ctx.fillStyle = '#2a2224'; for (let k = 0; k < 4; k++) ctx.fillRect(q.x - 28 + k * 4, gy - 40 - k * 9, 56 - k * 8, 7); }
       }
       if (!this.inside) for (const d of L.doors || []) {   // building fronts, with a marker if someone inside has a quest
+        if (d.bare) continue;
         const B = G.INTERIORS[d.to], mk = (B.npcs || []).map(n => !this.flags['dead_' + n.id] && G.questLog.marker(n.id)).find(Boolean);
         G.drawFacade(ctx, d, t, mk);
       }

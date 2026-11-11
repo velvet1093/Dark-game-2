@@ -103,7 +103,7 @@
     const sc = (e.def && e.def.scale) || 1.6, lm = e.limbs || { head: {}, armF: {}, armB: {} };
     const beat = down ? 0 : wind ? 1 : 0.5 + Math.sin(time * 9 + (e.id || 0)) * 0.5;
     const WG = T('#8a6478'), WD = T('#5a3c4e'), BAND = '#d8c4b4', EDGE = '#3a2432', FUR = T('#efe6d6'), SK = T('#e8d6c8'), DR = T('#2e2030'), HAIR = T('#e6d8b4'), GOLD = '#d8b860';
-    const cower = e.wingless && down && !e.dead, by = cower ? 11 : down ? 6 : 0;   // without her wings she curls up small
+    const cower = e.wingless && down && !e.dead && !e.calm, by = cower ? 11 : down ? 6 : 0;   // without her wings she curls up small
     const pull = e.ripPull || 0, pside = e.ripSide || 1;                          // a wing being dragged out toward the knight
     // ---- wings: forewing with a pale band and a dark scalloped edge; rounded hindwing below; a wing-eye on each
     const lift = down ? -8 : Math.round(beat * 10);
@@ -166,6 +166,7 @@
     G.spr.close(ctx, e.x + shiver, G.GROUND - 4 * sc - e.alt, { facing: e.facing, flash: e.flash > 0, scale: sc, rot: strike ? 0.32 : e.dead ? 0.5 : 0 });
     e.out = { head: [e.x, G.GROUND - e.alt - 4 * sc - 36 * 2 * sc], sh: [e.x, G.GROUND - e.alt - 24 * 2 * sc], hip: [e.x, G.GROUND - e.alt - 12 * 2 * sc] };
   }
+  G.drawMothGirlSprite = mothgirl;
   const prev = G.drawBeast;
   G.drawBeast = (ctx, e, t) => (e.def.model === 'bloodfly' ? bloodfly : e.def.model === 'moth' ? moth : e.def.model === 'mothgirl' ? mothgirl : prev)(ctx, e, t);
 

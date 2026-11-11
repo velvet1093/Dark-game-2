@@ -110,6 +110,16 @@
 
     draw(ctx, g) {
       if (this.gone) return;
+      if (this.def.hidden && this.def.needs && !g.flags[this.def.needs]) return;   // not here (yet, or in this story)
+      if (this.def.sprite === 'mothgirl' && G.drawMothGirlSprite) {   // Nell, wingless, sitting in the reeds
+        const calm = !!g.flags['met_' + this.def.id];
+        this.mg = this.mg || { id: 7, def: { scale: 1 }, limbs: { head: {}, armF: {}, armB: {} }, wingless: true, flash: 0, alt: 0, dead: false, state: 'broken' };
+        Object.assign(this.mg, { x: this.x, facing: g.player.x >= this.x ? 1 : -1, calm });
+        G.drawMothGirlSprite(ctx, this.mg, g.time);
+        const m = G.questLog.marker(this.def.id);
+        if (m) { ctx.font = 'bold 27px "Jersey 15", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#e0b84a'; ctx.fillText(m, this.x, G.GROUND - 100); }
+        return;
+      }
       if (this.def.fairy) {   // a fairy of the Lantern Court: sits on a mushroom cap, or hovers
         const d = this.def, t = g.time + this.home, f = g.player.x >= this.x ? 1 : -1, sit = !!d.sitH;
         const y = G.GROUND - (sit ? d.sitH : 110 + Math.sin(t * 2) * 6);

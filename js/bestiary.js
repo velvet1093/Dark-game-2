@@ -57,6 +57,10 @@
     { id: 'bram', name: 'Bram the Woodcutter', look: 'bram', text: 'He cuts wood for monks who are gone, because a man needs a reason to stay warm. He fights beside you.' },
     { id: 'osk', name: 'Osk the Ferryman', look: 'osk', text: 'He takes no coin. Nobody goes anywhere worth paying for.' },
     { id: 'wren', name: 'Hagge Wren', look: 'wren', text: 'The Mire-Wife has studied the black water for thirty years. The weeping came up out of a spring under Saint Hild\'s. If the spring is stopped, nobody has to be the well.' },
+    { id: 'nell', name: 'Nell', art: 'nell', text: 'Once the Lamplight Mother, queen of the moths. A girl of drowned Hildsmere who went into the water the first summer and came up with wings. You tore them out, and let her go. Hagge Wren took her in.',
+      more: [['roots_eaten', 'She sent her children to eat the roots off Saint Hild\'s door, and they followed Misery\'s light to do it.']] },
+    { id: 'hild', name: 'Saint Hild', look: 'hild', text: 'The first well. Three hundred years ago she stood in the spring under Hildsmere and drank the weeping, so it would not reach the houses. Her tear is the Saint\'s Tear.',
+      more: [['met_hild', 'She says the spring is grief: the weeping of every dead thing nobody named. Name them, and it runs dry.']] },
     { id: 'pell', name: 'Ser Pell', look: 'pell', text: 'A knight of the Long Battalion who went over the side of the Sun rather than bring the sickness home. He brought it anyway.',
       more: [['named', 'Number three-forty-one. He stood beside you at the muster, and heard your sister shouting your name.']] },
   ];
@@ -77,6 +81,7 @@
     if (d.model) G.drawBeast(ctx, e, 1.3); else G.drawHumanoid(ctx, { x: 0, y: G.GROUND, facing: 1, scale: e.scale, pose: e.pose(), look: d.look, limbs: e.limbs, weapon: d.weapon, wlen: d.wlen, flash: 0, time: 1.3, vx: 0 });
   });
   const personArt = p => portrait('npc_' + p.id, (ctx, w, h) => {
+    if (p.art === 'nell') { ctx.translate(w / 2, h - 16); ctx.translate(0, -G.GROUND); G.drawMothGirlSprite(ctx, { x: 0, alt: 0, facing: 1, state: 'broken', dead: false, limbs: { head: {}, armF: {}, armB: {} }, flash: 0, id: 7, def: { scale: 1.2 }, wingless: true, calm: true }, 1.3); return; }
     if (p.art === 'misery' || p.art === 'queen') { ctx.translate(w / 2, h / 2); ctx.scale(2.2, 2.2); G.drawMisery(ctx, 0, 0, 1, 1.3, false, false, false, p.art === 'queen' ? G.FAIRY_PALS.queen : undefined); return; }
     ctx.translate(w / 2, h - 12); ctx.scale(0.95, 0.95); ctx.translate(0, -G.GROUND);
     G.drawHumanoid(ctx, { x: 0, y: G.GROUND, facing: 1, scale: 1, pose: {}, look: G.LOOKS[p.look], weapon: 'none', flash: 0, time: 1.3, vx: 0 });
