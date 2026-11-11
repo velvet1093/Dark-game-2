@@ -110,6 +110,14 @@
 
     draw(ctx, g) {
       if (this.gone) return;
+      if (this.def.fairy) {   // a fairy of the Lantern Court: sits on a mushroom cap, or hovers
+        const d = this.def, t = g.time + this.home, f = g.player.x >= this.x ? 1 : -1, sit = !!d.sitH;
+        const y = G.GROUND - (sit ? d.sitH : 110 + Math.sin(t * 2) * 6);
+        G.drawMisery(ctx, this.x, y, f, t, false, false, sit, G.FAIRY_PALS[d.fairy]);
+        const m = G.questLog.marker(d.id);
+        if (m) { ctx.font = 'bold 27px "Jersey 15", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#e0b84a'; ctx.fillText(m, this.x, y - 30); }
+        return;
+      }
       const sickening = !this.dead && this.inf >= 60;
       if (sickening && !this.sick) this.sick = Object.assign({}, this.look, { eye: '#ff3b2f', soft: 0 });
       const d = this.def, gy = G.GROUND, t = g.time;

@@ -92,7 +92,16 @@
   // ------------------------------ Misery -----------------------------------
   // About twenty sprite pixels tall: a small thing, next to the knight.
   const LV = { b: '#b79be8', s: '#8a6ad0', l: '#e3d6ff' }, HR = { b: '#f3f0fa', s: '#c6bedb', l: '#ffffff' }, DR = { b: '#2a1838', s: '#170c22', l: '#4a3260' }, SKN = { b: '#f4e8ec', s: '#d6bfca' };
-  G.drawMisery = (ctx, x, y, facing, t, glee, near, sit) => {
+  const MISERY = { LV, HR, DR, SKN, band: '#1c1026', eye: '#6a48b8', mote: 'rgba(214,190,255,0.8)' };
+  // the good fairies of the Lantern Court: same small shape, their own colours
+  G.FAIRY_PALS = {
+    queen: { LV: { b: '#f0d27a', s: '#c9a13b', l: '#fff4c8' }, HR: { b: '#f6e7b0', s: '#d8c080', l: '#fffbe8' }, DR: { b: '#f2ece0', s: '#c8bfae', l: '#ffffff' }, SKN, band: '#c9a13b', eye: '#3a8a5a', mote: 'rgba(255,230,150,0.9)', crown: true },
+    bramble: { LV: { b: '#9ad48a', s: '#5a9a4a', l: '#d8f4c8' }, HR: { b: '#6a4a2a', s: '#4a3018', l: '#8a6a40' }, DR: { b: '#3a6a3a', s: '#244a24', l: '#5a8a4a' }, SKN, band: '#2a1a10', eye: '#2a6a2a', mote: 'rgba(170,230,150,0.85)' },
+    dew: { LV: { b: '#a8d8f0', s: '#6aa8d0', l: '#e8f8ff' }, HR: { b: '#dff4ff', s: '#a8c8e0', l: '#ffffff' }, DR: { b: '#4a7aa8', s: '#2a5a88', l: '#7aa8d8' }, SKN, band: '#1a2a4a', eye: '#2a5aa8', mote: 'rgba(170,220,255,0.85)' },
+    thimble: { LV: { b: '#f0a8c0', s: '#c87090', l: '#ffe0ea' }, HR: { b: '#e8a050', s: '#b87030', l: '#ffd090' }, DR: { b: '#8a2a4a', s: '#5a1a30', l: '#b84a6a' }, SKN, band: '#3a1020', eye: '#8a3a2a', mote: 'rgba(255,170,200,0.85)' },
+  };
+  G.drawMisery = (ctx, x, y, facing, t, glee, near, sit, pal = MISERY) => {
+    const { LV, HR, DR, SKN } = pal;
     const { R, E, line } = G.spr.open(64, 60), sway = Math.round(Math.sin(t * 2.6) * 0.7);
     const stretch = sit && (t % 7) < 0.6;                                    // now and then she stretches her wings
     const up = sit ? stretch : Math.floor(t * 13) % 2 === 0;
@@ -119,24 +128,25 @@
     E(0, -6, 3, 3, SKN.b); R(-3, -5, 1, 2, SKN.s);
     R(-5, -7, 2, 1, SKN.b); R(4, -7, 2, 1, SKN.s);
     R(-3, -10, 7, 2, HR.b); R(-3, -8, 1, 1, HR.b); R(-1, -8, 1, 1, HR.b); R(1, -8, 1, 1, HR.b); R(3, -8, 1, 1, HR.b); R(-4, -9, 1, 5, HR.b); R(3, -9, 1, 4, HR.s); R(-1, -10, 2, 1, HR.l);
-    R(-3, -11, 7, 1, '#1c1026'); R(-5, -10, 1, 2, LV.b); R(5, -10, 1, 2, LV.b);
+    R(-3, -11, 7, 1, pal.band); R(-5, -10, 1, 2, LV.b); R(5, -10, 1, 2, LV.b);
+    if (pal.crown) { R(-3, -13, 7, 1, '#c9a13b'); R(-3, -15, 1, 2, '#f0d27a'); R(0, -16, 1, 3, '#f0d27a'); R(3, -15, 1, 2, '#f0d27a'); R(0, -16, 1, 1, '#ffffff'); }
     R(-2, -12, 1, 1, HR.b); R(-3, -13, 1, 1, HR.b); R(2, -12, 1, 1, HR.b); R(3, -13, 1, 1, HR.b);
     // face: sweet until something bleeds. Sitting, her eyes wander.
     const look = sit ? (Math.sin(t * 0.7) > 0.55 ? 1 : Math.sin(t * 0.7) < -0.55 ? -1 : 0) : 0, blink = Math.sin(t * 1.3) > 0.97;
     if (glee) { R(-2, -6, 1, 1, '#e0122a'); R(1, -6, 1, 1, '#e0122a'); R(-1, -4, 3, 1, '#5a1030'); }
     else if (blink) { R(-2 + look, -5, 1, 1, '#2a1c48'); R(1 + look, -5, 1, 1, '#2a1c48'); }
-    else { R(-2 + look, -6, 1, 2, '#6a48b8'); R(1 + look, -6, 1, 2, '#6a48b8'); R(-3, -4, 1, 1, '#eaa3b3'); R(2, -4, 1, 1, '#eaa3b3'); }
+    else { R(-2 + look, -6, 1, 2, pal.eye); R(1 + look, -6, 1, 2, pal.eye); R(-3, -4, 1, 1, '#eaa3b3'); R(2, -4, 1, 1, '#eaa3b3'); }
     G.spr.close(ctx, x, y, { facing });
     // motes of light circling her: gold near something hidden, pink when she gloats
     for (let i = 0; i < 4; i++) {
       const a = t * 1.3 + i * 1.57, r = 18 + Math.sin(t * 2 + i) * 4;
-      ctx.fillStyle = glee ? 'rgba(255,120,150,0.8)' : near ? 'rgba(240,205,120,0.95)' : 'rgba(214,190,255,0.8)';
+      ctx.fillStyle = glee ? 'rgba(255,120,150,0.8)' : near ? 'rgba(240,205,120,0.95)' : pal.mote;
       if (Math.sin(t * 5 + i * 2.1) > -0.2) ctx.fillRect(Math.round((x + Math.cos(a) * r) / 2) * 2, Math.round((y + Math.sin(a) * r * 0.7) / 2) * 2, 2, 2);
     }
     // sitting, she hums: little notes drift up and fade
     if (sit && Math.sin(t * 0.45) > -0.2) for (let k = 0; k < 2; k++) {
       const ph = (t * 0.45 + k * 0.5) % 1, nx = Math.round((x + facing * (8 + ph * 12)) / 2) * 2, ny = Math.round((y - 18 - ph * 30) / 2) * 2;
-      ctx.fillStyle = `rgba(214,190,255,${0.85 * (1 - ph)})`; ctx.fillRect(nx, ny + 6, 4, 2); ctx.fillRect(nx + 2, ny, 2, 6); ctx.fillRect(nx + 4, ny, 2, 2);
+      ctx.fillStyle = pal.mote.replace(/[\d.]+\)$/, (0.85 * (1 - ph)).toFixed(2) + ')'); ctx.fillRect(nx, ny + 6, 4, 2); ctx.fillRect(nx + 2, ny, 2, 6); ctx.fillRect(nx + 4, ny, 2, 2);
     }
   };
 })();

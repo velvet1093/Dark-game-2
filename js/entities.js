@@ -28,6 +28,7 @@ G.Player = class {
   get tinctMax() { return 1 + (this.stats.tinct || 0); }
   infect(n, g) {
     if (this.dead || this.turnT != null) return;
+    if (g && g.flags && g.flags.seelie) n *= 0.75;   // the Lantern Court's favour
     this.inf = Math.min(100, this.inf + n);
     if (this.inf >= 100) {
       this.turnT = 45; G.sfx('infect'); g.shake = 10;

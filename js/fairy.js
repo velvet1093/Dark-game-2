@@ -43,6 +43,9 @@ G.FAIRY = {
   clueHow: { high: 'Not down here, though. Look up.', bars: 'Someone shut it behind iron.', veil: 'It is sitting in that red mist. Lovely colour.', plain: 'It is not even hidden properly.', inside: 'It is indoors. Knock, why not.' },
   clueNone: ['Nothing left to steal here. You have been thorough. How dull.'],
   perch: ['Comfy. Your helmet is warm.', 'Do not move. I can see every way you might die from up here.', 'Your head makes a lovely chair. Empty, mostly.', 'Hum hum. Nobody comes. Hum hum.', 'If you stand still long enough, they will think you are one of them.'],
+  ringWarn: 'Nothing over there. Mushrooms. Walk on. WALK ON.',
+  backFromCourt: ['You smell of honey. You went to THEM.', 'Did they tell you my old name? They love telling it. Do not say it.', 'Fine. Go and sit with the little lanterns. See if they come when you are dying. I will.'],
+  idleCourt: ['Mercy. Ugh. Nobody has called me that in four hundred years. Do not start.', 'They hide in a ring of mushrooms and call it a court. I sit on a knight. Who is winning?'],
   rest: ['Resting again? More of them wander in while you sleep. They never do. Lovely.', 'Sleep well. I will watch you. I always watch.'],
   death: [
     'Hee hee hee! Oh, that was a good one.',
@@ -57,12 +60,14 @@ G.FAIRY = {
 G.Fairy = class {
   constructor() { this.x = 0; this.y = 0; this.t = Math.random() * 9; this.say = null; this.sayT = 0; this.cd = 3; this.idleT = 16; this.facing = 1; this.glee = 0; this.lowSaid = false; this.motes = []; this.last = {}; }
   // Say one specific line in a speech bubble.
-  sayLine(s) { if (G.ui.blocking) return; this.say = s; this.sayT = 2.8 + s.length * 0.05; this.cd = this.sayT + 4; G.sfx('chime'); }
+  // (she says nothing while she is shut outside the Court)
+  sayLine(s) { if (G.ui.blocking || G.game.fairyAway) return; this.say = s; this.sayT = 2.8 + s.length * 0.05; this.cd = this.sayT + 4; G.sfx('chime'); }
   place(p) { this.x = p.x - 60; this.y = G.GROUND - 120; this.say = null; this.cd = 3; this.idleT = 14; this.clueT = 28; this.toldNone = false; }
 
   // Say a random line of the given kind in a speech bubble.
   bark(kind, force, chance = 1) {
-    if ((!force && (this.cd > 0 || Math.random() > chance)) || G.ui.blocking) return;
+    if ((!force && (this.cd > 0 || Math.random() > chance)) || G.ui.blocking || G.game.fairyAway) return;
+    if (kind === 'idle' && G.game.flags.court_met && Math.random() < 0.35) kind = 'idleCourt';   // since you met the Court, she brings it up
     const lines = G.FAIRY[kind]; let s;
     do s = G.pick(lines); while (lines.length > 1 && s === this.last[kind]);
     this.last[kind] = s; this.say = s; this.sayT = 2.6 + s.length * 0.045; this.cd = this.sayT + 3;

@@ -24,7 +24,8 @@ G.INTERIORS = {
     platforms: [{ x: 790, w: 70, h: 70 }, { x: 880, w: 380, h: 140 }],
     enemies: [],
     items: [{ x: 1220, alt: 140, icon: 1 }],
-    lore: [{ x: 620, title: 'Tally Scratched in the Table', text: "Nights without sleep, by room:\n\nRoom 1  IIII\nRoom 2  IIII IIII\nRoom 3  I  (gone)\nRoom 4  IIII IIII IIII IIII\n\nRoom 4 is the Captain's." }],
+    lore: [{ x: 300, title: 'Chalked Under a Table', text: "A child's rhyme, in a child's hand:\n\nWhite caps in a ring where the fen begins,\nstand very still, and they let you in.\nBring nothing that laughs when the red runs thin." },
+      { x: 620, title: 'Tally Scratched in the Table', text: "Nights without sleep, by room:\n\nRoom 1  IIII\nRoom 2  IIII IIII\nRoom 3  I  (gone)\nRoom 4  IIII IIII IIII IIII\n\nRoom 4 is the Captain's." }],
     npcs: [
       { id: 'maren', x: 1000, name: 'Maren the Innkeeper', look: 'innkeep', pose: 'stand', essential: true,
         lines: [
@@ -83,17 +84,47 @@ G.INTERIORS = {
     lore: [{ x: 660, title: 'Seven Knives', text: "Laid out on a cloth, each blessed and labelled in the Bishop's hand.\n\nFOR THE SPRING. FOR THE SOURCE. FOR THE WELL. FOR HER. FOR MERCY. FOR THE KINGDOM.\n\nThe seventh is unlabelled. It is the only one that has been used." }],
     npcs: [],
   },
+  // Not behind any door. Stand still inside the ring of white caps at the edge of the fen.
+  court: {
+    name: 'The Lantern Court', area: 2, style: 'glade', length: 1100, entry: 120, music: 'court', noMisery: true, exitLabel: 'Leave the Court',
+    furniture: [], platforms: [], enemies: [],
+    items: [{ x: 1000, icon: 1 }],
+    lore: [],
+    npcs: [
+      { id: 'thimble', x: 330, sitH: 78, name: 'Thimble', fairy: 'thimble', look: 'nun', essential: true,
+        lines: [['Thimble', "Ooh, a real knight! Can I sit on your head? Mercy does, doesn't she. I can tell. You've a dent."], ['Thimble', "Don't tell the Queen I said her old name. Don't tell Mercy either. Don't tell anyone anything. That's the rule."]],
+        repeat: [['Thimble', 'Your head looks very comfortable. I am only saying.']] },
+      { id: 'bramble', x: 480, sitH: 108, name: 'Bramble', fairy: 'bramble', look: 'nun', essential: true,
+        lines: [['Bramble', 'Mind the moss, big feet. Took me a hundred years to grow it.'], ['Bramble', 'We used to dance out in the fen. Now we hide in it. Your kind made the weeping. Our kind only has to watch it. Some of us got to liking that.']],
+        repeat: [['Bramble', 'Moss. Feet. We have discussed this.']] },
+      { id: 'elowen', x: 640, name: 'Elowen, Queen of the Lantern Court', fairy: 'queen', look: 'nun', essential: true, gift: 'favour',
+        lines: [
+          ['Elowen', 'A knight with no name, and clear eyes. Sit, if you can sit in all that iron. You found the ring, so you are welcome here.'],
+          ['Elowen', 'You came without her. Good. She would not have been let in, and she knows it.'],
+          ['Knight', 'The fairy who follows me.'],
+          ['Elowen', 'We called her Mercy, once. She was the one of us who sat with the dying, so that no one went alone. She was very good at it.'],
+          ['Elowen', 'Then she came to love the watching more than the easing. We took her name back. She chose the new one herself, and she has worn it well.'],
+          ['Elowen', 'She cannot hurt you with her hands. Only with your own despair. Do not give her any.'],
+          ['Elowen', 'Take our favour. It will not cure you. It will make the sickness walk more slowly through you. That is all kindness ever does.'],
+        ],
+        repeat: [['Elowen', 'Rest a while, if you need to. Nothing weeps inside the ring.']] },
+      { id: 'dew', x: 800, sitH: 92, name: 'Dew', fairy: 'dew', look: 'nun', essential: true,
+        lines: [['Dew', 'Is it true the bells never stop, up on the hill? ...I thought so. I can hear them in the pool.'], ['Dew', 'The Saint used to come here, when she was small. She left a little picture by the water. We kept it for her. You may take it to her, if you like.']],
+        repeat: [['Dew', 'By the water. We kept it dry.']] },
+    ],
+  },
 };
 // the doors that lead into them, on the street outside
 G.LEVELS[0].doors = [{ x: 1220, to: 'cottage' }];
 G.LEVELS[1].doors = [{ x: 1190, to: 'inn' }, { x: 1850, to: 'forge' }];
 G.LEVELS[2].doors = [{ x: 2050, to: 'hovel' }];
+G.LEVELS[2].secret = { x: 420, to: 'court' };   // the ring of white caps where the fen begins
 G.LEVELS[3].doors = [{ x: 4120, to: 'mill' }];
 G.LEVELS[4].doors = [{ x: 2200, to: 'sacristy' }];
 // Maren and Dunstan now keep to their own houses
 G.LEVELS[1].npcs = G.LEVELS[1].npcs.filter(n => n.id !== 'maren' && n.id !== 'dunstan');
 for (const B of Object.values(G.INTERIORS)) { B.interior = true; B.chapter = G.LEVELS[B.area].name; B.theme = B.style === 'stone' ? 'cathedral' : 'interior'; B._theme = { indoor: true, weather: 'dust' }; B.shrines = []; }
-G.ICON_NAMES.push('The Saint in the Doorway', 'The Saint Who Stayed', 'The Saint and the Wheel', 'The Saint among Knives');
+G.ICON_NAMES.push('The Saint by the Moon Pool', 'The Saint in the Doorway', 'The Saint Who Stayed', 'The Saint and the Wheel', 'The Saint among Knives');
 
 // ---------------------------------------------------------------------------
 // Drawing: the room itself (into the backdrop buffer), and each building's
@@ -167,7 +198,46 @@ G.ICON_NAMES.push('The Saint in the Doorway', 'The Saint Who Stayed', 'The Saint
     vestments(c, x, gy) { R(c, x - 70, gy - 200, 140, 5, '#3a261a'); for (let k = 0; k < 4; k++) { const vx = x - 56 + k * 36; R(c, vx, gy - 195, 28, 110, ['#3a0a10', '#d8d0c0', '#1a1418', '#4a3a10'][k]); R(c, vx + 12, gy - 200, 4, 8, '#5a5660'); } },
   };
 
+  // The Lantern Court: a moonlit clearing, giant glowing caps, a ring of light, a still pool.
+  const drawGlade = (c, B, cam, t) => {
+    const W = G.W, H = G.H, gy = G.GROUND;
+    const sky = c.createLinearGradient(0, 0, 0, gy); sky.addColorStop(0, '#070818'); sky.addColorStop(0.7, '#141a34'); sky.addColorStop(1, '#1c2a3a');
+    c.fillStyle = sky; c.fillRect(0, 0, W, H);
+    for (let i = 0; i < 60; i++) { const sx = (i * 173.3 - cam * 0.1) % W, sy = (i * 47.1) % (gy - 160); c.fillStyle = `rgba(230,235,255,${0.25 + (i % 4) * 0.12 + Math.sin(t * 2 + i) * 0.08})`; c.fillRect(Math.round(((sx + W) % W) / 2) * 2, Math.round(sy / 2) * 2, 2, 2); }
+    const mx = 760 - cam * 0.15; glow(c, mx, 120, 220, 'rgba(200,215,255,0.22)'); R(c, 0, 0, 0, 0, '#000'); c.fillStyle = '#e8ecf8'; c.beginPath(); c.arc(mx, 120, 46, 0, 7); c.fill(); c.fillStyle = 'rgba(180,190,220,0.5)'; c.beginPath(); c.arc(mx - 12, 110, 10, 0, 7); c.arc(mx + 16, 132, 7, 0, 7); c.fill();
+    c.save(); c.translate(-cam, 0);
+    // a wall of old trees around the clearing, their canopy closing overhead
+    for (let x = -60; x < B.length + 80; x += 130) { const h = Math.imul(x + 999, 2654435761) >>> 0; c.fillStyle = '#060a10'; c.fillRect(x + (h % 30), 0, 26 + h % 16, gy); c.beginPath(); c.ellipse(x + 20, 30 + (h % 40), 110, 60, 0, 0, 7); c.fill(); }
+    // ground: deep moss, pale flowers
+    R(c, 0, gy - 3, B.length, H - gy + 3, '#0c1810'); R(c, 0, gy - 3, B.length, 3, '#2a4a2a');
+    for (let x = 0; x < B.length; x += 9) { const h = Math.imul(x + 7, 2654435761) >>> 0; if (h % 3 === 0) R(c, x, gy - 2 - h % 6, 2, 2 + h % 6, '#1e3a1e'); if (h % 23 === 0) R(c, x, gy - 6, 2, 2, h % 2 ? '#e8ecf8' : '#a8c8f0'); }
+    // giant caps, glowing, where the Court sits
+    for (const n of B.npcs) if (n.sitH) {
+      const x = n.x, h = n.sitH - 8, col = { thimble: ['#c87090', '255,170,200'], bramble: ['#5a9a4a', '170,230,150'], dew: ['#6aa8d0', '170,220,255'] }[n.fairy];
+      glow(c, x, gy - h, 110, `rgba(${col[1]},0.22)`);
+      R(c, x - 6, gy - h, 12, h, '#d8d0c0'); R(c, x - 6, gy - h, 3, h, '#a8a090');
+      c.fillStyle = col[0]; c.beginPath(); c.ellipse(x, gy - h, 34, 14, 0, Math.PI, 0); c.fill(); R(c, x - 34, gy - h - 1, 68, 3, '#1a1416');
+      c.fillStyle = `rgba(${col[1]},0.9)`; for (let k = -2; k <= 2; k++) c.fillRect(x + k * 11 - 2, gy - h - 8 - (k & 1) * 3, 4, 3);
+    }
+    // the ring of light, and the little white caps that make it
+    glow(c, 640, gy - 20, 170, 'rgba(255,235,170,0.2)');
+    c.strokeStyle = `rgba(255,240,190,${0.35 + Math.sin(t * 1.5) * 0.08})`; c.lineWidth = 3; c.beginPath(); c.ellipse(640, gy + 10, 110, 16, 0, 0, 7); c.stroke();
+    for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2, x = 640 + Math.cos(a) * 110, y = gy + 10 + Math.sin(a) * 16; R(c, x - 1, y - 6, 3, 6, '#d8d0c0'); R(c, x - 4, y - 9, 9, 4, '#f4f0e8'); }
+    // the moon pool, and what was left beside it
+    c.fillStyle = '#0a1830'; c.beginPath(); c.ellipse(920, gy + 14, 70, 13, 0, 0, 7); c.fill();
+    c.fillStyle = `rgba(220,230,255,${0.55 + Math.sin(t * 1.2) * 0.1})`; c.beginPath(); c.ellipse(912, gy + 13, 14, 4, 0, 0, 7); c.fill();
+    // fireflies
+    for (let i = 0; i < 26; i++) { const fx = (i * 97 + Math.sin(t * 0.6 + i) * 40) % B.length, fy = gy - 40 - ((i * 53 + t * 9) % 220); if (Math.sin(t * 3 + i * 1.7) > -0.3) { c.fillStyle = 'rgba(230,255,150,0.9)'; c.fillRect(Math.round(fx / 2) * 2, Math.round(fy / 2) * 2, 2, 2); glow(c, fx, fy, 10, 'rgba(230,255,150,0.25)'); } }
+    // the way out: a gap in the briars
+    c.fillStyle = '#05080a'; c.beginPath(); c.moveTo(24, gy); c.quadraticCurveTo(62, gy - 150, 100, gy); c.fill();
+    c.fillStyle = '#0e1a14'; c.beginPath(); c.moveTo(38, gy); c.quadraticCurveTo(62, gy - 118, 86, gy); c.fill();
+    c.strokeStyle = '#1a2416'; c.lineWidth = 2; for (let k = 0; k < 9; k++) { c.beginPath(); c.moveTo(24 + k * 9, gy - 20 - (k * 13) % 60); c.lineTo(30 + k * 9, gy - 30 - (k * 13) % 60); c.stroke(); }
+    R(c, -40, 0, 40, H, '#030405'); R(c, B.length, 0, 40, H, '#030405');
+    c.restore();
+  };
+
   G.drawInterior = (c, B, cam, t) => {
+    if (B.style === 'glade') return drawGlade(c, B, cam, t);
     const S = STYLE[B.style] || STYLE.wood, W = G.W, H = G.H, gy = G.GROUND;
     c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
     c.save(); c.translate(-cam, 0);

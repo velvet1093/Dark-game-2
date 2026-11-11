@@ -97,7 +97,7 @@
         return { x: k.x, y: G.GROUND - 200, label: tool ? k.open : k.shut, fn: () => (tool ? this.openGate(i) : this.gateRefused(k)) };
       }
       if (L.exit && near(L.exit.x, 60)) return { x: L.exit.x, y: G.GROUND - 150, label: L.exit.label, fn: () => this.travel() };
-      if (this.inside) { if (near(60, 50)) return { x: 60, y: G.GROUND - 130, label: 'Leave ' + this.level.name, fn: () => this.leaveBuilding() }; return null; }
+      if (this.inside) { if (near(60, 50)) return { x: 60, y: G.GROUND - 130, label: L.exitLabel || 'Leave ' + this.level.name, fn: () => this.leaveBuilding() }; return null; }
       for (const d of L.doors || []) if (near(d.x, 36)) return { x: d.x, y: G.GROUND - 110, label: 'Enter ' + G.INTERIORS[d.to].name, fn: () => this.enterBuilding(d) };
       if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
       return null;
@@ -125,6 +125,10 @@
         this.save();
         if (d.cleanse) this.cleanse(n);
         if (d.shop) G.ui.shop(d.shop);
+        if (d.gift === 'favour' && !this.flags.seelie) {   // the Lantern Court's favour
+          this.flags.seelie = 1; this.flags.court_met = 1; G.sfx('questdone'); G.sfx('cleanse');
+          G.questLog.banners.push({ kind: 'A favour', title: 'The Lantern Court', sub: 'The infection takes hold a quarter more slowly', t: 5 }); this.save();
+        }
         if (d.id === 'ysolde') {
           G.ui.dialogue(G.FAIRY.choice, () => G.ui.choice('The Saint\'s Tear is warm in your hand.', [
             { label: 'Give her the Tear', fn: () => this.ending('kept') },
@@ -225,14 +229,19 @@
       this.enemies = (B.enemies || []).map(([t, x], i) => { const e = new G.Enemy(t, x); e.inIdx = i; return e; }).filter(e => !gone[e.inIdx]);
       this.npcs = (B.npcs || []).map(n => new G.Npc(n, this)); this.surf = (B.platforms || []).slice(); this.boss = null; this.bossFight = false;
       const p = this.player; Object.assign(p, { x: B.entry, alt: 0, air: false, vy: 0, vx: 0, facing: 1 }); p.set('idle');
-      this.cam = 0; this.fairy.place(p); this.toldGate = {}; this.card = 3; this.fade = 0.5; G.sfx('page'); G.sfx('thud'); G.ambience('hall');
+      this.cam = 0; this.fairy.place(p); this.toldGate = {}; this.card = 3; this.fade = 0.5; G.sfx('page'); G.sfx('thud'); G.ambience(B.style === 'glade' ? 'none' : 'hall');
+      if (B.music) G.music(B.music);
+      if (B.noMisery) { this.fairy.say = null; this.fairyAway = true; }
     },
     leaveBuilding() {
       const o = this.outside; if (!o) return;
       Object.assign(this, { level: o.level, enemies: o.enemies, npcs: o.npcs, surf: o.surf, boss: o.boss, cam: o.cam, inside: null, outside: null });
       G.fx.decals.splice(0, G.fx.decals.length, ...o.decals); G.fx.gibs.splice(0, G.fx.gibs.length, ...o.gibs); G.fx.drops.length = 0;
       const p = this.player; Object.assign(p, { x: o.x, alt: 0, air: false, vy: 0, vx: 0 }); p.set('idle');
-      this.fairy.place(p); this.fade = 0.5; G.sfx('page'); G.ambience({ road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall' }[this.level.theme]);
+      const fromCourt = this.fairyAway; this.fairyAway = false;
+      G.music({ fen: 'road' }[this.level.theme] || this.level.theme);
+      this.fairy.place(p); if (fromCourt) { this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.backFromCourt)); }
+      this.fade = 0.5; G.sfx('page'); G.ambience({ road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall' }[this.level.theme]);
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { G.questLog.onKill(e, this); if (this.inside && e.inIdx != null) (this.cleared[this.inside.id] || (this.cleared[this.inside.id] = {}))[e.inIdx] = 1; },
@@ -320,7 +329,16 @@
       }
       const held = Object.values(G.input.held).some(Boolean);   // how long the knight has stood still with nothing pressed
       this.idleFor = !held && p.state === 'idle' && Math.abs(p.vx) < 5 && !p.air && !p.dead ? (this.idleFor || 0) + dt : 0;
-      this.fairy.update(dt, this);
+      if (!this.fairyAway) this.fairy.update(dt, this);
+      // the ring of white caps: stand in it, perfectly still, and the Court lets you in
+      const sr = !this.inside && L.secret;
+      if (sr) {
+        const inRing = Math.abs(p.x - sr.x) < 34 && !p.air && !p.dead;
+        const was = this.ringT || 0; this.ringT = inRing && this.idleFor > 0.6 ? was + dt : 0;
+        if (was < 0.4 && this.ringT >= 0.4) G.sfx('chime');
+        if (this.ringT > 2.8) { this.ringT = 0; G.sfx('cleanse'); this.enterBuilding({ x: sr.x, to: sr.to }); return; }
+        if (!this.toldRing && !this.flags.court_met && Math.abs(p.x - sr.x) < 200) { this.toldRing = 1; this.fairy.cd = 0; this.fairy.sayLine(G.FAIRY.ringWarn); }   // she would rather you did not
+      }
       G.fxUpdate(dt);
       if (!p.dead && p.hp < p.maxHp * 0.35 && (this.heartT -= dt) <= 0) { this.heartT = 0.85; G.sfx('heart'); }
 
@@ -355,7 +373,7 @@
       if (this.inside) G.drawInterior(ctx, L, cam, t); else G.drawBackdrop(ctx, L, cam, t);
       ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.drawFx(ctx, 'ground'); ctx.restore();
       if (!this.inside) G.drawFog(ctx, L, cam, t);
-      {   // Misery gives off a little light of her own, more of it indoors
+      if (!this.fairyAway) {   // Misery gives off a little light of her own, more of it indoors
         const f = this.fairy, lx = f.x - cam, ly = f.y, r = this.inside ? 165 : 130, glee = f.glee > 0 || p.dead, lg = ctx.createRadialGradient(lx, ly, 4, lx, ly, r);
         lg.addColorStop(0, glee ? 'rgba(150,70,110,0.34)' : this.inside ? 'rgba(130,105,190,0.36)' : 'rgba(115,90,170,0.28)'); lg.addColorStop(0.45, glee ? 'rgba(80,30,60,0.12)' : 'rgba(70,55,115,0.12)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lg; ctx.fillRect(lx - r, ly - r, r * 2, r * 2); ctx.restore();
@@ -368,7 +386,7 @@
       for (const e of this.enemies) if (e.dead && vis(e.x)) e.draw(ctx, this);
       for (const e of this.enemies) if (!e.dead && vis(e.x)) e.draw(ctx, this);
       p.draw(ctx, this);
-      this.fairy.draw(ctx, this);
+      if (!this.fairyAway) this.fairy.draw(ctx, this);
       G.drawFx(ctx, 'air');
       if (this.prompt) {
         const pr = this.prompt, s = (G.inputMode === 'touch' ? 'USE · ' : '[' + G.keyName('use') + '] ') + pr.label;
@@ -379,7 +397,7 @@
         ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, px, by);
       }
       ctx.restore();
-      G.drawAtmosphere(ctx, L, cam, t, { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: this.inside ? 150 : 115 }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
+      G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: this.inside ? 150 : 115 }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
@@ -448,6 +466,13 @@
           }
           if (!open) glow(x, gy - 90, 110, 'rgba(200,20,40,0.22)');
         }
+      }
+      // the ring of white caps at the edge of the fen, brighter while someone stands still in it
+      if (L.secret && !this.inside) {
+        const x = L.secret.x, k = Math.min(1, (this.ringT || 0) / 2.8);
+        glow(x, gy + 4, 70 + k * 90, `rgba(240,235,200,${0.08 + k * 0.3})`);
+        for (let q = 0; q < 11; q++) { const a = q / 11 * Math.PI * 2, mx = x + Math.cos(a) * 34, my = gy + 8 + Math.sin(a) * 7; ctx.fillStyle = '#d8d0c0'; ctx.fillRect(mx - 1, my - 5, 2, 5); ctx.fillStyle = '#f4f0e8'; ctx.fillRect(mx - 4, my - 8, 8, 3); }
+        for (let q = 0; q < Math.floor(k * 14); q++) { const a = t * 2 + q * 0.45, r = 60 * (1 - k) + 10; ctx.fillStyle = 'rgba(255,240,180,0.9)'; ctx.fillRect(Math.round((x + Math.cos(a) * r) / 2) * 2, Math.round((gy - 30 + Math.sin(a * 1.3) * r * 0.6) / 2) * 2, 2, 2); }
       }
       // archways: onward at the far end, and back the way you came at the near end
       const arch = (x, col) => {

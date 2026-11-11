@@ -80,7 +80,7 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 
 ## Collectables and tools
 
-**Weeping icons** — nineteen small gilt paintings of the Saint: three in every area, and four more inside buildings. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 19 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — twenty small gilt paintings of the Saint: three in every area, four inside buildings, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 20 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -112,6 +112,10 @@ Six buildings can be entered. Walk up to the door and press the interact key. Th
 | Cathedral | The Sacristy | the Bishop's seven knives, two guards, a reliquary and an icon |
 
 Misery counts icons behind a door when she hints, and tells you when one is indoors.
+
+## A secret
+
+There is a seventh place, behind no door. Somewhere in the game a child's rhyme says where to look and what to do; it takes no tool, only patience. What waits there are the other kind of fairy, who remember Misery by an older name. Misery will not go in, and she will not thank you for going.
 
 ## Trade in Brannoc's Hold
 
