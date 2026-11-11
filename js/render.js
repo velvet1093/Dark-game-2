@@ -318,6 +318,7 @@ const THEMES = {
   harbour: { sky: ['#05060b', '#0f0c18', '#2e1420'], moon: true, mid: ['hull', 'mast', 'tree', 'mast', 'hull'], near: ['anchor', 'bollard', 'net', 'crate', 'bollard', 'grave'], ground: '#0c0b0d', edge: '#22202a', weather: 'rain', water: true, sea: true },
   convent: { sky: ['#07060c', '#141020', '#3a1c2a'], moon: true, mid: ['chapel', 'wall', 'tree', 'cloister', 'wall', 'cloister'], near: ['grave', 'lilies', 'candles', 'cross', 'lilies', 'grave'], ground: '#0d0b0e', edge: '#2c2632', weather: 'ash', water: true },
   mountain: { sky: ['#0a0c14', '#1a2030', '#3a3c4e'], moon: true, mid: ['peak', 'pine', 'pine', 'peak', 'pine'], near: ['pine', 'rock', 'cross', 'pine', 'rock', 'stake'], ground: '#6a7080', edge: '#c0c8d8', weather: 'snow', snow: true },
+  swamp: { sky: ['#040806', '#0c1610', '#1e2a1a'], moon: true, mid: ['willow', 'tree', 'stilt', 'willow', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#0a100c', edge: '#1e2c20', weather: 'spores', water: true },
   crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
 
@@ -480,6 +481,11 @@ G.drawAtmosphere = (ctx, level, cam, t, light, hurt, fever = 0) => {
       const sx = i * 137.5 - cam * 0.6 + t * (20 + wv * 2.2) + Math.sin(t * 1.3 + i) * 14, x = Math.round((((sx % W) + W) % W) / 2) * 2, y = Math.round(((i * 71.3 + t * (60 + i % 5 * 14)) % H) / 2) * 2;
       if (Math.abs(wv) > 60) c.fillRect(x, y, 2 + Math.round(Math.abs(wv) / 60) * 2, 2); else c.fillRect(x, y, 2, 2);
     }
+  } else if (T.weather === 'spores') {   // pale spores drifting up off the black water, and fireflies
+    for (let i = 0; i < 46; i++) {
+      const x = ((i * 113.7 + Math.sin(t * 0.5 + i) * 40 - cam * 0.4) % W + W) % W, y = H - ((i * 47.3 + t * (10 + i % 4 * 5)) % H);
+      c.fillStyle = i % 7 === 0 ? `rgba(220,240,120,${0.5 + Math.sin(t * 3 + i) * 0.4})` : 'rgba(190,210,180,0.5)'; c.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, 2, 2);
+    }
   } else if (T.weather === 'rain') {
     c.fillStyle = 'rgba(170,170,195,0.5)';
     for (let i = 0; i < 70; i++) {
@@ -607,7 +613,7 @@ Object.assign(PROPS, {
 // A distant skyline, far behind the playfield.
 G.drawFar = (ctx, level, cam, t) => {
   const W = G.W, gy = G.GROUND, th = level.theme, off = cam * 0.25;
-  ctx.save(); ctx.fillStyle = th === 'cathedral' || th === 'crypt' ? '#0c080b' : th === 'fen' ? '#0b1210' : '#150b0f';
+  ctx.save(); ctx.fillStyle = th === 'cathedral' || th === 'crypt' ? '#0c080b' : th === 'fen' || th === 'swamp' ? '#0b1210' : '#150b0f';
   const each = (step, fn) => { for (let i = Math.floor(off / step) - 1; i * step - off < W + step; i++) fn(Math.round((i * step - off) / 2) * 2, Math.imul(i + 7, 2654435761) >>> 0, i); };
   if (th === 'road') each(760, (x, h) => {           // a ruined keep on the ridge
     const y = gy - 60 - h % 30; ctx.fillRect(x, y - 120, 46, 120); ctx.fillRect(x - 6, y - 132, 14, 14); ctx.fillRect(x + 16, y - 128, 12, 10); ctx.fillRect(x + 46, y - 60, 90, 60); ctx.fillRect(x + 136, y - 34, 40, 34);
@@ -643,6 +649,10 @@ G.drawFar = (ctx, level, cam, t) => {
     for (let x = 0; x <= W; x += 6) { const wx = x + off * 0.5, top = gy - 150 - Math.abs(Math.sin(wx * 0.0042)) * 150 - Math.sin(wx * 0.017) * 22; if (top < gy - 230) ctx.fillRect(x, top, 6, Math.min(30, gy - 230 - top + 6)); }
     ctx.fillStyle = '#150b0f';
   }
+  else if (th === 'swamp') each(170, (x, h) => {     // dead trees standing in the mist
+    const hh = 90 + h % 80; ctx.fillRect(x, gy - hh, 4, hh); ctx.fillRect(x - 12, gy - hh * 0.75, 16, 3); ctx.fillRect(x + 4, gy - hh * 0.6, 14, 3);
+    ctx.fillStyle = 'rgba(40,70,50,0.4)'; ctx.fillRect(x - 10, gy - hh * 0.75, 2, 22); ctx.fillRect(x + 14, gy - hh * 0.6, 2, 16); ctx.fillStyle = '#0b1210';
+  });
   else if (th === 'crypt') each(260, (x, h) => {     // low vaults, receding
     ctx.fillRect(x, 0, 30, gy); ctx.beginPath(); ctx.moveTo(x + 30, 230); ctx.quadraticCurveTo(x + 145, 120, x + 260, 230); ctx.lineTo(x + 260, 0); ctx.lineTo(x + 30, 0); ctx.fill();
     ctx.fillStyle = '#060405'; for (let k = 0; k < 4; k++) ctx.fillRect(x + 6, gy - 60 - k * 70, 18, 30); ctx.fillStyle = '#0c080b';
@@ -709,6 +719,15 @@ Object.assign(PROPS, {
     c.save(); c.fillStyle = 'rgba(190,200,216,0.5)'; c.beginPath(); c.moveTo(x - w * 0.1, y - h); c.lineTo(x - w * 0.22, y - h * 0.7); c.lineTo(x - w * 0.08, y - h * 0.76); c.lineTo(x + w * 0.05, y - h * 0.86); c.fill(); c.restore();
   },
   rock(c, x, y, s) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8 * s, y - 26 * s); c.lineTo(x + 34 * s, y - 34 * s); c.lineTo(x + 56 * s, y - 14 * s); c.lineTo(x + 60 * s, y); c.fill(); c.save(); c.fillStyle = 'rgba(200,210,226,0.6)'; c.fillRect(x + 10 * s, y - 30 * s, 24 * s, 4); c.restore(); },
+  willow(c, x, y, s, seed, t) {   // a drowned willow, hung with moss
+    const h = 170 * s; c.fillRect(x - 5, y - h, 10, h); c.beginPath(); c.ellipse(x, y - h, 70 * s, 30 * s, 0, Math.PI, 0); c.fill();
+    c.lineWidth = 2; for (let k = -6; k <= 6; k++) { const bx = x + k * 10 * s, sw = Math.sin(t * 0.8 + k + seed) * 3; c.beginPath(); c.moveTo(bx, y - h); c.quadraticCurveTo(bx + sw, y - h * 0.6, bx + sw * 2, y - h * (0.25 + (k & 1) * 0.15)); c.stroke(); }
+  },
+  stilt(c, x, y, s) {   // a hut on stilts, its window lit
+    const w = 90 * s; for (const k of [6, w / 2, w - 10]) c.fillRect(x + k, y - 70 * s, 4, 70 * s); c.fillRect(x, y - 120 * s, w, 50 * s);
+    c.beginPath(); c.moveTo(x - 8, y - 120 * s); c.lineTo(x + w / 2, y - 160 * s); c.lineTo(x + w + 8, y - 120 * s); c.fill();
+    c.save(); c.fillStyle = 'rgba(200,170,90,0.6)'; c.fillRect(x + w * 0.35, y - 106 * s, 12 * s, 14 * s); c.restore();
+  },
   cloister(c, x, y, s) {   // a run of round arches, the walk around the convent garth
     const w = 300 * s, h = 120 * s; c.fillRect(x, y - h - 30 * s, w, 30 * s); c.beginPath(); c.moveTo(x - 10, y - h - 30 * s); c.lineTo(x + w / 2, y - h - 80 * s); c.lineTo(x + w + 10, y - h - 30 * s); c.fill();
     for (let k = 0; k <= 5; k++) { const ax = x + k * w / 5; c.fillRect(ax - 5, y - h, 10, h); if (k < 5) { c.beginPath(); c.moveTo(ax + 5, y - h * 0.6); c.quadraticCurveTo(ax + w / 10, y - h - 10, ax + w / 5 - 5, y - h * 0.6); c.lineTo(ax + w / 5 - 5, y - h); c.lineTo(ax + 5, y - h); c.fill(); } }

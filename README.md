@@ -78,20 +78,21 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
-Four **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
+Five **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
 
 | Side area | Way in | Needs | |
 | --- | --- | --- | --- |
 | The Wreck of the Sun | a cliff path near the start of the Gallows Road | Wind-Step Greaves | the Long Battalion's ship, run aground in the shallows. Drowned deckhands and knights of your own battalion, the Bosun who rowed you home, the ship's log, and the battalion roll with your name torn out of it. Boss: **the Standard-Bearer**, who still guards the colours at the stern |
 | The Lily Convent | a chained causeway in the middle of the Weeping Fen | Headsman's Greataxe | the mother house of the Sisters, on an island of lilies. Weeping Novices, Sister Petra (she cleanses), the Rule of the House and the infirmary tally. Boss: **Abbess Severine, the Lily Rotted**, who drank the wash-water so her Sisters would not have to |
 | The Pilgrims' Pass | a goat path near Hollowmere's third candle | Wind-Step Greaves | a snowbound mountain road to the Windcallers' monastery, swept by **gusts that push you back down it** (see below). Frozen Pilgrims, White Wolves and Cairn Wardens; Sigrun the Guide, Bram the Woodcutter (who fights beside you) and Brother Aldous. Boss: **Brother Hask, the Windcaller** |
+| The Gloamwater | an old causeway east out of the Weeping Fen, past where the Matron fell | Lily Lantern | a drowned mire where the sickness first came up out of the ground. **Slowing water** (see below), boardwalks on stilts, Bloodflies, Weeping Moths and the Mire-Drowned; Osk the Ferryman, Hagge Wren the Mire-Wife, and Ser Pell of the Long Battalion. Boss: **the Lamplight Mother** |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
 
 ## Collectables and tools
 
-**Weeping icons** — thirty-five small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 35 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — thirty-eight small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 38 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -182,11 +183,24 @@ Enemies hunt villagers as well as you, and lean towards the easier prey.
 | White Wolf | a fast pack hunter, low to the ground, so the wind hardly touches it |
 | Cairn Warden | a tall spearman of the pass; poise, long reach, rooted against the wind |
 | **Brother Hask, the Windcaller** | boss of the Pilgrims' Pass; an axe, a long lunge, and a horn that throws a gust straight at you. His hobnailed boots are yours when he falls |
+| Bloodfly | small, fast and in swarms; dives in to drink, and what it leaves behind is the sickness |
+| Weeping Moth | flies high and slow, then sweeps down and shakes its wings over you; the dust fills your infection bar |
+| Mire-Drowned | at home in the water: the mire does not slow it |
+| **The Lamplight Mother** | boss of the Gloamwater; a great moth drawn to light (and Misery glows). Long dives, clouds of weeping dust, and swarms of bloodflies as she weakens. Strike her as she dives, or jump |
 | **Ser Garrick, the Oathkeeper** | the last boss |
 
 ## Misery
 
 A small lavender fairy with white hair follows you as your "guide". She glows faintly and lights the dark around her, and if you stand still long enough she sits on your helm. She is not on your side. Her advice is mostly bad, she giggles when you bleed, sulks when you heal, and keeps count of every time she watches you die.
+
+## The water of the Gloamwater
+
+- **Shallow water** (to the ankle) halves your pace and takes the spring out of your jump.
+- **Deep water** (red bubbles rise from it) slows you to a crawl, barely lets you jump, and **fills your infection bar** while you stand in it. On Unfair it is slower still and weeps into you faster.
+- **Boardwalks on stilts** keep you dry, but they are broken, and the flies can reach you there.
+- Enemies wade slowly too, except the Mire-Drowned. Fliers do not care.
+
+**Hagge Wren** asks for three black lilies from the deep pools (reward: a permanent extra flask). She also starts **The Black Spring**: the weeping came up out of a spring under the drowned chapel of Saint Hild's before it ever reached Ysolde. If the spring can be stopped, nobody has to be the well. The chapel door at the far end of the mire is bound in black roots that do not give yet. This is the road toward cleansing the infection for good, still to come.
 
 ## The wind on the Pass
 
@@ -277,6 +291,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/traps.js` | the trials: crumbling, false and moving ledges, swinging blades, falling spikes |
 | `js/mountain.js` | the Pilgrims' Pass: its people, enemies, boss, quest and the wind |
 | `js/story.js` | the Remembrances, the knight's name, and the third ending |
+| `js/swamp.js` | the Gloamwater: slowing water, the flying enemies and their sprites, its people, boss and quests |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |

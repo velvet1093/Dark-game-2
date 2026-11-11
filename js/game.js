@@ -6,8 +6,8 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
-  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind' };
-  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village' }[L.theme] || L.theme);
+  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain' };
+  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
@@ -178,7 +178,7 @@
       if (it.thorns) return { x: it.x, y: y - 54, label: 'Take the bundle of thorns', fn: take(() => { this.misery.thorns += it.thorns; G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.thorns + ' thorns for Misery', '#b89ae0', 16); }) };
       if (it.cache) return { x: it.x, y: y - 54, label: 'Open the reliquary', fn: take(() => { this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); }) };
       if (it.weapon) return { x: it.x, y: y - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: take(() => this.gainWeapon(it.weapon)) };
-      return { x: it.x, y: y - 40, label: 'Gather the white lily', fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, 'White lily', '#efeaf2', 13); }) };
+      return { x: it.x, y: y - 40, label: it.id === 'blacklily' ? 'Pull up the black lily' : 'Gather the white lily', fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, it.id === 'blacklily' ? 'Black lily' : 'White lily', '#efeaf2', 13); }) };
     },
     iconTotal() { return G.LEVELS.concat(Object.values(G.INTERIORS)).reduce((n, l) => n + (l.items || []).filter(it => it.icon).length, 0); },
     // Icons still to be found in the area the knight is in (Misery hints at these).
@@ -375,9 +375,11 @@
       if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); return; }   // the world may have changed under us; pick up next frame
 
       G.traps.tick(this, dt);
+      const px0 = p.x, pAir = p.air;
       p.update(dt, this);
+      if (L.waters) G.swamp.afterPlayer(this, px0, pAir, dt);
       G.wind.tick(this, dt);
-      for (const e of this.enemies) e.update(dt, this);
+      for (const e of this.enemies) { const ex = e.x; e.update(dt, this); if (L.waters) G.swamp.afterEnemy(this, e, ex); }
       for (const n of this.npcs) n.update(dt, this);
       G.questLog.tick(this, dt);
       // keep the living from stacking on one another
@@ -429,7 +431,7 @@
       // backdrop, props and ground blood go through the pixel buffer; characters are drawn over it
       const main = ctx; ctx = G.bgBegin();
       if (this.inside) G.drawInterior(ctx, L, cam, t); else G.drawBackdrop(ctx, L, cam, t);
-      ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.traps.draw(ctx, this, t); G.wind.draw(ctx, this, t); G.drawFx(ctx, 'ground'); ctx.restore();
+      ctx.save(); ctx.translate(-cam, 0); this.drawWorldProps(L, t); G.traps.draw(ctx, this, t); G.wind.draw(ctx, this, t); if (L.waters && !this.inside) G.swamp.drawBack(ctx, this, t); G.drawFx(ctx, 'ground'); ctx.restore();
       if (!this.inside) G.drawFog(ctx, L, cam, t);
       if (!this.fairyAway) {   // Misery gives off a little light of her own, more of it indoors
         const f = this.fairy, lx = f.x - cam, ly = f.y, r = this.inside ? 165 : 130, glee = f.glee > 0 || p.dead, lg = ctx.createRadialGradient(lx, ly, 4, lx, ly, r);
@@ -444,6 +446,7 @@
       for (const e of this.enemies) if (e.dead && vis(e.x)) e.draw(ctx, this);
       for (const e of this.enemies) if (!e.dead && vis(e.x)) e.draw(ctx, this);
       p.draw(ctx, this);
+      if (L.waters && !this.inside) G.swamp.drawFront(ctx, this, t);   // the water closes over feet and paws
       if (!this.fairyAway) this.fairy.draw(ctx, this);
       G.drawFx(ctx, 'air');
       if (this.prompt) {
@@ -486,7 +489,7 @@
       }
       // pits: stakes on the road and in the village, black water in the fen, a broken floor over the crypt
       for (const [pi, pk] of (L.pits || []).entries()) {
-        const x = pk.x, w = pk.w, th = L.theme === 'crypt' ? 'cathedral' : L.theme, wall = th === 'cathedral' ? '#1c181c' : th === 'fen' ? '#0e1612' : '#1a1012';
+        const x = pk.x, w = pk.w, th = L.theme === 'crypt' ? 'cathedral' : L.theme === 'swamp' ? 'fen' : L.theme, wall = th === 'cathedral' ? '#1c181c' : th === 'fen' ? '#0e1612' : '#1a1012';
         ctx.fillStyle = '#020102'; ctx.fillRect(x, gy - 3, w, G.H - gy + 3);
         ctx.fillStyle = wall; ctx.fillRect(x, gy - 3, 4, 70); ctx.fillRect(x + w - 4, gy - 3, 4, 70);
         ctx.fillStyle = th === 'cathedral' ? '#34303a' : '#2a1a1e'; for (const [ox, ww] of [[-6, 8], [w - 4, 10], [6, 4], [w - 14, 6]]) ctx.fillRect(x + ox, gy - 4, ww, 3);   // a crumbling lip
@@ -644,7 +647,7 @@
         }
         glow(it.x, gy - 12, 30 + Math.sin(t * 3 + i) * 4, 'rgba(235,225,255,0.4)');
         ctx.strokeStyle = '#3a5a3a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(it.x, gy); ctx.lineTo(it.x + 1, gy - 14); ctx.stroke();
-        ctx.fillStyle = '#f4f0fa'; for (let k = 0; k < 5; k++) { const a = k * 1.257 + 0.3; ctx.beginPath(); ctx.ellipse(it.x + 1 + Math.cos(a) * 4, gy - 16 + Math.sin(a) * 3, 3.2, 1.8, a, 0, 7); ctx.fill(); }
+        ctx.fillStyle = it.id === 'blacklily' ? '#3a1a40' : '#f4f0fa'; for (let k = 0; k < 5; k++) { const a = k * 1.257 + 0.3; ctx.beginPath(); ctx.ellipse(it.x + 1 + Math.cos(a) * 4, gy - 16 + Math.sin(a) * 3, 3.2, 1.8, a, 0, 7); ctx.fill(); }
         ctx.fillStyle = '#e0b84a'; ctx.beginPath(); ctx.arc(it.x + 1, gy - 16, 1.4, 0, 7); ctx.fill();
       });
       // vigil candles

@@ -56,7 +56,7 @@
     close(ctx, x, y, o = {}) {
       finish(!!o.flash);
       const sm = ctx.imageSmoothingEnabled; ctx.save(); ctx.imageSmoothingEnabled = false;
-      ctx.translate(Math.round(x), Math.round(y)); ctx.scale(o.facing || 1, 1); if (o.rot) ctx.rotate(o.rot);
+      ctx.translate(Math.round(x), Math.round(y)); ctx.scale((o.facing || 1) * (o.scale || 1), o.scale || 1); if (o.rot) ctx.rotate(o.rot);
       ctx.drawImage(buf, -this.ox * PX, -this.oy * PX, BW * PX, BH * PX);
       ctx.restore(); ctx.imageSmoothingEnabled = sm;
     },

@@ -501,7 +501,7 @@ G.Enemy = class {
     }
     if (this.def.fly) {
       const s = this.state, low = this.crawling || s === 'broken' || s === 'executed' || s === 'idle';
-      const want = low ? 0 : s === 'strike' ? 46 : s === 'windup' ? 138 : s === 'stagger' ? 70 : 122;
+      const fa = this.def.flyAlt || 122, want = low ? 0 : s === 'strike' ? (this.def.diveAlt || 46) : s === 'windup' ? fa + 16 : s === 'stagger' ? 70 : fa + Math.sin(g.time * 2.3 + this.id) * (this.def.bob || 0);
       this.alt += (want - this.alt) * Math.min(1, dt * (s === 'strike' ? 14 : low ? 6 : 3));
     }
     const px0 = this.x; this.x += this.vx * dt;
