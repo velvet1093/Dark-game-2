@@ -319,6 +319,7 @@ const THEMES = {
   convent: { sky: ['#07060c', '#141020', '#3a1c2a'], moon: true, mid: ['chapel', 'wall', 'tree', 'cloister', 'wall', 'cloister'], near: ['grave', 'lilies', 'candles', 'cross', 'lilies', 'grave'], ground: '#0d0b0e', edge: '#2c2632', weather: 'ash', water: true },
   mountain: { sky: ['#0a0c14', '#1a2030', '#3a3c4e'], moon: true, mid: ['peak', 'pine', 'pine', 'peak', 'pine'], near: ['pine', 'rock', 'cross', 'pine', 'rock', 'stake'], ground: '#6a7080', edge: '#c0c8d8', weather: 'snow', snow: true },
   swamp: { sky: ['#040806', '#0c1610', '#1e2a1a'], moon: true, mid: ['willow', 'tree', 'stilt', 'willow', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#0a100c', edge: '#1e2c20', weather: 'spores', water: true },
+  orchard: { sky: ['#0a0606', '#2a0e08', '#6a2410'], moon: true, mid: ['tree', 'tree', 'house', 'tree', 'cart', 'tree'], near: ['stake', 'fence', 'grave', 'cross', 'stake', 'fence'], ground: '#140c0a', edge: '#3a1e14', weather: 'ash' },
   crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
 
@@ -649,6 +650,10 @@ G.drawFar = (ctx, level, cam, t) => {
     for (let x = 0; x <= W; x += 6) { const wx = x + off * 0.5, top = gy - 150 - Math.abs(Math.sin(wx * 0.0042)) * 150 - Math.sin(wx * 0.017) * 22; if (top < gy - 230) ctx.fillRect(x, top, 6, Math.min(30, gy - 230 - top + 6)); }
     ctx.fillStyle = '#150b0f';
   }
+  else if (th === 'orchard') each(130, (x, h) => {   // the orchard, rows of burnt trees, some still smouldering
+    const hh = 50 + h % 40; ctx.fillRect(x, gy - hh, 4, hh); ctx.fillRect(x - 14, gy - hh, 32, 4); ctx.fillRect(x - 10, gy - hh - 10, 4, 12); ctx.fillRect(x + 10, gy - hh - 8, 4, 10);
+    if (h % 3 === 0) { ctx.fillStyle = `rgba(255,${110 + (h % 60)},40,${0.45 + Math.sin(t * 4 + h) * 0.2})`; ctx.fillRect(x - 6 + h % 20, gy - hh - 4, 3, 3); ctx.fillStyle = '#150b0f'; }
+  });
   else if (th === 'swamp') each(170, (x, h) => {     // dead trees standing in the mist
     const hh = 90 + h % 80; ctx.fillRect(x, gy - hh, 4, hh); ctx.fillRect(x - 12, gy - hh * 0.75, 16, 3); ctx.fillRect(x + 4, gy - hh * 0.6, 14, 3);
     ctx.fillStyle = 'rgba(40,70,50,0.4)'; ctx.fillRect(x - 10, gy - hh * 0.75, 2, 22); ctx.fillRect(x + 14, gy - hh * 0.6, 2, 16); ctx.fillStyle = '#0b1210';

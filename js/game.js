@@ -6,8 +6,8 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
-  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain' };
-  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road' }[L.theme] || L.theme);
+  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain', orchard: 'wind' };
+  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road', orchard: 'village' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
@@ -18,7 +18,7 @@
     // ------------------------------ flow -----------------------------------
     toTitle() { G.ui.clear(); this.mode = 'title'; G.music('title'); G.ambience('wind'); G.ui.title(!!store.get()); },
     newGame() {
-      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false, kills: {}, seen: {} });
+      Object.assign(this, { player: new G.Player(), fairy: new G.Fairy(), ichor: 0, flags: {}, read: {}, items: {}, stain: null, cp: { lv: 0, x: 120 }, weapons: ['longsword'], weaponId: 'longsword', npcInf: {}, abilities: {}, weaponLv: {}, bought: {}, misery: { thorns: 0, got: {} }, watchUsed: false, kills: {}, seen: {}, wskills: {}, marks: 0, markXP: 0, marksEarned: 0, relics: 0 });
       G.questLog.reset(); this.memQ = [];
       G.ui.slides(G.STORY.intro, () => {
         this.loadLevel(0, 120); this.save();
@@ -36,12 +36,15 @@
       this.npcInf = s.npcInf || {}; this.weaponLv = s.weaponLv || {}; this.bought = s.bought || {};
       // saves from before Misery took gifts: a thorn for each boss already put down
       this.misery = s.misery || { thorns: Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length * 3, got: {} }; this.watchUsed = !!s.watchUsed; this.kills = s.kills || {}; this.seen = s.seen || {};
+      this.wskills = s.wskills || {}; this.marks = s.marks || 0; this.markXP = s.markXP || 0; this.relics = s.relics || 0;
+      this.marksEarned = s.marksEarned != null ? s.marksEarned : Object.keys(this.flags).filter(k => /^boss_.*_dead$/.test(k)).length;   // saves from before Weapon Arts: a mark for each boss already beaten
+      if (s.marks == null) this.marks = this.marksEarned;
       this.abilities = s.abilities || {};   // (saves that took the old Wind-Step Greaves from the Matron keep the double jump; it is the Moth Wings now)
       G.LEVELS.forEach((L, lv) => (L.gates || []).forEach((k, i) => { if (s.cp.lv > lv || (s.cp.lv === lv && s.cp.x > k.x)) this.flags[this.gateKey(i, lv)] = 1; }));   // saves already past a gate added later
       G.ui.clear(); this.loadLevel(s.cp.lv, s.cp.x); this.memQ = [];
       if (this.flags.boss_malvern_dead) this.remember('blessing'); if (this.flags.boss_abbess_dead) this.remember('letter'); if (this.flags.boss_windcaller_dead) this.remember('sun'); if (this.read['5:2']) this.remember('muster');
     },
-    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, kills: this.kills, seen: this.seen, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
+    save() { store.set({ cp: this.cp, ichor: this.ichor, stats: this.player.stats, flags: this.flags, read: this.read, items: this.items, npcInf: this.npcInf, abilities: this.abilities, weaponLv: this.weaponLv, bought: this.bought, misery: this.misery, watchUsed: this.watchUsed, kills: this.kills, seen: this.seen, wskills: this.wskills, marks: this.marks, markXP: this.markXP, marksEarned: this.marksEarned, relics: this.relics, weapons: this.weapons, weapon: this.weaponId, stain: this.stain, quests: G.questLog.state, inf: Math.min(this.player.inf, 90), tinct: this.player.tinct }); },
     loadLevel(idx, x) {
       const L = this.level = G.LEVELS[idx]; this.levelIdx = idx; this.inside = null; this.outside = null; this.cleared = {};
       G.fxReset(); this.player.reset(); this.player.x = x; this.player.facing = 1;
@@ -181,6 +184,7 @@
         }) };
       }
       if (it.ability) return { x: it.x, y: y - 60, label: 'Take the ' + G.ABILITIES[it.ability].name, fn: take(() => this.gainAbility(it.ability)) };
+      if (it.relic) return { x: it.x, y: y - 60, label: "Take the Martyr's Relic", fn: take(() => { this.relics = (this.relics || 0) + 1; G.sfx('questdone'); G.sfx('bell'); G.questLog.banners.push({ kind: "Martyr's Relic", title: it.relicName || 'A Martyr\'s Relic', sub: 'It awakens one weapon\'s art, at a vigil candle', t: 5 }); }) };
       if (it.thorns) return { x: it.x, y: y - 54, label: 'Take the bundle of thorns', fn: take(() => { this.misery.thorns += it.thorns; G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.thorns + ' thorns for Misery', '#b89ae0', 16); }) };
       if (it.cache) return { x: it.x, y: y - 54, label: 'Open the reliquary', fn: take(() => { this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); }) };
       if (it.weapon) return { x: it.x, y: y - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: take(() => this.gainWeapon(it.weapon)) };
@@ -294,7 +298,8 @@
       this.fade = 0.5; G.sfx('page'); G.ambience(AMB[this.level.theme]);
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
-    onEnemyDeath(e) { this.kills = this.kills || {}; this.kills[e.type] = (this.kills[e.type] || 0) + 1; G.questLog.onKill(e, this); if (this.inside && e.inIdx != null) (this.cleared[this.inside.id] || (this.cleared[this.inside.id] = {}))[e.inIdx] = 1; },
+    onEnemyDeath(e) { this.kills = this.kills || {}; this.kills[e.type] = (this.kills[e.type] || 0) + 1;
+      if (G.skills) { G.skills.gainXP(this, e.def.ichor || 20); if (G.skills.art(this) === 'scythe') { const p = this.player; p.st = p.maxSt; p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.04); } }   /* marks; the Harvest */ G.questLog.onKill(e, this); if (this.inside && e.inIdx != null) (this.cleared[this.inside.id] || (this.cleared[this.inside.id] = {}))[e.inIdx] = 1; },
     onNpcTurn(n) {
       G.text(n.x, G.GROUND - 130, n.def.name + ' has turned', '#e060f0', 16); G.sfx('infect');
       this.fairy.cd = 0; this.fairy.bark('npcturn', true); this.save();
@@ -357,6 +362,7 @@
     // A boss put down: executed, or spared and gone. Either way the way on is open.
     bossDefeated() {
       const B = this.level.boss; this.flags['boss_' + B.type + '_dead'] = 1; if (B.final) this.flags.bossDead = 1;
+      this.marks = (this.marks || 0) + 1; this.marksEarned = (this.marksEarned || 0) + 1; G.questLog.banners.push({ kind: 'Mark of Martyrdom', title: 'A boss gives a mark', sub: 'Spend marks on Weapon Arts at a vigil candle', t: 3.5 });
       if (B.grants) this.gainAbility(B.grants);
       if (B.memory) this.remember(B.memory);
       this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
@@ -663,6 +669,13 @@
           ctx.fillStyle = '#3a342c'; ctx.fillRect(x - 8, y - 28, 2, 20); ctx.fillRect(x + 6, y - 28, 2, 20);
           return;
         }
+        if (it.relic) {   // a martyr's relic: a small gold reliquary with a heart in it
+          const x = it.x, y = gy - (it.alt || 0);
+          glow(x, y - 20, 50 + Math.sin(t * 3 + i) * 6, 'rgba(255,190,90,0.45)');
+          ctx.fillStyle = '#3a2412'; ctx.fillRect(x - 9, y - 30, 18, 30); ctx.fillStyle = '#c9a13b'; ctx.fillRect(x - 9, y - 30, 18, 3); ctx.fillRect(x - 9, y - 3, 18, 3); ctx.fillRect(x - 9, y - 30, 3, 30); ctx.fillRect(x + 6, y - 30, 3, 30); ctx.fillRect(x - 1, y - 38, 2, 8); ctx.fillRect(x - 4, y - 35, 8, 2);
+          ctx.fillStyle = '#a00a12'; ctx.fillRect(x - 4, y - 20, 8, 6); ctx.fillRect(x - 3, y - 14, 6, 2); ctx.fillRect(x - 1, y - 12, 2, 2); ctx.fillStyle = '#ff5a5a'; ctx.fillRect(x - 3, y - 19, 2, 2);
+          return;
+        }
         if (it.thorns) {   // a bundle of black thorns, for Misery
           const x = it.x, y = gy - (it.alt || 0);
           glow(x, y - 14, 40 + Math.sin(t * 3 + i) * 5, 'rgba(180,140,240,0.4)');
@@ -727,6 +740,7 @@
         ctx.fillRect(x - 2, y - 4, 4, 6); ctx.fillRect(x - 4, y - 6, 8, 2); ctx.fillRect(x - 4, y + 2, 8, 12); ctx.fillRect(x - 6, y + 4, 12, 8);
       }
       ctx.font = '22px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#c9333b'; ctx.fillText('Ichor  ' + this.ichor, W - 26, 34);
+      if (this.marks > 0 || this.markXP > 0) { const need = G.skills.need(this), y0 = 140; ctx.textAlign = 'left'; ctx.font = '17px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#e0b84a'; ctx.fillText('Marks ' + this.marks + (this.relics ? '  ·  Relics ' + this.relics : ''), 26, y0 + 12); ctx.fillStyle = '#2a2018'; ctx.fillRect(26, y0 + 17, 90, 3); ctx.fillStyle = '#c9a13b'; ctx.fillRect(26, y0 + 17, 90 * Math.min(1, this.markXP / need), 3); ctx.textAlign = 'right'; }
       if (this.misery.thorns > 0) { ctx.font = '17px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#a88ad0'; ctx.fillText('Thorns ' + this.misery.thorns, 26, 134); ctx.textAlign = 'right'; }
       if (this.bossFight && this.boss) {
         const b = this.boss; ctx.textAlign = 'center'; ctx.font = '20px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#cfc4b8'; ctx.fillText(b.def.name + (G.unfair() ? '  ·  unfair' : ''), W / 2, H - 46);

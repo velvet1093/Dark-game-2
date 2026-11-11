@@ -92,7 +92,8 @@
       const kills = g.kills || {}, seen = g.seen || {};
       const foe = ([type, text, tip], boss) => ({ key: type, kind: boss ? 'Boss' : 'Foe', name: G.ENEMIES[type].name, known: !!(seen[type] || kills[type] || (boss && g.flags['boss_' + type + '_dead'])), text, tip, kills: kills[type] || 0, art: () => foeArt(type) });
       const person = p => ({ key: p.id, kind: 'Person', name: p.name, known: p.always || !!g.flags['met_' + p.id], text: p.text + (p.more || []).filter(([f]) => g.flags[f]).map(([, t]) => '\n\n' + t).join(''), art: () => personArt(p) });
-      return { Foes: FOES.map(f => foe(f)), Bosses: BOSSES.map(b => foe(b, true)), People: PEOPLE.map(person) };
+      const X = G.BESTIARY_EXTRA || { foes: [], bosses: [], people: [] };   // entries added by later content
+      return { Foes: FOES.concat(X.foes).map(f => foe(f)), Bosses: BOSSES.concat(X.bosses).map(b => foe(b, true)), People: PEOPLE.concat(X.people).map(person) };
     },
     count(g) { const E = this.entries(g); let n = 0, t = 0; for (const k in E) for (const e of E[k]) { t++; if (e.known) n++; } return [n, t]; },
   };

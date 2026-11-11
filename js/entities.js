@@ -24,7 +24,7 @@ G.Player = class {
   get maxHp() { return 100 + this.stats.vig * 16; }
   get flaskMax() { return 3 + (this.stats.flask || 0); }
   get maxSt() { return 100 + this.stats.end * 12; }
-  get dmgMul() { const g = G.game, lv = (g.weaponLv && g.weaponLv[g.weaponId]) || 0; return (1 + this.stats.str * 0.09) * (1 + 0.15 * lv) * (this.turnT != null ? 1.25 : 1); }
+  get dmgMul() { const g = G.game, lv = (g.weaponLv && g.weaponLv[g.weaponId]) || 0, S = G.skills, art = S && S.art(g); return (1 + this.stats.str * 0.09) * (1 + 0.15 * lv) * (this.turnT != null ? 1.25 : 1) * (S && S.has(g, 'edge') ? 1.15 : 1) * (art === 'greatsword' && this.hp > this.maxHp * 0.75 ? 1.3 : 1); }
   get tinctMax() { return 1 + (this.stats.tinct || 0); }
   infect(n, g) {
     if (this.dead || this.turnT != null) return;
@@ -45,9 +45,19 @@ G.Player = class {
   }
   set(state) { this.state = state; this.t = 0; }
   startAttack(atk, combo) {
+    const g = G.game, S = G.skills;
+    if (S && combo >= 0 && S.art(g) === 'longsword' && !atk.finisher) atk = Object.assign({}, atk, { wind: atk.wind * 0.67, rec: atk.rec * 0.75 });   // Oath of the Battalion
     this.atk = atk; this.combo = combo; this.set('attack'); this.hitSet = new Set(); this.swung = false;
-    this.st = Math.max(0, this.st - atk.st); this.stDelay = 0.7; this.buf = null;
+    this.st = Math.max(0, this.st - atk.st * (S && S.has(g, 'thrift') ? 0.75 : 1));
+    if (atk.finisher) G.text(this.x, G.GROUND - 120, 'FINAL BLOW', '#e0b84a', 14); if (atk.charged) G.text(this.x, G.GROUND - 120, 'GATHERED STRENGTH', '#e0b84a', 14); this.stDelay = 0.7; this.buf = null;
     if (atk.poiseBreak) G.sfx('whoosh');
+  }
+  // A blow landing, with whatever the weapon's skills add to it.
+  landHit(e, a, dmg, g, w) {
+    const S = G.skills, art = S && S.art(g), fx = { bleed: w.bleed * (S && S.has(g, 'bleed') ? 1.6 : 1) };
+    if (art === 'knife' && (this.cut7 = (this.cut7 || 0) + 1) % 7 === 0) e.bleed = Math.max(e.bleed, 100 - fx.bleed);   // the seventh cut
+    e.takeHit(dmg, a, this.facing, g, fx); this.bloody = Math.min(1, this.bloody + 0.25);
+    if (art === 'iceaxe' && !e.dead) { if (!(e.frostT > 0)) G.text(e.x, G.GROUND - 120 * e.scale, 'FROSTBITE', '#b8d8f0', 12); e.frostT = 3; }
   }
   startExecute(e) {
     this.target = e; e.state = 'executed'; e.t = 0; e.vx = 0;
@@ -106,7 +116,9 @@ G.Player = class {
       } else if (want('roll') && !this.air && this.st > 0) {
         this.buf = null; this.st = Math.max(0, this.st - 22); this.stDelay = 0.6;
         if (dir) this.facing = dir; this.set('roll'); G.sfx('roll');
-      } else if (want('attack') && this.st > 0) this.startAttack(w.light[0], 0);
+      } else if (want('attack') && this.air && I.down('down') && this.st > 0 && G.skills && G.skills.has(g, 'plunge')) { this.buf = null; this.set('plunge'); this.vy = -950; this.vx = 0; this.st = Math.max(0, this.st - 14); G.sfx('whoosh'); }
+      else if (want('attack') && this.st > 0) this.startAttack(w.light[0], 0);
+      else if (want('heavy') && this.st > 0 && G.skills && G.skills.has(g, 'charge') && !this.air) { this.buf = null; this.set('charge'); this.chargeReady = false; }
       else if (want('heavy') && this.st > 0) this.startAttack(w.heavy, -1);
       else if (I.hit('flask') && this.flasks > 0 && this.hp < this.maxHp) { this.flasks--; this.healed = false; this.curing = false; this.set('heal'); G.sfx('gulp'); g.fairy.bark('heal', false, 0.6); }
       else if (I.hit('cure') && this.tinct > 0 && this.inf > 0) { this.tinct--; this.healed = false; this.curing = true; this.set('heal'); G.sfx('gulp'); }
@@ -117,11 +129,12 @@ G.Player = class {
         for (const e of g.enemies) {
           if (e.dead || e.state === 'executed' || this.hitSet.has(e.id) || e.alt - this.alt > 95 || this.alt - e.alt > 64) continue;
           const rel = (e.x - this.x) * this.facing;
-          if (rel > -12 && rel < a.reach + 14 * e.scale) { this.hitSet.add(e.id); e.takeHit(a.dmg * this.dmgMul, a, this.facing, g, w); this.bloody = Math.min(1, this.bloody + 0.25); }
+          if (rel > -12 && rel < a.reach * (G.skills && G.skills.art(g) === 'spear' ? 1.25 : 1) + 14 * e.scale) { this.hitSet.add(e.id); this.landHit(e, a, a.dmg * this.dmgMul, g, w); }
         }
       }
       if (this.t > t2 + a.rec * 0.35) {
         if (want('attack') && this.combo >= 0 && this.combo < w.light.length - 1 && this.st > 0) { if (dir) this.facing = dir; this.startAttack(w.light[this.combo + 1], this.combo + 1); }
+        else if (want('attack') && this.combo === w.light.length - 1 && this.st > 0 && G.skills && G.skills.has(g, 'finisher')) { if (dir) this.facing = dir; this.startAttack(G.skills.finisher(w), w.light.length); }
         else if (want('roll') && this.st > 0) { this.buf = null; this.st = Math.max(0, this.st - 22); if (dir) this.facing = dir; this.set('roll'); G.sfx('roll'); }
       }
       if (this.t >= t3) this.set('idle');
@@ -141,6 +154,19 @@ G.Player = class {
       this.vx = 0; this.buf = null;
       if (this.state === 'sit' && !G.ui.blocking && this.t > 0.7 && (dir || I.down('block') || ['attack', 'heavy', 'roll', 'jump', 'flask', 'cure', 'use'].some(a => I.hit(a)))) { this.set('rise'); G.sfx('step'); }
       if (this.state === 'rise' && this.t >= 0.42) this.set('idle');
+    } else if (this.state === 'charge') {   // gathering strength while heavy is held
+      this.vx = 0;
+      if (!this.chargeReady && this.t >= 0.5) { this.chargeReady = true; G.sfx('chime'); for (let i = 0; i < 8; i++) G.fx.sparks.push({ x: this.x + G.rand(-16, 16), y: G.GROUND - this.alt - G.rand(20, 80), vx: G.rand(-40, 40), vy: G.rand(-80, -20), t: 0.35 }); }
+      if (!I.down('heavy') || this.t >= 1.2) this.startAttack(this.chargeReady ? G.skills.charged(w) : w.heavy, -1);
+    } else if (this.state === 'plunge') {   // falling blade-first
+      this.vx = 0;
+      if (!this.air && !this.plunged) {
+        this.plunged = true; g.shake = 12; G.sfx('thud'); G.sfx('sever'); G.spark(this.x, G.GROUND - this.alt, 16);
+        const a = G.skills.plunge(w);
+        for (const e of g.enemies) if (!e.dead && e.state !== 'executed' && Math.abs(e.x - this.x) < 90 && Math.abs((e.alt || 0) - this.alt) < 70) this.landHit(e, a, a.dmg * this.dmgMul, g, w);
+        this.plungeT = 0.35;
+      }
+      if (this.plunged && (this.plungeT -= dt) <= 0) { this.plunged = false; this.set('idle'); }
     } else if (this.state === 'rip') {   // tearing out the Lamplight Mother's wings
       this.vx = 0; const e = this.target;
       if (e) { e.ripSide = (this.x >= e.x ? 1 : -1) * e.facing; e.ripPull = this.t < 0.35 ? 0 : this.t < 1.15 ? Math.min(1, (this.t - 0.35) / 0.6) : 0; }
@@ -216,6 +242,10 @@ G.Player = class {
       P.lean = -0.3; P.head = -0.3; P.armA = -0.3; P.w = 1.8; P.footF = 2; P.footB = -12;
     } else if (s === 'heal') {
       P.bA = 2.4; P.bE = 0.9; P.head = -0.35; P.lean = -0.1; P.armA = 0.2; P.w = 0.6;
+    } else if (s === 'charge') {
+      G.swing(P, this.weapon.heavy.anim, 0, Math.min(1, t / 0.5)); P.crouch = 6 + Math.sin(t * 40) * (this.chargeReady ? 1 : 0); P.footF = 13; P.footB = -12;
+    } else if (s === 'plunge') {
+      G.swing(P, G.ANIM.slam, this.plunged ? 2 : 1, this.plunged ? 0.3 : 0.9); P.footF = 6; P.footB = -4; P.crouch = this.plunged ? 10 : 0;
     } else if (s === 'rip') {
       // reach in, grip with both hands, haul back in jerks, then the tear: arms flung up and back with the wing
       if (t < 0.35) { const u = t / 0.35; Object.assign(P, { armA: 2.1 * u, armE: 0.3, bA: 1.9 * u, bE: 0.4, lean: 0.3 * u, footF: 12, footB: -8 }); }
@@ -363,6 +393,7 @@ G.Enemy = class {
     if (this.bleed >= 100) {
       this.bleed = 0; this.bleedT = 5; dmg += this.maxHp * (this.def.boss ? 0.06 : 0.12);
       G.text(this.x, G.GROUND - 112 * this.scale, 'HAEMORRHAGE', '#e0222c', 16); G.blood(this.x, G.GROUND - 55 * this.scale, 40, 0, 320); G.sfx('bleed');
+      if (G.skills && G.skills.art(g) === 'flail') for (const o of g.enemies) if (o !== this && !o.dead && Math.abs(o.x - this.x) < 140) { o.bleed = Math.min(99, o.bleed + 60); G.blood(o.x, G.GROUND - 50 * o.scale, 8, 0, 200); }   // Scourge of the Penitent
     }
     const wasBroken = this.state === 'broken';
     this.hurt(dmg, { dir, decap: part === 'head' && this.limbs.head.gone });
@@ -380,6 +411,7 @@ G.Enemy = class {
     G.gib(k === 'head' ? 'head' : k[0] === 'a' ? 'arm' : 'leg', jx, jy, dir, this.def.look, { scale: this.scale });
     if (k === 'armF' && this.def.weapon !== 'none') G.gib('weapon', jx, jy, dir, this.def.look, { wtype: this.def.weapon, wlen: this.def.wlen, scale: this.scale });
     if (k !== 'head') { G.text(this.x, G.GROUND - 120 * this.scale, 'SEVERED', '#e0222c', 17); this.hp -= this.maxHp * 0.08; }
+    if (G.skills && G.skills.art(g) === 'greataxe') { const p = g.player; p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.06); }   // Headsman's Due
   }
 
   die(o = {}) {
@@ -401,6 +433,7 @@ G.Enemy = class {
   }
 
   update(dt, g) {
+    if (this.frostT > 0) { this.frostT -= dt; dt *= 0.65; }   // Frostbite: everything it does, slower
     this.t += dt; this.flash -= dt; this.cd -= dt;
     if (this.leaving) {   // spared: it turns away and is gone
       this.leaving += dt; this.state = 'idle'; this.facing = this.x > g.player.x ? 1 : -1; this.vx = this.facing * 60; this.x += this.vx * dt;

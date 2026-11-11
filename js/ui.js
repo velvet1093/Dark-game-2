@@ -125,6 +125,7 @@
         { label: `Vigor ${s.vig} <small>— more life</small>`, fn: up('vig'), off: poor },
         { label: `Strength ${s.str} <small>— deeper cuts</small>`, fn: up('str'), off: poor },
         { label: `Endurance ${s.end} <small>— more stamina</small>`, fn: up('end'), off: poor },
+        { label: `Weapon arts <small>— ${g.marks || 0} mark${(g.marks || 0) === 1 ? '' : 's'} to spend</small>`, fn: () => this.weaponArts() },
         { label: `Misery's gifts <small>— ${g.misery.thorns} thorn${g.misery.thorns === 1 ? '' : 's'} to give</small>`, fn: () => this.miseryTree() },
         { label: 'Rise', fn: () => this.clear() },
       ], '<div class="keys">Resting restores your flasks — but not your blood. The infected never rest; more will have wandered in.</div>');

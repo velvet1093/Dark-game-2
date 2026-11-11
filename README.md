@@ -78,7 +78,7 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
-Five **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
+Seven **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
 
 | Side area | Way in | Needs | |
 | --- | --- | --- | --- |
@@ -86,6 +86,8 @@ Five **side areas** branch off the main road. Neither is needed to finish the ga
 | The Lily Convent | a chained causeway in the middle of the Weeping Fen | Headsman's Greataxe | the mother house of the Sisters, on an island of lilies. Weeping Novices, Sister Petra (she cleanses), the Rule of the House and the infirmary tally. Boss: **Abbess Severine, the Lily Rotted**, who drank the wash-water so her Sisters would not have to |
 | The Pilgrims' Pass | a goat path near Hollowmere's third candle | Moth Wings | a snowbound mountain road to the Windcallers' monastery, swept by **gusts that push you back down it** (see below). Frozen Pilgrims, White Wolves and Cairn Wardens; Sigrun the Guide, Bram the Woodcutter (who fights beside you) and Brother Aldous. Boss: **Brother Hask, the Windcaller** |
 | The Gloamwater | an old causeway east out of the Weeping Fen, past where the Matron fell | nothing: and you must go, for the wings | a drowned mire where the sickness first came up out of the ground. **Slowing water** (see below), boardwalks on stilts, Bloodflies, Weeping Moths and the Mire-Drowned; Osk the Ferryman, Hagge Wren the Mire-Wife, and Ser Pell of the Long Battalion. Boss: **the Lamplight Mother** |
+| The Under-Hold | a grate behind the chapel in Brannoc's Hold | nothing | the town's catacombs: rats as big as dogs, Catacomb Ghouls, the torn-out death ledgers, and Brother Quill the archivist, who knows where the muster book went. Mini-boss: **the Gravewarden of Brannoc** |
+| The Ashfall Orchard | Hollowmere's first lane | nothing (one relic wants the wings) | the burnt orchard, still warm: Ash-Pickers with coal-bright eyes, and Teodor, who lit it with his wife inside. Mini-boss: **the Charcoal Widow** |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
@@ -304,6 +306,8 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/swamp.js` | the Gloamwater: slowing water, the flying enemies and their sprites, its people, boss and quests |
 | `js/bestiary.js` | the in-game Bestiary: entries, sprite portraits and the screen |
 | `js/nell.js` | after the Lamplight Mother: Nell, the root scene, Saint Hild's Undercroft and the Seven Hundred Names |
+| `js/skills.js` | Weapon Arts: marks, the per-weapon trees, the new moves and each weapon's art |
+| `js/optional.js` | the Under-Hold and the Ashfall Orchard, and the relics in the trials |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -329,6 +333,31 @@ The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen
 **At the door**, choose *Call the moths to the roots*. Misery refuses, then gives in. If you took her to the Lantern Court, she tells you why Mercy stopped leading the dying into the dark: *"Because they always went."* Then she drifts to the roots, and the moths follow her in a white storm and eat the door open. **If you executed Nell**, her orphaned moths can still be led; it is only colder.
 
 **Beneath it** is **Saint Hild's Undercroft**, and **Saint Hild** herself: the *first* well. Three hundred years ago she drank the spring so it would not reach Hildsmere. She wept once, and that tear is the Saint's Tear. She says the Tear only moves the weeping from one well to the next, and that the spring is **grief**: the weeping of every dead thing nobody named. The Long Battalion's seven hundred struck-out names have fed it like a river. To end the weeping, **name them**. The priests wrote every name in a muster book before they struck them out. This starts the quest **Seven Hundred Names**, the road toward cleansing the infection for good. Its next step is still to come.
+
+## Weapon Arts
+
+Every weapon has its own skill tree, bought at a vigil candle (**Weapon arts**) with **Marks of Martyrdom**. A meter under your weapon name fills with every death you cause; a full meter is a mark, and every boss gives one outright. Skills belong to the weapon they were bought for. Switch weapons with the arrows at the bottom of the screen.
+
+| | Left branch | Right branch |
+| --- | --- | --- |
+| 1 mark | **Keen Edge**: +15% damage | **Light Hand**: attacks cost a quarter less stamina |
+| 2 marks | **Bloodletter**: builds bleeding 60% faster | **Plunging Blow**: in the air, hold down and attack to drive the blade down and strike everything where you land |
+| 3 marks | **Final Blow**: one more attack at the end of the combo, a guard-breaking finisher | **Gathered Strength**: hold heavy to charge, release for double damage that breaks any guard |
+
+The top of each tree (3 marks, both branches, and a **Martyr's Relic**) is that weapon's own **art**:
+
+| Weapon | Art |
+| --- | --- |
+| Knight's Longsword | **Oath of the Battalion**: light attacks a third faster |
+| Headsman's Greataxe | **Headsman's Due**: every severed limb gives back 6% of your life |
+| Penitent's Flail | **Scourge of the Penitent**: a haemorrhage spreads its bleeding to everything near it |
+| Fen-Warden Spear | **Warden's Reach**: every blow reaches a quarter further |
+| Battalion Greatsword | **Colours of the Sun**: +30% damage while your life is above three quarters |
+| The Seventh Knife | **The Seventh Cut**: every seventh hit opens a haemorrhage |
+| The Abbess's Scythe | **Harvest**: every kill restores your stamina and 4% of your life |
+| Pilgrim's Ice-Axe | **Frostbite**: what you strike is slowed for three seconds |
+
+**Martyr's Relics** (seven so far): two in the Under-Hold and two in the Ashfall Orchard (one of each behind its mini-boss), and one at the far end of each of the three trials.
 
 ## Execute or spare
 

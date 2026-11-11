@@ -168,3 +168,13 @@ body.on-ledge #t-down { display: block; }
 .btext .btip { color: #b89ae0; }
 .bclose { width: auto; padding: .3em 1.4em; font-size: .75em; margin-top: .6em; }
 @media (max-width: 700px) { .bwrap { flex-direction: column; height: 70%; } .opts.blist { width: 100%; max-height: 35%; } .bport { width: 6em; } }
+
+/* ---- weapon arts ---- */
+.opts.wtree { grid-template-columns: repeat(2, 1fr); max-width: 40em; }
+.opts.wtree .btn.sig { grid-column: 1 / -1; border-color: #c9a13b; }
+.opts.wtree .btn.sig.got { background: #2a1e0a; color: #f0d680; }
+.opts.wtree .btn.nav { min-height: 0; text-align: center; font-size: .6em; }
+.opts.wtree .btn.back { grid-column: 1 / -1; min-height: 0; text-align: center; }
+.opts.tree.wtree .btn:last-child { grid-column: 1 / -1; }
+.markbar { width: 16em; height: .35em; background: #2a2018; margin: -0.6em auto .6em; }
+.markbar i { display: block; height: 100%; background: #c9a13b; }
