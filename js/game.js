@@ -423,6 +423,14 @@
       if (G.input.hit('journal')) { G.ui.journal(); return; }
       if (G.input.hit('bestiary')) { G.ui.bestiary(); return; }
       if (G.input.hit('swap') && (this.player.state === 'idle' || this.player.state === 'block')) this.swapWeapon();
+      if (this.transit) {   // walking off the edge: the knight goes on, the world goes dark, and the next place comes up out of it
+        const T = this.transit, p = this.player; T.t += dt; p.vx = T.side * 120; p.x += p.vx * dt; p.facing = T.side; p.walk += dt * 11; p.state = 'idle';
+        if (T.t >= 0.9) {
+          this.transit = null; const E = T.E, key = 'edge_' + this.levelIdx + '_' + E.to, go = () => { this.cp = { lv: E.to, x: E.at }; this.loadLevel(E.to, E.at); this.player.facing = T.side; this.fade = 1.2; this.save(); };
+          if (E.slides && !this.flags[key]) { this.flags[key] = 1; G.ui.slides(E.slides, go); } else go();
+        }
+        return;
+      }
       if (this.restMenuT > 0 && (this.restMenuT -= dt) <= 0) { if (this.player.state === 'sit') { G.ui.shrine(); return; } }
       if (this.memQ && this.memQ.length && !(this.restMenuT > 0) && !this.bossFight && !this.player.dead && ['idle', 'block', 'sit'].includes(this.player.state)) { this.playMemory(this.memQ.shift()); return; }
       if (this.hitstop > 0) { this.hitstop -= dt; return; }
@@ -443,7 +451,7 @@
         if (!E || this.inside || this.bossFight || p.dead || p.air) continue;
         const at = side < 0 ? p.x <= (L.minX || 0) + 32 : p.x >= L.length - 32, pushing = G.input.down(side < 0 ? 'left' : 'right');
         if (!at || !pushing) { if (!at) E.told = false; continue; }
-        if (!E.needs || this.hasTool(E.needs)) { this.cp = { lv: E.to, x: E.at }; this.fade = 0.6; G.sfx('page'); this.loadLevel(E.to, E.at); this.player.facing = side; this.save(); return; }
+        if (!E.needs || this.hasTool(E.needs)) { this.transit = { E, side, t: 0 }; G.sfx('whoosh'); return; }   // walk on into the dark; see below
         if (!E.told) { E.told = true; G.sfx('block'); G.text(side < 0 ? p.x + 300 : p.x - 300, G.GROUND - 200, E.shut, '#d9c9b0', 14); this.fairy.cd = 0; if (E.wist) this.fairy.sayLine(E.wist); }
       }
       this.seen = this.seen || {};
@@ -532,7 +540,8 @@
       ctx.restore();
       G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: (this.inside ? (this.inside.id === 'court' ? 280 : 150) : 115) * (this.mis('glow') ? 1.45 : 1) }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
-      if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
+      if (this.transit) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.transit.t / 0.8)})`; ctx.fillRect(0, 0, W, H); }   // fading out as he walks on
+      if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 1.4)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
       if (p.qte) {   // the button to mash, over the knight
         const Q = p.qte, x = Math.round(p.x - cam), y = G.GROUND - 200, pulse = 1 + Math.sin(t * 22) * 0.08 + Q.shove * 0.18, key = G.keyName('use');
