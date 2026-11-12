@@ -389,6 +389,7 @@
       if (B.grants) this.gainAbility(B.grants);
       if (B.memory) this.remember(B.memory);
       if (G.voice) G.voice.boss();
+      if (G.decay) { const st = G.decay.stage(this); if (st > (this.flags.decay || 0)) { this.flags.decay = st; setTimeout(() => { G.questLog.banners.push({ kind: 'The infection', title: G.decay.DECAY[st].name, sub: 'It shows on your harness now', t: 4.5 }); this.fairy.cd = 0; this.fairy.sayLine(G.pick(['Oh, look at you. You are starting to suit the place.', 'Rust and red. My favourite colours.', 'You are coming apart so beautifully.'])); }, 3500); } }
       this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
     },
     // The Lamplight Mother's wings: torn out before the end, and yours from then on.

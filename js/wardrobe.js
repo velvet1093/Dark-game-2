@@ -52,11 +52,43 @@
   const SETS = { knight: KNIGHT, weapon: FIN, wings: WINGS, misery: MIS };
   const looks = {};
 
+  // ---- the knight wears down as the story goes on: rust, stains, a cracked helm, and at the last, the red behind the visor
+  const DECAY = [
+    { name: null },
+    { name: 'The rust sets in', tint: 0.88, plume: 0.85 },
+    { name: 'The weeping begins', tint: 0.74, plume: 0.7, cape: 0.8 },
+    { name: 'More of it than of you', tint: 0.6, plume: 0.55, cape: 0.65, eye: '#ff3b2f' },
+  ];
+  G.decay = {
+    DECAY,
+    stage(g) { if (!g || !g.flags) return 0; const n = Object.keys(g.flags).filter(k => /^boss_.*_dead$/.test(k)).length + (g.flags.named ? 1 : 0); return n >= 10 ? 3 : n >= 6 ? 2 : n >= 2 ? 1 : 0; },
+    apply(look, st) {
+      if (!st) return look; const D = DECAY[st], sh = (c, k) => (c ? G.shade(c, k) : c), out = Object.assign({}, look);
+      for (const k of ['body', 'arm', 'leg', 'helmCol', 'trim']) out[k] = sh(look[k], D.tint);
+      out.plume = sh(look.plume, D.plume); if (D.cape) out.cape = sh(look.cape, D.cape);
+      return out;
+    },
+    // marks laid over the drawn knight: rust specks, weeping streaks from the visor, a crack in the helm, a glow in the slit
+    draw(ctx, p, o, t) {
+      const st = this.stage(G.game); if (!st || !o.out || !o.out.head) return;
+      const f = o.facing || 1, [hx, hy] = o.out.head, [sx, sy] = o.out.sh, [px, py] = o.out.hip, helm = (o.look.helm || 'helm') === 'helm';
+      const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, w, h); };
+      const spots = [[0.2, 0.2], [0.7, 0.5], [0.4, 0.8], [0.9, 0.3], [0.1, 0.6], [0.55, 0.15], [0.3, 0.45], [0.8, 0.85]];
+      for (let i = 0; i < st * 3; i++) { const [u, v] = spots[i % spots.length]; R(sx - f * 8 + f * u * 14, sy + v * (py - sy), 2, 2, i % 3 ? '#6a3a20' : '#4a2a18'); }   // rust
+      if (st >= 2) for (let i = 0; i < 3; i++) R(px - 6 + i * 5, py + 4 + (i % 2) * 4, 2, 4, '#5a0a10');                                                     // old blood on the legs
+      if (helm) {
+        if (st >= 2) { const len = 6 + st * 3; R(hx + f * 2, hy + 1, 2, len, '#a00a12'); R(hx + f * 6, hy + 1, 2, len - 3, '#a00a12'); }                // he weeps red through the visor
+        if (st >= 2) { R(hx - f * 4, hy - 10, 2, 2, '#1a1418'); R(hx - f * 2, hy - 8, 2, 2, '#1a1418'); R(hx, hy - 6, 2, 2, '#1a1418'); }                 // a crack across the helm
+        if (st >= 3) { const a = 0.6 + Math.sin(t * 4) * 0.3; ctx.fillStyle = `rgba(255,59,47,${a})`; ctx.fillRect(Math.round((hx + f * 2) / 2) * 2, Math.round((hy - 3) / 2) * 2, 8, 2); }   // the red behind the slit
+      } else if (st >= 2) { R(hx + f * 2, hy, 2, 6 + st * 2, '#a00a12'); R(hx + f * 6, hy, 2, 4 + st * 2, '#a00a12'); }
+    },
+  };
+
   G.wardrobe = {
     FIN, SETS,
     cos(g) { return g.cos || (g.cos = { knight: 'battalion', wings: 'lamplight', misery: 'misery', weapon: {} }); },
     open(set, id, g) { const s = SETS[set][id]; return !s.need || !!s.need[0](g); },
-    look(g) { const id = this.cos(g).knight; if (!KNIGHT[id] || !this.open('knight', id, g)) return G.LOOKS.player; return looks[id] || (looks[id] = Object.assign({}, G.LOOKS.player, KNIGHT[id].look)); },
+    look(g) { let id = this.cos(g).knight; if (!KNIGHT[id] || !this.open('knight', id, g)) id = 'battalion'; const st = G.decay.stage(g), key = id + ':' + st; return looks[key] || (looks[key] = G.decay.apply(Object.assign({}, G.LOOKS.player, KNIGHT[id].look), st)); },
     finishOf(g, wid) { const f = this.cos(g).weapon[wid]; return f && FIN[f] && this.open('weapon', f, g) ? f : null; },
     steel(g, wid) { const f = this.finishOf(g, wid); return f ? FIN[f].pal : null; },
     wingPal(g) { const w = this.cos(g).wings; return WINGS[w] && this.open('wings', w, g) ? WINGS[w].pal : null; },

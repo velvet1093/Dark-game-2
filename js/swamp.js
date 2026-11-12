@@ -135,7 +135,10 @@
     const arm = (side, gone) => {
       if (gone) return;
       const sx = side * 4, sy = -24 + by; let hx, hy;
-      if (cower) { hx = side * 3; hy = -44 + by; } else if (wind) { hx = side * 13; hy = -33 + by; } else if (strike) { hx = 10 + (side < 0 ? 2 : 0); hy = -19 + by; } else if (down) { hx = side * 4; hy = -12 + by; } else { hx = side * 7; hy = -16 + by; }
+      const cast = e.cast || 0, point = e.point || 0;
+      if (cast > 0) { hx = side * (7 + cast * 3); hy = -46 - Math.round(cast * 10) + by; }   // both hands raised high, gathering
+      else if (point > 0) { if (side > 0) { hx = 10 + Math.round(point * 12); hy = -28 + by; } else { hx = -6; hy = -17 + by; } }   // one arm thrust out at the enemy
+      else if (cower) { hx = side * 3; hy = -44 + by; } else if (wind) { hx = side * 13; hy = -33 + by; } else if (strike) { hx = 10 + (side < 0 ? 2 : 0); hy = -19 + by; } else if (down) { hx = side * 4; hy = -12 + by; } else { hx = side * 7; hy = -16 + by; }
       line(sx, sy, hx, hy, DR.b, 2); R(hx - 1, hy - 1, 3, 3, SK.b); R(hx + (side > 0 ? 1 : -1), hy + 2, 1, 1, '#2a1a1a');
     };
     arm(-1, lm.armB && lm.armB.gone);
@@ -157,6 +160,7 @@
       for (let i = 0; i < 9; i++) { const ax = 2 + Math.round(i * 0.7), ay = hy - 7 - i; R(ax, ay, 1, 1, GOLD); R(-ax, ay, 1, 1, GOLD); if (i % 2 === 0 && i > 1) { R(ax + 1, ay, 2, 1, sh(GOLD, 0.7)); R(-ax - 2, ay, 2, 1, sh(GOLD, 0.7)); } }   // feathered antennae
     }
     arm(1, lm.armF && lm.armF.gone);
+    if ((e.cast || 0) > 0) arm(-1, lm.armB && lm.armB.gone);   // when she raises both hands, both are in front
     if (cower) {   // hands clutched over her head, knees drawn up
       for (const sd of [-1, 1]) { line(sd * 6, -24 + by, sd * 7, -36 + by, DR.b, 2); line(sd * 7, -36 + by, sd * 2, -42 + by, DR.b, 2); R(sd * 2 - 1, -43 + by, 3, 3, SK.b); }
       R(-7, -12 + by, 5, 3, '#2a1e2a'); R(3, -12 + by, 5, 3, '#2a1e2a');

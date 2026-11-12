@@ -340,11 +340,24 @@ The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen
 
 ## After the Lamplight Mother: Nell, the roots and the first well
 
-**If you spared her**, she is waiting at Hagge Wren's hut in the Gloamwater, wingless, wrapped in a blanket. Her name is **Nell**: a girl of drowned Hildsmere, nineteen the summer the water came up warm. She cowers until you speak to her. She tells you the spring is not water but crying, and that her moths could eat the black roots off Saint Hild's door, if a light went in front of them. Misery glows. Misery says no. (Quest: *The Moths and the Light*.) When you first speak to her you choose what becomes of her: **leave her be**, or **bind her to your service**. Bound, she wears an iron collar and **follows you as a companion** on her chain, through every area. Every few seconds she sends a swarm of moths at whatever is fighting you (it builds bleeding; against bosses it does less). Speak to her on the road to send her back to Wren's hut, where she waits chained to a stake until you call her along again. She calls you master, and her Weeping Moths and Bloodflies no longer attack you. At the chapel door her moths eat the roots at your word, with no light needed. Misery is thrilled, and Aurelle says she will keep even a vow taken in iron.
+**If you spared her**, she is waiting at Hagge Wren's hut in the Gloamwater, wingless, wrapped in a blanket. Her name is **Nell**: a girl of drowned Hildsmere, nineteen the summer the water came up warm. She cowers until you speak to her. She tells you the spring is not water but crying, and that her moths could eat the black roots off Saint Hild's door, if a light went in front of them. Misery glows. Misery says no. (Quest: *The Moths and the Light*.) When you first speak to her you choose what becomes of her: **leave her be**, or **bind her to your service**. Bound, she wears an iron collar and **follows you as a companion** on her chain, through every area. Every few seconds she raises both hands, gathering her moths in a pale glow, then thrusts one arm out and sends the swarm at whatever is fighting you (it builds bleeding; against bosses it does less). Speak to her on the road to send her back to Wren's hut, where she waits chained to a stake until you call her along again. She calls you master, and her Weeping Moths and Bloodflies no longer attack you. At the chapel door her moths eat the roots at your word, with no light needed. Misery is thrilled, and Aurelle says she will keep even a vow taken in iron.
 
 **At the door**, choose *Call the moths to the roots*. Misery refuses, then gives in. If you took her to the Lantern Court, she tells you why Mercy stopped leading the dying into the dark: *"Because they always went."* Then she drifts to the roots, and the moths follow her in a white storm and eat the door open. **If you executed Nell**, her orphaned moths can still be led; it is only colder.
 
 **Beneath it** is **Saint Hild's Undercroft**, and **Saint Hild** herself: the *first* well. Three hundred years ago she drank the spring so it would not reach Hildsmere. She wept once, and that tear is the Saint's Tear. She says the Tear only moves the weeping from one well to the next, and that the spring is **grief**: the weeping of every dead thing nobody named. The Long Battalion's seven hundred struck-out names have fed it like a river. To end the weeping, **name them**. The priests wrote every name in a muster book before they struck them out. This starts the quest **Seven Hundred Names**, the road toward cleansing the infection for good. Its next step is still to come.
+
+## The knight wears down
+
+The infection shows on the knight as the story goes on, whatever harness he wears. With every boss that falls (and when he remembers his name) it gets worse:
+
+| Stage | After | Look |
+| --- | --- | --- |
+| clean | the start | bright steel, a red plume |
+| the rust sets in | 2 bosses | duller steel, rust spots, a faded plume |
+| the weeping begins | 6 | darker still, red tears running from the visor, a crack across the helm, old blood on the legs, a darker cape |
+| more of it than of you | 10 | blackened harness, and a red glow behind the eye-slit |
+
+A banner and a word from Misery mark each new stage.
 
 ## Wardrobe
 

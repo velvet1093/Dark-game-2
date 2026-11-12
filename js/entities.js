@@ -343,6 +343,7 @@ G.Player = class {
     }
     if (sinkP) { ctx.save(); ctx.beginPath(); ctx.rect(this.x - 200, 0, 400, G.GROUND + 2); ctx.clip(); }
     G.drawHumanoid(ctx, o); this.headPos = o.out.head;
+    if (G.decay) G.decay.draw(ctx, this, o, g.time);
     if (sinkP) {
       ctx.restore(); const gy = G.GROUND, k = this.dead ? 0.3 : 1;
       ctx.strokeStyle = `rgba(150,190,170,${0.5 * k})`; ctx.lineWidth = 2; for (let r = 0; r < 3; r++) { const rr = ((g.time * 30 + r * 14) % 42) + 8; ctx.beginPath(); ctx.ellipse(this.x, gy, rr, 3, 0, 0, 7); ctx.stroke(); }

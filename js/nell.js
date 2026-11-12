@@ -164,17 +164,22 @@
       const S = this.s, p = g.player;
       // follow: keep a few paces behind him, on the ground
       const want = p.x - p.facing * 64, d = want - S.x;
-      S.vx = Math.abs(d) > 14 ? Math.sign(d) * Math.min(220, Math.abs(d) * 3) : 0; S.x += S.vx * dt; S.walk += Math.abs(S.vx) * dt * 0.1;
+      S.vx = S.cast ? 0 : Math.abs(d) > 14 ? Math.sign(d) * Math.min(220, Math.abs(d) * 3) : 0; S.x += S.vx * dt; S.walk += Math.abs(S.vx) * dt * 0.1;
       if (Math.abs(p.x - S.x) > 500) S.x = p.x - p.facing * 64;   // she does not get left behind
-      S.facing = Math.abs(S.vx) > 5 ? Math.sign(S.vx) : (p.x >= S.x ? 1 : -1);
+      if (!S.cast) S.facing = Math.abs(S.vx) > 5 ? Math.sign(S.vx) : (p.x >= S.x ? 1 : -1);
       if (S.say && (S.sayT -= dt) <= 0) S.say = null;
       // the swarm: every few seconds, at the nearest thing fighting him
       S.cd -= dt;
       if (S.cd <= 0) {
         let best = null, bd = 300;
         for (const e of g.enemies) { if (e.dead || e.dormant || e.state === 'idle' || e.state === 'broken' || e.state === 'executed' || e.type === 'moth' || e.type === 'bloodfly') continue; const dd = Math.abs(e.x - S.x); if (dd < bd) { bd = dd; best = e; } }
-        if (best) { S.cd = 3.6 + Math.random() * 0.8; S.swarms.push({ x: S.x, y: G.GROUND - 50, e: best, t: 0 }); G.sfx('whoosh'); if (Math.random() < 0.35) this.sayLine(G.pick(LINES.swarm)); }
+        if (best) { S.cd = 3.6 + Math.random() * 0.8; S.cast = { t: 0, e: best }; S.facing = best.x >= S.x ? 1 : -1; G.sfx('chime'); if (Math.random() < 0.35) this.sayLine(G.pick(LINES.swarm)); }
         else S.cd = 0.5;
+      }
+      if (S.cast) {   // 0-0.45 gather with both hands raised; at 0.45 the swarm leaves her outstretched hand; 0.45-0.8 hold; then let the arm fall
+        const C = S.cast; C.t += dt; S.vx = 0; if (C.e && !C.e.dead) S.facing = C.e.x >= S.x ? 1 : -1;
+        if (!C.sent && C.t >= 0.45) { C.sent = true; if (C.e && !C.e.dead) { S.swarms.push({ x: S.x + S.facing * 18, y: G.GROUND - 40, e: C.e, t: 0 }); G.sfx('whoosh'); g.shake = Math.max(g.shake, 2); } }
+        if (C.t >= 0.85) S.cast = null;
       }
       for (let i = S.swarms.length - 1; i >= 0; i--) {
         const w = S.swarms[i], e = w.e; w.t += dt;
@@ -192,8 +197,14 @@
       if (!this.on(g) || g.inside || !this.s || !G.drawMothGirlSprite) return;
       const S = this.s, gy = G.GROUND, walking = Math.abs(S.vx) > 5;
       this.mg = this.mg || { id: 9, def: { scale: 0.95 }, limbs: { head: {}, armF: {}, armB: {} }, wingless: true, flash: 0, alt: 0, dead: false };
-      Object.assign(this.mg, { x: S.x, alt: walking ? Math.abs(Math.sin(S.walk * 3)) * 3 : 0, facing: S.facing, state: 'chase', calm: true });
+      const C = S.cast, ct = C ? C.t : 0, cast = C && ct < 0.45 ? Math.min(1, ct / 0.3) : 0, point = C && ct >= 0.45 ? Math.max(0, 1 - Math.max(0, ct - 0.65) / 0.2) : 0;
+      Object.assign(this.mg, { x: S.x, alt: walking ? Math.abs(Math.sin(S.walk * 3)) * 3 : cast * 4, facing: S.facing, state: 'chase', calm: true, cast, point });
+      if (cast > 0) {   // moths spiralling in to her raised hands, and a pale glow gathering
+        const hx = S.x, hy = gy - 76 - cast * 10, gl = ctx.createRadialGradient(hx, hy, 2, hx, hy, 40); gl.addColorStop(0, `rgba(255,236,190,${0.5 * cast})`); gl.addColorStop(1, 'rgba(255,220,160,0)'); ctx.fillStyle = gl; ctx.fillRect(hx - 40, hy - 40, 80, 80);
+        for (let m = 0; m < 14; m++) { const a = t * 7 + m * 0.45, r = (1 - cast) * 50 + 8 + (m % 3) * 4; ctx.fillStyle = m % 3 ? '#e8dcc0' : '#b8a888'; ctx.fillRect(Math.round(hx + Math.cos(a) * r) - 1, Math.round(hy + Math.sin(a) * r * 0.7), 3, 2); }
+      }
       G.drawMothGirlSprite(ctx, this.mg, t);
+      if (point > 0.5 && ct < 0.6) { ctx.fillStyle = 'rgba(255,240,200,0.8)'; for (let m = 0; m < 8; m++) ctx.fillRect(Math.round(S.x + S.facing * (22 + m * 5)), Math.round(gy - 52 + Math.sin(m * 2 + t * 30) * 4), 3, 2); }   // the burst from her hand
       // the collar, and the chain running to his hand
       const p = g.player, cx = S.x, cy = gy - 38 - this.mg.alt, hx = p.x - p.facing * 4, hy = gy - 46 - (p.alt || 0);
       ctx.fillStyle = '#3a3438'; ctx.fillRect(cx - 6, cy, 12, 4); ctx.fillStyle = '#8a848c'; ctx.fillRect(cx - 6, cy, 12, 1); ctx.fillRect(cx - 1, cy + 3, 2, 2);
