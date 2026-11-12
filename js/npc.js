@@ -21,7 +21,7 @@
     get atRest() { return !!(this.def.restFlag && G.game.flags[this.def.restFlag]); }
     get canTurn() { return !this.def.cleanse && !this.def.essential && this.def.pose !== 'hang'; }   // the Sisters wash daily and do not turn
     get targetable() { return !this.gone && !this.dead && !this.def.essential && this.def.pose !== 'hang' && !this.atRest; }
-    get canTalk() { const g = G.game; return !this.gone && !this.dead && !this.atRest && this.state !== 'cower' && (!this.def.needs || g.flags[this.def.needs]); }
+    get canTalk() { const g = G.game; if (this.def.hideIf && g.flags[this.def.hideIf]) return false; return !this.gone && !this.dead && !this.atRest && this.state !== 'cower' && (!this.def.needs || g.flags[this.def.needs]); }
     set(s) { this.state = s; this.t = 0; }
 
     // Same signature as Player.damage so enemies can strike either.
@@ -110,7 +110,8 @@
 
     draw(ctx, g) {
       if (this.gone) return;
-      if (this.def.hidden && this.def.needs && !g.flags[this.def.needs]) return;   // not here (yet, or in this story)
+      if (this.def.hidden && this.def.needs && !g.flags[this.def.needs]) return;
+      if (this.def.hideIf && g.flags[this.def.hideIf]) return;   // away with the knight   // not here (yet, or in this story)
       if (this.def.sprite === 'mothgirl' && G.drawMothGirlSprite) {   // Nell, wingless, sitting in the reeds
         const calm = !!g.flags['met_' + this.def.id];
         this.mg = this.mg || { id: 7, def: { scale: 1 }, limbs: { head: {}, armF: {}, armB: {} }, wingless: true, flash: 0, alt: 0, dead: false, state: 'broken' };

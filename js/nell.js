@@ -13,7 +13,7 @@
 
   // ---- Nell, at the Mire-Wife's hut
   L.npcs.push({
-    id: 'nell', x: 2190, name: 'Nell', sprite: 'mothgirl', needs: 'boss_mothmother_spared', hidden: true, essential: true,
+    id: 'nell', x: 2190, name: 'Nell', sprite: 'mothgirl', needs: 'boss_mothmother_spared', hidden: true, essential: true, hideIf: 'nell_follow',
     lines: [
       ['Nell', 'Don\'t... oh. It is you. The one who took them.'],
       ['Nell', '...And let me go. Nobody has ever let me go. Not the water, not the moths, not the light.'],
@@ -29,6 +29,7 @@
     ],
     repeat: [['Nell', 'The roots on the chapel door. My children are waiting in the reeds there. They only need a light.']],
     repeatBound: [['Nell', 'Master.'], ['Nell', 'They are by the chapel door. They will do what you say. ...Everything does, now.']],
+    callBack: true,
   });
   // What becomes of her: left be, or bound in iron to your service.
   G.NELL = {
@@ -48,7 +49,7 @@
         ['Nell', 'Yes. Yes, master. My children are yours. They will not touch you. They will go where you send them.'],
         ['Misery', 'Oh. OH. Look at you. Look at what you have done. I have never been so proud of anyone in my life.'],
         ['Aurelle', 'A vow taken in iron is still a vow, little knight. I will keep it. I keep them all.'],
-      ], () => { G.sfx('thud'); G.sfx('bell'); G.questLog.banners.push({ kind: 'Nell is bound', title: 'Her moths are yours', sub: 'Weeping Moths and Bloodflies will not attack you', t: 5 }); });
+      ], () => { G.sfx('thud'); G.sfx('bell'); g.flags.nell_follow = 1; G.companion.place(g); g.save(); G.questLog.banners.push({ kind: 'Nell is bound', title: 'She follows on her chain', sub: 'Her moths fight for you. Weeping Moths and Bloodflies will not attack you', t: 5 }); });
     },
   };
   G.QUESTS.moths = {
@@ -141,4 +142,82 @@
   };
   const prevDraw = G.swamp.drawBack;
   G.swamp.drawBack = (ctx, g, t) => { prevDraw(ctx, g, t); drawDoor(ctx, g, t); };
+
+  // ---------------------------------------------------------------------------
+  // Nell as a companion: collared, she walks a few steps behind the knight,
+  // through every place he goes, and sends her moths at whatever fights him.
+  // ---------------------------------------------------------------------------
+  const LINES = {
+    follow: ['Yes, master.', 'I am coming.', 'Where you go.'],
+    swarm: ['Children. There.', 'Go. Eat.', 'Take that one.'],
+    idle: ['...', 'The chain is cold.', 'It is very dark, master. Even with her.', 'I can hear them weeping, under the ground. Always.'],
+  };
+  G.FAIRY.nellJab = ['Walk faster, moth. You are holding up the parade.', 'Do not look at me. I am not the one who put a collar on you.', 'She is very quiet. I like her better quiet.'];
+  G.companion = {
+    s: null,
+    on(g) { return !!(g.flags.nell_bound && g.flags.nell_follow); },
+    place(g) { const p = g.player; this.s = { x: p.x - p.facing * 70, vx: 0, facing: p.facing, cd: 2, say: null, sayT: 0, idleT: 18, swarms: [], walk: 0 }; },
+    sayLine(t) { if (this.s) { this.s.say = t; this.s.sayT = 2.4 + t.length * 0.04; } },
+    tick(g, dt) {
+      if (!this.on(g) || g.inside) return;
+      if (!this.s) this.place(g);
+      const S = this.s, p = g.player;
+      // follow: keep a few paces behind him, on the ground
+      const want = p.x - p.facing * 64, d = want - S.x;
+      S.vx = Math.abs(d) > 14 ? Math.sign(d) * Math.min(220, Math.abs(d) * 3) : 0; S.x += S.vx * dt; S.walk += Math.abs(S.vx) * dt * 0.1;
+      if (Math.abs(p.x - S.x) > 500) S.x = p.x - p.facing * 64;   // she does not get left behind
+      S.facing = Math.abs(S.vx) > 5 ? Math.sign(S.vx) : (p.x >= S.x ? 1 : -1);
+      if (S.say && (S.sayT -= dt) <= 0) S.say = null;
+      // the swarm: every few seconds, at the nearest thing fighting him
+      S.cd -= dt;
+      if (S.cd <= 0) {
+        let best = null, bd = 300;
+        for (const e of g.enemies) { if (e.dead || e.dormant || e.state === 'idle' || e.state === 'broken' || e.state === 'executed' || e.type === 'moth' || e.type === 'bloodfly') continue; const dd = Math.abs(e.x - S.x); if (dd < bd) { bd = dd; best = e; } }
+        if (best) { S.cd = 3.6 + Math.random() * 0.8; S.swarms.push({ x: S.x, y: G.GROUND - 50, e: best, t: 0 }); G.sfx('whoosh'); if (Math.random() < 0.35) this.sayLine(G.pick(LINES.swarm)); }
+        else S.cd = 0.5;
+      }
+      for (let i = S.swarms.length - 1; i >= 0; i--) {
+        const w = S.swarms[i], e = w.e; w.t += dt;
+        if (!e || e.dead) { S.swarms.splice(i, 1); continue; }
+        const tx = e.x, ty = G.GROUND - (e.alt || 0) - 50 * e.scale, k = Math.min(1, dt * 4);
+        w.x += (tx - w.x) * k; w.y += (ty - w.y) * k;
+        if (Math.hypot(tx - w.x, ty - w.y) < 20 || w.t > 1.2) {
+          e.takeHit(e.def.boss ? 9 : 16, { sever: 0, quiet: true, noStagger: !!e.def.boss }, w.x <= e.x ? 1 : -1, g, { bleed: 14 });
+          G.text(e.x, G.GROUND - 120 * e.scale, 'SWARMED', '#e8dcc0', 12); S.swarms.splice(i, 1);
+        }
+      }
+      if ((S.idleT -= dt) <= 0) { S.idleT = 20 + Math.random() * 15; if (Math.random() < 0.5) this.sayLine(G.pick(LINES.idle)); else { g.fairy.cd = 0; g.fairy.sayLine(G.pick(G.FAIRY.nellJab)); } }
+    },
+    draw(ctx, g, t) {
+      if (!this.on(g) || g.inside || !this.s || !G.drawMothGirlSprite) return;
+      const S = this.s, gy = G.GROUND, walking = Math.abs(S.vx) > 5;
+      this.mg = this.mg || { id: 9, def: { scale: 0.95 }, limbs: { head: {}, armF: {}, armB: {} }, wingless: true, flash: 0, alt: 0, dead: false };
+      Object.assign(this.mg, { x: S.x, alt: walking ? Math.abs(Math.sin(S.walk * 3)) * 3 : 0, facing: S.facing, state: 'chase', calm: true });
+      G.drawMothGirlSprite(ctx, this.mg, t);
+      // the collar, and the chain running to his hand
+      const p = g.player, cx = S.x, cy = gy - 38 - this.mg.alt, hx = p.x - p.facing * 4, hy = gy - 46 - (p.alt || 0);
+      ctx.fillStyle = '#3a3438'; ctx.fillRect(cx - 6, cy, 12, 4); ctx.fillStyle = '#8a848c'; ctx.fillRect(cx - 6, cy, 12, 1); ctx.fillRect(cx - 1, cy + 3, 2, 2);
+      ctx.fillStyle = '#5a5458'; const sag = Math.max(6, 30 - Math.abs(hx - cx) * 0.25);
+      for (let k = 1; k < 14; k++) { const u = k / 14, x = cx + (hx - cx) * u, y = cy + 3 + (hy - cy - 3) * u + Math.sin(u * Math.PI) * sag; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 2); }
+      // her moths in flight
+      for (const w of S.swarms) for (let m = 0; m < 12; m++) { const a = t * 9 + m * 1.9, r = 6 + (m % 4) * 4, x = w.x + Math.cos(a) * r, y = w.y + Math.sin(a * 1.3) * r, f = Math.floor(t * 20 + m) % 2; ctx.fillStyle = m % 3 ? '#e8dcc0' : '#b8a888'; ctx.fillRect(Math.round(x) - 2, Math.round(y) - (f ? 1 : 0), 2, 2); ctx.fillRect(Math.round(x) + 1, Math.round(y) - (f ? 1 : 0), 2, 2); }
+      if (S.say) {
+        ctx.font = '16px "Jersey 15", "VT323", monospace'; ctx.textAlign = 'center'; const w = ctx.measureText(S.say).width + 16, bx = S.x, by = gy - 108;
+        ctx.globalAlpha = Math.min(1, S.sayT * 3); ctx.fillStyle = 'rgba(20,14,10,0.88)'; ctx.fillRect(bx - w / 2, by - 18, w, 24); ctx.strokeStyle = '#a08870'; ctx.lineWidth = 1; ctx.strokeRect(bx - w / 2 + 0.5, by - 17.5, w, 24); ctx.fillStyle = '#e8dcc0'; ctx.fillText(S.say, bx, by); ctx.globalAlpha = 1;
+      }
+    },
+    // speak to her on the road: keep her with you, or send her back to the hut
+    prompt(g) {
+      if (!this.on(g) || g.inside || !this.s || Math.abs(g.player.x - this.s.x) > 50) return null;
+      return { x: this.s.x, y: G.GROUND - 120, label: 'Speak to Nell', fn: () => G.ui.choice('Nell waits at the end of her chain.', [
+        { label: 'Keep walking <small>— she follows</small>', fn: () => this.sayLine(G.pick(LINES.follow)) },
+        { label: 'Send her back to Wren\'s hut <small>— she waits there, chained</small>', fn: () => { g.flags.nell_follow = 0; this.s = null; g.save(); G.text(g.player.x, G.GROUND - 130, 'Nell goes back to the hut', '#d9c9b0', 14); } },
+      ]) };
+    },
+  };
+  // and at the hut, chained, she can be called to follow again
+  G.NELL.callAgain = g => G.ui.choice('Nell sits chained by the hut.', [
+    { label: 'Take her with you <small>— she follows on her chain</small>', fn: () => { g.flags.nell_follow = 1; G.companion.place(g); g.save(); G.companion.sayLine('Yes, master.'); } },
+    { label: 'Leave her here', fn: () => {} },
+  ]);
 })();

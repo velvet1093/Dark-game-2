@@ -52,7 +52,7 @@
       this.spawnEnemies(); this.npcs = L.npcs.map(d => new G.Npc(d, this)); this.toldGate = {};
       // everything that can be stood on: ledges, and the tops of rubble walls
       this.surfAll = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h })));
-      G.traps.init(this, L); this.surf = this.surfAll.filter(pl => !pl.fake && !pl.off); this.fairy.place(this.player);
+      G.traps.init(this, L); this.surf = this.surfAll.filter(pl => !pl.fake && !pl.off); this.fairy.place(this.player); if (G.companion && G.companion.on(this)) G.companion.place(this);
       G.music(musicFor(L)); G.ambience(AMB[L.theme]); this.flags['reached_' + idx] = 1; if (G.voice) G.voice.place(idx);
       this.cam = this.camFor(x - W * 0.42, x); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
@@ -93,6 +93,7 @@
       }
       if (p.state === 'sit' || p.state === 'rise') return null;
       if (p.alt >= 30) return items();   // up on a ledge: only what is up here with you can be reached
+      const cp = G.companion && G.companion.prompt(this); if (cp) return cp;
       for (const n of this.npcs) {   // a wounded villager can be saved with your own tincture, even mid-fight
         if (n.dead || n.gone || n.inf < 35 || !near(n.x, 70)) continue;
         if (p.tinct > 0) return { x: n.x, y: G.GROUND - 132, label: 'Give your tincture to ' + n.def.name, hot: n.turnT != null, fn: () => {
@@ -148,7 +149,8 @@
         this.save();
         if (d.cleanse) this.cleanse(n);
         if (d.shop) G.ui.shop(d.shop);
-        if (d.id === 'nell' && !this.flags.nell_fate && G.NELL) G.NELL.choose(this);   // what becomes of her
+        if (d.id === 'nell' && !this.flags.nell_fate && G.NELL) G.NELL.choose(this);
+        else if (d.id === 'nell' && this.flags.nell_bound && !this.flags.nell_follow && G.NELL) G.NELL.callAgain(this);   // what becomes of her
         if (d.gift === 'favour' && !this.flags.seelie) {   // the Lantern Court's favour
           this.flags.seelie = 1; this.flags.court_met = 1; G.sfx('questdone'); G.sfx('cleanse');
           G.questLog.banners.push({ kind: 'A favour', title: 'The Lantern Court', sub: 'The infection takes hold a quarter more slowly', t: 5 }); this.save();
@@ -488,6 +490,7 @@
       const held = Object.values(G.input.held).some(Boolean);   // how long the knight has stood still with nothing pressed
       this.idleFor = !held && p.state === 'idle' && Math.abs(p.vx) < 5 && !p.air && !p.dead ? (this.idleFor || 0) + dt : 0;
       if (!this.fairyAway) this.fairy.update(dt, this);
+      if (G.companion) G.companion.tick(this, dt);
       // the ring of white caps: stand in it, perfectly still, and the Court lets you in
       const sr = !this.inside && L.secret;
       if (sr) {
@@ -547,6 +550,7 @@
       for (const e of this.enemies) if (!e.dead && vis(e.x)) e.draw(ctx, this);
       p.draw(ctx, this);
       if (L.waters && !this.inside) G.swamp.drawFront(ctx, this, t);   // the water closes over feet and paws
+      if (G.companion) G.companion.draw(ctx, this, t);
       if (!this.fairyAway) this.fairy.draw(ctx, this);
       G.drawFx(ctx, 'air');
       if (this.prompt) {
