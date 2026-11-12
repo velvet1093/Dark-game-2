@@ -54,7 +54,7 @@
       this.surfAll = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h })));
       G.traps.init(this, L); this.surf = this.surfAll.filter(pl => !pl.fake && !pl.off); this.fairy.place(this.player);
       G.music(musicFor(L)); G.ambience(AMB[L.theme]); this.flags['reached_' + idx] = 1; if (G.voice) G.voice.place(idx);
-      this.cam = clamp(x - W * 0.42, L.minX || 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
+      this.cam = this.camFor(x - W * 0.42, x); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
       const L = this.level;
@@ -240,6 +240,12 @@
       const m = this.misery; if (m.got[n.id] || m.thorns < n.cost) return false;
       m.thorns -= n.cost; m.got[n.id] = 1; G.sfx('questdone'); this.fairy.cd = 0; this.save(); return true;
     },
+    // the camera's range: the whole place, or (where a place is split into screens) the screen the knight is on
+    camFor(target, x) {
+      const L = this.level, lo0 = L.minX || 0;
+      if (L.split == null || this.inside) return clamp(target, lo0, Math.max(lo0, L.length - W));
+      return x < L.split ? clamp(target, lo0, Math.max(lo0, L.split - 40 - W)) : clamp(target, L.split, L.length - W);
+    },
     reachedLv(lv) { return !!this.flags['reached_' + lv] || (this.levelIdx >= lv && this.levelIdx <= 4); },
     hasTool(need) { return need === 'axe' ? this.weapons.includes('greataxe') : !!this.abilities[need]; },
     // Stop a body moving from px to x if a closed gate stands between. Rubble walls only stop what is below their top.
@@ -423,6 +429,17 @@
       if (G.input.hit('journal')) { G.ui.journal(); return; }
       if (G.input.hit('bestiary')) { G.ui.bestiary(); return; }
       if (G.input.hit('swap') && (this.player.state === 'idle' || this.player.state === 'block')) this.swapWeapon();
+      if (this.zoneT) {   // a short black between two screens of one place
+        const Z = this.zoneT, p = this.player; Z.t += dt;
+        if (!Z.moved && Z.t >= 0.22) { Z.moved = true; p.x = Z.to; p.vx = 0; p.facing = Z.side; this.cam = this.camFor(p.x - W * 0.42 + p.facing * 40, p.x); this.fairy.place(p); }
+        if (Z.t >= 0.55) this.zoneT = null;
+        return;
+      }
+      if (this.level.split != null && !this.inside && !this.bossFight && !this.player.dead && !this.player.air && !this.transit) {
+        const L = this.level, p = this.player, inA = p.x < L.split;
+        if (!inA && p.x <= L.split + 32 && G.input.down('left')) { this.zoneT = { t: 0, to: L.split - 80, side: -1 }; G.sfx('step'); return; }
+        if (inA && p.x >= L.split - 42 && G.input.down('right')) { this.zoneT = { t: 0, to: L.split + 70, side: 1 }; G.sfx('step'); return; }
+      }
       if (this.transit) {   // walking off the edge: the knight goes on, the world goes dark, and the next place comes up out of it
         const T = this.transit, p = this.player; T.t += dt; p.vx = T.side * 120; p.x += p.vx * dt; p.facing = T.side; p.walk += dt * 11; p.state = 'idle';
         if (T.t >= 0.9) {
@@ -438,7 +455,7 @@
       const p = this.player, L = this.level;
       this.lvT += dt; this.card -= dt; this.fade = Math.max(0, this.fade - dt); this.shake = Math.max(0, this.shake - dt * 40);
 
-      this.bounds = this.bossFight ? G.arena(L.boss) : [(L.minX || 0) + 30, L.length - 30];
+      this.bounds = this.bossFight ? G.arena(L.boss) : L.split != null && !this.inside ? (p.x < L.split ? [(L.minX || 0) + 30, L.split - 40] : [L.split + 30, L.length - 30]) : [(L.minX || 0) + 30, L.length - 30];
       this.prompt = (p.state === 'idle' || p.state === 'block') && !p.air ? this.findInteract() : null;
       if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); return; }   // the world may have changed under us; pick up next frame
 
@@ -497,7 +514,7 @@
 
       let target = p.x - W * 0.42 + p.facing * 40;
       const west = L.boss && L.boss.end < L.boss.gate;
-      target = clamp(target, this.bossFight && !west ? L.boss.gate - 110 : L.minX || 0, this.bossFight && west ? Math.max(0, L.boss.gate + 110 - W) : L.length - W);
+      target = this.bossFight ? clamp(target, !west ? L.boss.gate - 110 : L.minX || 0, west ? Math.max(0, L.boss.gate + 110 - W) : L.length - W) : this.camFor(target, p.x);
       this.cam += (target - this.cam) * Math.min(1, dt * 5);
     },
 
@@ -540,7 +557,8 @@
       ctx.restore();
       G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: (this.inside ? (this.inside.id === 'court' ? 280 : 150) : 115) * (this.mis('glow') ? 1.45 : 1) }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
-      if (this.transit) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.transit.t / 0.8)})`; ctx.fillRect(0, 0, W, H); }   // fading out as he walks on
+      if (this.transit) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.transit.t / 0.8)})`; ctx.fillRect(0, 0, W, H); }
+      if (this.zoneT) { const z = this.zoneT.t, a = z < 0.22 ? z / 0.22 : Math.max(0, 1 - (z - 0.22) / 0.33); ctx.fillStyle = `rgba(0,0,0,${a})`; ctx.fillRect(0, 0, W, H); }   // fading out as he walks on
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 1.4)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
       if (p.qte) {   // the button to mash, over the knight
