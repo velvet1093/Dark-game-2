@@ -77,7 +77,8 @@ G.Player = class {
     this.target = e; e.state = 'executed'; e.t = 0; e.vx = 0;
     this.facing = e.x >= this.x ? 1 : -1; this.x = e.x - this.facing * 46 * e.scale; e.facing = -this.facing;
     const X = G.execKindFor ? G.execKindFor(e, this) : { kind: Math.random() < 0.5 ? 'decap' : 'impale' };
-    this.execKind = X.kind; this.execText = X.text || null; this.execHit = 0; this.struck = false; this.set('execute'); this.vx = 0;
+    this.execKind = X.kind; this.execText = X.text || null; this.execHit = 0; this.struck = false; this.set('execute'); this.vx = 0; this.qte = null; this.qteDone = false;
+    const XD = G.EXECS && G.EXECS[X.kind]; if (XD && XD.close) this.x = e.x - this.facing * XD.close * e.scale;   // close enough to take hold
   }
   get invulnerable() { return this.dead || this.pitInv > 0 || this.state === 'execute' || (this.state === 'roll' && this.t < 0.32); }
 
@@ -193,6 +194,24 @@ G.Player = class {
     } else if (this.state === 'execute') {
       this.vx = 0;
       const X = G.EXECS[this.execKind] || G.EXECS.decap, e = this.target;
+      if (X.qte && e && !this.qteDone && this.t >= X.qte.at) {   // hold her under: press, press, press
+        const Q = this.qte || (this.qte = { fill: 0.4, time: X.qte.time, shove: 0 }), un = G.unfair();
+        this.t = X.qte.at; Q.time -= dt; Q.shove = Math.max(0, Q.shove - dt * 6);
+        Q.fill -= dt * (un ? 0.34 : 0.26);                                   // she fights back up
+        if (I.hit('use') || I.hit('attack') || I.hit('confirm')) { Q.fill += un ? 0.075 : 0.09; Q.shove = 1; G.sfx('splat'); g.shake = Math.max(g.shake, 3); }
+        Q.fill = Math.min(1, Q.fill);
+        e.struggle = 1 - Q.fill; e.sinkTarget = (26 + Q.fill * 34) * e.scale;   // only her head and arms above the water
+        if (Math.random() < dt * (4 + e.struggle * 10)) G.sfx(Math.random() < 0.3 ? 'scream' : 'splat');
+        if (Q.fill >= 1) { this.qteDone = true; this.qte = null; e.struggle = 0.5; e.sinkTarget = 44 * e.scale; G.text(e.x, G.GROUND - 120, 'HELD UNDER', '#e0d8c8', 16); g.hitstop = 0.08; }
+        else if (Q.fill <= 0 || Q.time <= 0) {   // she breaks free and throws him off
+          this.qte = null; e.struggle = 0; e.sinking = false; e.sinkTarget = null; e.sink = 0; e.set('broken'); e.vx = 0;
+          G.text(e.x, G.GROUND - 140, 'SHE BREAKS FREE', '#e0222c', 18); G.sfx('roar'); g.shake = 12;
+          G.blood(e.x, G.GROUND - 30, 20, -this.facing, 260);
+          this.set('hurt'); this.vx = -this.facing * 260; this.hp = Math.max(1, this.hp - this.maxHp * 0.12); this.flash = 0.2; this.target = null;
+          return;
+        }
+      }
+      if (e && e.struggle && this.qteDone && this.t < X.hits[X.hits.length - 1]) { const u = (this.t - X.qte.at) / 1.43; e.struggle = Math.max(0, 0.5 - u * 0.5); e.sinkTarget = (44 + u * 70) * e.scale; }   // weaker, and slowly under
       while (!this.struck && this.execHit < X.hits.length && this.t >= X.hits[this.execHit]) {   // each blow as its moment comes; the last one kills
         if (this.execHit === X.hits.length - 1) { this.struck = true; this.bloody = 1; g.executeStrike(e, this); }
         else if (X.mid && e) X.mid(g, e, this, this.execHit);
@@ -279,6 +298,7 @@ G.Player = class {
       else { const u = Math.min(1, (t - 1.5) / 0.5); Object.assign(P, { armA: 3.5 * (1 - u), armE: 0.8 * (1 - u), bA: 0.4, bE: 0.3, lean: -0.45 * (1 - u), footF: 10, footB: -10 }); }
     } else if (s === 'execute') {
       G.execPose(P, this.execKind, t);
+      if (this.qte) { const sh = this.qte.shove; P.crouch += sh * 5; P.lean += sh * 0.12 + Math.sin(G.game.time * 30) * 0.04 * (1 - this.qte.fill); P.armE += sh * 0.25; }   // shoving her down
     } else if (s === 'sit' || s === 'rise') {
       // down onto one knee, then onto the ground beside the flame; rising runs it backwards
       const k = s === 'sit' ? Math.min(1, t / 0.5) : 1 - Math.min(1, t / 0.42);
@@ -307,6 +327,11 @@ G.Player = class {
       G.drawPlayerWings(ctx, this.x - this.facing * 6, o.y - 50, this.facing, this.wingT / 0.5, g.time, this.wingGlide, this.wingVis);   // her wings, on your back
     }
     if (this.state === 'rip' && this.t > 1.15 && this.t < 1.45 && G.swamp) G.swamp.drawHeld(ctx, this.x + this.facing * 18, o.y - 58 - (this.t - 1.15) * 60, this.facing, g.time);   // her wing, in your fist
+    const grab = this.state === 'execute' && this.execKind === 'drown' && this.t > 0.3 && this.t < 2.2;
+    if (grab) {   // the sword stuck in the mud beside him, both hands free
+      o.weapon = 'none'; const sx = this.x - this.facing * 22, gy = G.GROUND;
+      ctx.fillStyle = '#7d808c'; ctx.fillRect(sx - 1, gy - 30, 3, 32); ctx.fillStyle = '#eef0f5'; ctx.fillRect(sx - 1, gy - 30, 1, 30); ctx.fillStyle = '#c9a13b'; ctx.fillRect(sx - 6, gy - 32, 13, 3); ctx.fillStyle = '#3a2a1e'; ctx.fillRect(sx - 1, gy - 42, 3, 10); ctx.fillStyle = '#c9a13b'; ctx.fillRect(sx - 2, gy - 45, 5, 3);
+    }
     G.drawHumanoid(ctx, o); this.headPos = o.out.head;
     if (this.state === 'heal' && o.out.head) this.drawFlask(ctx, o, g.time);
     if (this.healFx > 0) {   // a glow rising through him when the water takes
@@ -648,6 +673,10 @@ G.Enemy = class {
     else if (s === 'strike') { P.footF = 14; P.footB = -10; G.swing(P, a.anim, 1, Math.min(1, t / a.active)); }
     else if (s === 'recover') { P.footF = 12; P.footB = -9; G.swing(P, a.anim, 2, Math.min(1, t / (a.rec * m.speed))); }
     else if (s === 'stagger') { P.lean = -0.35; P.head = -0.4; P.armA = -0.4; P.bA = -0.9; P.footF = 2; P.footB = -13; }
+    else if (s === 'executed' && this.struggle > 0) {   // held under: arms clawing up out of the water, head thrashing
+      const k = this.struggle, tt = G.game.time;
+      Object.assign(P, { crouch: 4, lean: -0.3 + Math.sin(tt * 13) * 0.25 * k, head: -0.4 + Math.sin(tt * 17) * 0.4 * k, armA: Math.PI - 0.7 + Math.sin(tt * 19) * 0.7 * k, armE: 0.4 + Math.sin(tt * 23) * 0.6 * k, bA: Math.PI + 0.5 + Math.sin(tt * 16 + 1) * 0.7 * k, bE: 0.5 + Math.sin(tt * 21) * 0.5 * k, footF: 6, footB: -6 });
+    }
     else if (s === 'broken' || s === 'executed') {
       const u = G.ease(Math.min(1, t / 0.3)), sway = s === 'broken' ? Math.sin(t * 2.2) * 0.06 : 0;
       P.crouch = 15 * u; P.lean = 0.42 * u + sway; P.head = 0.6 * u; P.armA = 0.15; P.armE = 0.2; P.w = 0.5; P.bA = 0; P.bE = 0.1; P.footF = 12; P.footB = -14;
@@ -668,7 +697,8 @@ G.Enemy = class {
       const ay = G.GROUND - this.alt - 60 * this.scale, gr = ctx.createRadialGradient(this.x, ay, 4, this.x, ay, 110 * this.scale);
       gr.addColorStop(0, `rgba(255,20,30,${0.6 + Math.sin(g.time * 8) * 0.15})`); gr.addColorStop(0.5, 'rgba(200,10,20,0.25)'); gr.addColorStop(1, 'rgba(220,20,30,0)'); ctx.fillStyle = gr; ctx.fillRect(this.x - 120 * this.scale, ay - 120 * this.scale, 240 * this.scale, 240 * this.scale);
     }
-    if (this.sinking) this.sink = Math.min(46 * this.scale, (this.sink || 0) + 30 * this.scale / 60);   // going under
+    if (this.sinkTarget != null) this.sink = (this.sink || 0) + (this.sinkTarget - (this.sink || 0)) * 0.2;   // pushed down, fighting up
+    else if (this.sinking) this.sink = Math.min(70 * this.scale, (this.sink || 0) + 60 * this.scale / 60);   // going under
     if (this.sink) { o.y += Math.round(this.sink); o.y = Math.round(o.y / 2) * 2; }
     if (this.disarmed) o.weapon = 'none';
     const fade = this.leaving ? Math.max(0, 1 - this.leaving / 2.2) : 1; if (fade < 1) { ctx.save(); ctx.globalAlpha = fade; }
@@ -679,6 +709,10 @@ G.Enemy = class {
       const gy = G.GROUND, k = this.sinking ? 1 : 0.4;   // rings on the black water, and bubbles while she still breathes
       ctx.strokeStyle = `rgba(150,190,170,${0.5 * k})`; ctx.lineWidth = 2;
       for (let r = 0; r < 3; r++) { const rr = ((g.time * 30 + r * 14) % 42) + 8; ctx.beginPath(); ctx.ellipse(this.x, gy, rr * this.scale, 3, 0, 0, 7); ctx.stroke(); }
+      if (this.struggle > 0.05) {   // thrashing: water flung up, white and black
+        const k2 = this.struggle; ctx.fillStyle = `rgba(220,236,228,${0.5 + k2 * 0.4})`;
+        for (let sp = 0; sp < 6 + k2 * 10; sp++) { const ph = (g.time * (2 + sp % 3) + sp * 0.37) % 1, dx = Math.sin(sp * 2.1 + g.time * 4) * 34 * this.scale; ctx.fillRect(Math.round(this.x + dx * ph), Math.round(gy - 4 - Math.sin(ph * Math.PI) * (24 + k2 * 30)), 3, 3); }
+      }
       if (this.sinking) { ctx.fillStyle = 'rgba(210,230,220,0.85)'; for (let b = 0; b < 4; b++) { const ph = (g.time * 1.8 + b * 0.27) % 1; ctx.fillRect(Math.round(this.x - 14 + b * 9 + Math.sin(g.time * 5 + b) * 3), Math.round(gy - 4 - ph * 26), 3, 3); } }
     }
     if (this.bannerT != null) {   // the Long Battalion's colours, settling over him

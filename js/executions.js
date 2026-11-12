@@ -40,11 +40,11 @@
     flurry: { dur: 1.8, hits: [0.2, 0.35, 0.5, 0.65, 0.8, 0.95, 1.22], text: 'CUT TO RIBBONS', keys: flurry,
       mid: (g, e, p, i) => { G.blood(e.x - p.facing * 4, G.GROUND - 60 * e.scale, 10, p.facing * (i % 2 ? -1 : 1), 260); G.sfx('swing'); G.sfx('hit'); g.hitstop = 0.03; } },
     // the Matron: by the hair, down into the black water, and held there until it stops
-    drown: { dur: 2.6, hits: [0.45, 2.05], quiet: true, text: 'RETURNED TO THE WATER',
-      keys: [K(0, BASE), K(0.35, { armA: 1.5, armE: 0.3, bA: 1.4, bE: 0.4, lean: 0.35, crouch: 4 }), K(0.6, { armA: 1.1, armE: 0.6, bA: 1.0, bE: 0.6, lean: 0.6, crouch: 14, footF: 14, footB: -16 }), K(2.05, { armA: 1.0, armE: 0.7, bA: 0.9, bE: 0.7, lean: 0.65, crouch: 16, footF: 14, footB: -16 }), K(2.6, BASE)],
+    drown: { dur: 2.6, hits: [0.45, 2.05], quiet: true, text: 'RETURNED TO THE WATER', close: 30, qte: { at: 0.62, time: 3.6 },
+      keys: [K(0, BASE), K(0.35, { armA: 1.6, armE: 0.2, bA: 1.5, bE: 0.3, lean: 0.4, crouch: 6 }), K(0.6, { armA: 0.75, armE: 0.35, bA: 0.6, bE: 0.4, lean: 0.75, crouch: 18, head: 0.4, footF: 16, footB: -16 }), K(2.05, { armA: 0.7, armE: 0.35, bA: 0.55, bE: 0.4, lean: 0.8, crouch: 18, head: 0.45, footF: 16, footB: -16 }), K(2.6, BASE)],
       wobble: (P, t) => { if (t > 0.6 && t < 2.0) { const k = 1 - (t - 0.6) / 1.4; P.lean += Math.sin(t * 38) * 0.06 * k; P.armA += Math.sin(t * 31) * 0.08 * k; } },   // she fights it, less and less
       mid: (g, e) => { e.sinking = true; G.sfx('splat'); G.sfx('scream'); g.shake = 6; },
-      fin: (g, e) => { e.sinking = false; e.sink = Math.max(e.sink || 0, 46 * e.scale); G.sfx('bell'); g.slow = 0.6; } },
+      fin: (g, e) => { e.sinking = false; e.struggle = 0; e.sinkTarget = null; e.sink = Math.max(e.sink || 0, 104 * e.scale); G.sfx('bell'); g.slow = 0.6; } },
     // the Standard-Bearer: strike the sword from his hands, salute him, run him through, and let the colours fall over him
     colours: { dur: 2.6, hits: [0.32, 1.28], text: 'RELIEVED OF DUTY',
       keys: [K(0, BASE), K(0.2, RISE0), K(0.32, RISE1), K(0.55, RISE1), K(0.8, { armA: 2.0, armE: 1.25, w: 3.14, lean: 0, head: 0.05, footF: 9, footB: -9 }), K(1.1, { armA: 2.0, armE: 1.25, w: 3.14, lean: 0, footF: 9, footB: -9 }), K(1.2, THR0), K(1.28, THR1), K(2.0, THR1), K(2.6, BASE)],

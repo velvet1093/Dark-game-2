@@ -523,6 +523,17 @@
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
+      if (p.qte) {   // the button to mash, over the knight
+        const Q = p.qte, x = Math.round(p.x - cam), y = G.GROUND - 200, pulse = 1 + Math.sin(t * 22) * 0.08 + Q.shove * 0.18, key = G.keyName('use');
+        ctx.save(); ctx.translate(x, y); ctx.scale(pulse, pulse);
+        ctx.fillStyle = '#140a0c'; ctx.fillRect(-26, -26, 52, 52); ctx.strokeStyle = Q.fill > 0.75 ? '#f0d680' : '#e0222c'; ctx.lineWidth = 4; ctx.strokeRect(-26, -26, 52, 52);
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = (key.length > 2 ? '18px' : '30px') + ' "Jersey 15", "VT323", monospace'; ctx.fillText(key, 0, key.length > 2 ? 6 : 11);
+        ctx.restore();
+        ctx.fillStyle = '#000'; ctx.fillRect(x - 82, y + 38, 164, 12); ctx.fillStyle = '#2a1416'; ctx.fillRect(x - 80, y + 40, 160, 8);
+        ctx.fillStyle = Q.fill > 0.75 ? '#f0d680' : '#c8d8e0'; ctx.fillRect(x - 80, y + 40, 160 * Q.fill, 8);
+        ctx.fillStyle = '#e0222c'; ctx.fillRect(x - 80, y + 52, 160 * Math.max(0, Q.time / 3.6), 3);
+        ctx.textAlign = 'center'; ctx.font = '18px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#000'; ctx.fillText('HOLD HER UNDER', x + 1, y + 75); ctx.fillStyle = '#e8e0d0'; ctx.fillText('HOLD HER UNDER', x, y + 74);
+      }
       if (G.voice) G.voice.draw(ctx, this, W, H);   // the Voice: a gold flash, and her words
     },
 
@@ -815,9 +826,10 @@
       // touch layout: hide the pad under menus, and show the Use button only when there is something to use
       const cl = document.body.classList, open = G.ui.blocking || game.mode !== 'play', pr = open ? null : game.prompt;
       if (cl.contains('ui-open') !== open) { cl.toggle('ui-open', open); if (open) G.input.held = {}; }
-      if (cl.contains('can-use') !== !!pr) cl.toggle('can-use', !!pr);
+      const prq = pr || (!open && game.player.qte ? { label: 'Push', hot: true } : null);   // the drowning: the Use button is the one to mash
+      if (cl.contains('can-use') !== !!prq) cl.toggle('can-use', !!prq);
       const ledge = !open && !game.player.air && game.player.alt > 0; if (cl.contains('on-ledge') !== ledge) cl.toggle('on-ledge', ledge);
-      if (pr && useBtn) { const s = pr.hot ? 'Execute' : pr.label.split(' ')[0]; if (useBtn.textContent !== s) { useBtn.textContent = s; useBtn.classList.toggle('hot', !!pr.hot); } }
+      if (prq && useBtn) { const s = game.player.qte ? 'PUSH' : prq.hot ? 'Execute' : prq.label.split(' ')[0]; if (useBtn.textContent !== s) { useBtn.textContent = s; useBtn.classList.toggle('hot', !!prq.hot); } }
       if (game.player.flaskMax !== lastFlasks) { lastFlasks = game.player.flaskMax; document.documentElement.style.setProperty('--flasks', lastFlasks); }
       requestAnimationFrame(frame);
     };

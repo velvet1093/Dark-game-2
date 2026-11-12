@@ -6,7 +6,7 @@
 // Misery notices him listening to nothing.
 // ---------------------------------------------------------------------------
 (() => {
-  const WHO = 'The Voice';
+  const WHO = 'Aurelle';   // Aurelle of the Dawn, goddess of vows kept
   // her first words in each place, the first time he comes there
   const PLACES = [
     'East, little knight. Always east.',
@@ -50,16 +50,28 @@
     boss() { if (Math.random() < 0.7) setTimeout(() => this.say(G.pick(BOSS), 0.3), 2600); },
     // drawn over everything: the flash, and her words in gold
     draw(ctx, g, W, H) {
-      if (g.voiceFlash > 0) {
-        const k = g.voiceFlash, gr = ctx.createRadialGradient(W / 2, H / 2, H * 0.1, W / 2, H / 2, H * 0.9);
-        gr.addColorStop(0, `rgba(255,230,150,${0.22 * k})`); gr.addColorStop(1, `rgba(255,200,80,${0.5 * k})`); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+      if (g.voiceFlash > 0 && g.player) {   // a shaft of dawn-light falls on the knight alone
+        const k = g.voiceFlash, p = g.player, x = p.x - g.cam, fy = G.GROUND - (p.alt || 0), t = g.time;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const top = 0, wTop = 26, wBot = 70;
+        const beam = ctx.createLinearGradient(0, top, 0, fy);
+        beam.addColorStop(0, `rgba(255,214,120,${0.05 * k})`); beam.addColorStop(0.7, `rgba(255,220,140,${0.22 * k})`); beam.addColorStop(1, `rgba(255,236,170,${0.42 * k})`);
+        ctx.fillStyle = beam; ctx.beginPath(); ctx.moveTo(x - wTop, top); ctx.lineTo(x + wTop, top); ctx.lineTo(x + wBot, fy + 6); ctx.lineTo(x - wBot, fy + 6); ctx.fill();
+        ctx.fillStyle = `rgba(255,240,190,${0.18 * k})`; ctx.beginPath(); ctx.moveTo(x - wTop * 0.35, top); ctx.lineTo(x + wTop * 0.35, top); ctx.lineTo(x + wBot * 0.35, fy); ctx.lineTo(x - wBot * 0.35, fy); ctx.fill();   // the bright core
+        const halo = ctx.createRadialGradient(x, fy - 50, 4, x, fy - 50, 90); halo.addColorStop(0, `rgba(255,232,160,${0.5 * k})`); halo.addColorStop(1, 'rgba(255,200,90,0)');
+        ctx.fillStyle = halo; ctx.fillRect(x - 90, fy - 140, 180, 180);
+        const pool = ctx.createRadialGradient(x, fy, 2, x, fy, 80); pool.addColorStop(0, `rgba(255,226,150,${0.45 * k})`); pool.addColorStop(1, 'rgba(255,200,90,0)');
+        ctx.fillStyle = pool; ctx.save(); ctx.translate(x, fy); ctx.scale(1, 0.18); ctx.translate(-x, -fy); ctx.fillRect(x - 80, fy - 80, 160, 160); ctx.restore();
+        ctx.fillStyle = `rgba(255,244,200,${0.9 * k})`;   // motes drifting down the shaft
+        for (let i = 0; i < 16; i++) { const ph = (t * 0.35 + i * 0.13) % 1, yy = top + ph * (fy - top), half = wTop + (wBot - wTop) * ph; ctx.fillRect(Math.round(x + Math.sin(i * 7.3 + t) * half * 0.8), Math.round(yy), 2, 2); }
+        ctx.restore();
       }
       const w = g.whisper; if (!w) return;
       const a = Math.min(1, w.t * 3, (w.dur - w.t) * 2);
       ctx.save(); ctx.globalAlpha = Math.max(0, a); ctx.textAlign = 'center'; ctx.font = 'italic 26px "Jersey 15", "VT323", monospace';
       ctx.fillStyle = 'rgba(40,24,0,0.8)'; ctx.fillText('“' + w.text + '”', W / 2 + 2, H * 0.42 + 2);
       ctx.fillStyle = '#ffe08a'; ctx.fillText('“' + w.text + '”', W / 2, H * 0.42);
-      ctx.font = '15px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#c9a13b'; ctx.fillText('the Voice', W / 2, H * 0.42 + 24);
+      ctx.font = '15px "Jersey 15", "VT323", monospace'; ctx.fillStyle = '#c9a13b'; ctx.fillText('Aurelle', W / 2, H * 0.42 + 24);
       ctx.restore();
     },
   };
@@ -70,19 +82,11 @@
   G.FAIRY.intro = [
     [WHO, 'Rise, little knight. Rise. You are not finished.'],
     ['Knight', '...Who is there?'],
+    [WHO, 'I am Aurelle, of the Dawn. I keep the vows that mortals make, and I have kept yours, all this long way.'],
     [WHO, 'Only you can hear me. Only you ever will. Walk east, and I will walk with you.'],
   ].concat(intro);
-  G.STORY.intro.splice(G.STORY.intro.length - 1, 0, 'On the long road home, in the dark below the deck of the Sun, something spoke to you.\nA voice like warm gold. A woman\'s voice.\nNo one else aboard could hear it.');
+  G.STORY.intro.splice(G.STORY.intro.length - 1, 0, 'On the long road home, in the dark below the deck of the Sun, something spoke to you.\nA voice like warm gold. A woman\'s voice. Aurelle, goddess of the dawn and of vows kept.\nNo one else aboard could hear it.');
   // before the last choice
   G.FAIRY.choice = [[WHO, 'Whatever you choose, little knight, I will be there when it is done.']].concat(G.FAIRY.choice);
   if (G.FAIRY.choiceNamed) G.FAIRY.choiceNamed = [[WHO, 'Corin. Whatever you choose, I will be there when it is done.']].concat(G.FAIRY.choiceNamed);
-  // Saint Hild feels her, for a moment
-  if (G.INTERIORS.undercroft) {
-    const h = G.INTERIORS.undercroft.npcs.find(n => n.id === 'hild');
-    if (h) h.lines.splice(2, 0, ['Saint Hild', 'There is something else down here with you. Something bright, behind your eyes. ...No. It is gone.'], [WHO, 'Listen to her, little knight. But not for too long.']);
-  }
-  // Ysolde hears nothing; Garrick heard it once
-  const cath = G.LEVELS[4];
-  const gl = ['Ser Garrick', 'Does she still talk to you, brother? The golden one? She stopped talking to me when I took my name back.'];
-  if (cath && cath.boss) { if (cath.boss.intro) cath.boss.intro.push(gl); if (cath.boss.introNamed) cath.boss.introNamed.push(gl); }
 })();

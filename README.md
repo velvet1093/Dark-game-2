@@ -313,7 +313,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/wardrobe.js` | the Wardrobe: knight, weapon, wing and Misery skins, their unlocks and the screen |
 | `js/executions.js` | the executions: choreography per kind of foe and per boss |
 | `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
-| `js/voice.js` | the Voice: the goddess only the knight can hear |
+| `js/voice.js` | Aurelle, the goddess only the knight can hear |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -395,7 +395,7 @@ Every boss has its own:
 | Boss | Execution |
 | --- | --- |
 | Gaunt, the Windcaller, the Gravewarden | hamstrung, then beheaded |
-| the Drowned Matron | **returned to the water**: taken by the hair and held under the black water until she stops fighting; rings and bubbles, then still |
+| the Drowned Matron | **returned to the water**: the knight drives his sword into the mud, takes her head in both hands and forces her down. **Mash Use (E, or the Use button on touch)** to hold her under while she claws and thrashes up out of the water. Fill the bar before it runs out and she slowly goes under and is still. Fail and she **breaks free**, throwing you off (some damage), and you must break her again |
 | the Standard-Bearer | **relieved of duty**: his greatsword struck spinning from his hands, a salute with the blade, a thrust through, and the Battalion's colours falling over him |
 | Abbot Ulric | skewered, lifted high on the blade, then flung down |
 | Malvern, the Charcoal Widow | six cuts and a thrust ("SEVEN CUTS") |
@@ -404,18 +404,18 @@ Every boss has its own:
 
 **Drinking**: the knight takes the flask off his belt, tips it up under his visor and drinks it down. A glow rises through him when it takes: gold for blessed water, lavender for a lily tincture.
 
-## The Voice
+## Aurelle
 
-The knight is guided by a goddess, and only he can hear her. Whenever she speaks the world **flashes gold** and a glass note sounds. Her words appear in gold across the screen without stopping the game, or in a gold dialogue box at the turns of the story.
+The knight is guided by **Aurelle of the Dawn, goddess of vows kept**. She kept his vow alive all the long way home, and only he can hear her. Whenever she speaks, **a shaft of gold dawn-light falls on the knight alone**, with motes drifting down it, and a glass note sounds. Her words appear in gold over the play without stopping it, or in a gold dialogue box at the turns of the story.
 
 She speaks:
-- before Misery finds him, at the very start ("Rise, little knight. Rise.")
+- before Misery finds him, at the very start ("Rise, little knight... I am Aurelle, of the Dawn.")
 - the first time he enters each place
 - at his first rest, and when he rises after a death
 - sometimes after a boss falls
 - before the last choice
 
-No one else hears her. Misery only notices him listening to nothing ("Who are you nodding at? There is nobody there. ...Is there?"). Saint Hild feels something bright behind his eyes for a moment. Ser Garrick heard her once, until he took his name back.
+No one else knows of her. Only Misery notices him listening to nothing ("Who are you nodding at? There is nobody there. ...Is there?").
 
 ## Execute or spare
 
