@@ -349,15 +349,18 @@
     },
     // Called at the moment the executioner's blow lands.
     executeStrike(e, p) {
-      const dir = p.facing, decap = p.execKind === 'decap' && !e.crawling && e.def.model !== 'crow';
+      const X = G.EXECS[p.execKind] || {}, dir = p.facing, decap = !!X.decap && !e.crawling && !e.def.model;
+      if (X.pre) X.pre(this, e, p);
       const [jx, jy] = decap ? e.joint('head') : e.joint('armF');
-      G.blood(jx, jy, 70, dir, 460); G.blood(jx, jy, 30, -dir, 200);
+      if (X.quiet) G.blood(jx, jy, 18, dir, 160); else { G.blood(jx, jy, 70, dir, 460); G.blood(jx, jy, 30, -dir, 200); }
+      if (e.lift) { e.alt = 0; }
       e.vx = dir * 60; e.die({ exec: true, decap, dir });
       if (!decap) { e.fountain = 0; G.decal(e.x, 12, 40); }
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.12);
       const th = e.def.boss ? 4 : 1; this.misery.thorns += th; G.text(e.x, G.GROUND - 160 * e.scale, '+' + th + ' thorn' + (th > 1 ? 's' : ''), '#b89ae0', 14);
       this.hitstop = 0.14; this.shake = 14; this.slow = 0.55; G.sfx('exec');
-      G.text(e.x, G.GROUND - 130 * e.scale, 'EXECUTED', '#e0222c', 20);
+      G.text(e.x, G.GROUND - 130 * e.scale, p.execText || X.text || 'EXECUTED', X.quiet ? '#e0d8c8' : '#e0222c', 20);
+      if (X.fin) X.fin(this, e, p);
       if (e.def.boss) this.bossDefeated();
     },
     // A boss put down: executed, or spared and gone. Either way the way on is open.

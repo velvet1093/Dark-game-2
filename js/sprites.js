@@ -83,8 +83,9 @@
       if (e.dead) R(6, -3, 1, 1, '#000000'); else { R(6, -4, 2, 2, L.eye); R(6, -4, 1, 1, '#ffffff'); }
     }
     wing(lm.armF.gone, W1, -1, f);
-    G.spr.close(ctx, e.x, y0, { facing: e.facing, flash: e.flash > 0, rot: st === 'strike' ? 0.55 : st === 'windup' ? -0.3 : e.dead ? 0.25 : 0 });
-    e.out = { head: [e.x + e.facing * 12, y0 - 8], sh: [e.x, y0 - 4], hip: [e.x - e.facing * 8, y0] };
+    const sc = e.def.scale || 1;
+    G.spr.close(ctx, e.x, y0 - (sc - 1) * 10, { facing: e.facing, flash: e.flash > 0, scale: sc, rot: st === 'strike' ? 0.55 : st === 'windup' ? -0.3 : e.dead ? 0.25 : 0 });
+    e.out = { head: [e.x + e.facing * 12 * sc, y0 - 8 * sc], sh: [e.x, y0 - 4 * sc], hip: [e.x - e.facing * 8 * sc, y0] };
   }
 
   G.drawBeast = (ctx, e, time) => (e.def.model === 'hound' ? hound : crow)(ctx, e, time);

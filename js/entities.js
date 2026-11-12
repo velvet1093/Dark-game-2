@@ -52,6 +52,20 @@ G.Player = class {
     if (atk.finisher) G.text(this.x, G.GROUND - 120, 'FINAL BLOW', '#e0b84a', 14); if (atk.charged) G.text(this.x, G.GROUND - 120, 'GATHERED STRENGTH', '#e0b84a', 14); this.stDelay = 0.7; this.buf = null;
     if (atk.poiseBreak) G.sfx('whoosh');
   }
+  // The flask in his hand while he drinks: a small bottle, tipped up under the visor, emptying.
+  drawFlask(ctx, o, time) {
+    const t = this.t, f = this.facing, [hx, hy] = o.out.head, [px, py] = o.out.hip;
+    const up = G.ease(Math.min(1, t / 0.25)), down = G.ease(Math.max(0, Math.min(1, (t - 0.72) / 0.3))), k = up * (1 - down);
+    const x = px - f * 6 + (hx + f * 7 - (px - f * 6)) * k, y = py + 2 + (hy + 8 - (py + 2)) * k;   // from the belt to the mouth and back
+    const tilt = k * (t > 0.25 && t < 0.72 ? 2.2 : 1.4) * f, level = Math.max(0, 1 - Math.max(0, t - 0.3) / 0.35), liquid = this.curing ? '#b79be8' : '#e8d49a';
+    ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(tilt); ctx.scale(1.6, 1.6);
+    ctx.fillStyle = '#1a1214'; ctx.fillRect(-5, -6, 10, 12); ctx.fillRect(-3, -11, 6, 5);                         // outline
+    ctx.fillStyle = 'rgba(220,226,236,0.85)'; ctx.fillRect(-4, -5, 8, 10); ctx.fillRect(-2, -10, 4, 5);         // glass
+    ctx.fillStyle = liquid; const lh = Math.round(9 * level); ctx.fillRect(-4, 5 - lh, 8, lh);                   // what is left
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(-3, -4, 1, 4); ctx.fillStyle = '#5a3a20'; ctx.fillRect(-2, -12, 4, 2); // shine, cork
+    ctx.restore();
+    if (t > 0.3 && t < 0.62 && Math.random() < 0.5) { ctx.fillStyle = liquid; ctx.fillRect(Math.round(hx + f * 4), Math.round(hy + 10 + Math.random() * 8), 2, 2); }   // a drip
+  }
   // A blow landing, with whatever the weapon's skills add to it.
   landHit(e, a, dmg, g, w) {
     const S = G.skills, art = S && S.art(g), fx = { bleed: w.bleed * (S && S.has(g, 'bleed') ? 1.6 : 1) };
@@ -62,7 +76,8 @@ G.Player = class {
   startExecute(e) {
     this.target = e; e.state = 'executed'; e.t = 0; e.vx = 0;
     this.facing = e.x >= this.x ? 1 : -1; this.x = e.x - this.facing * 46 * e.scale; e.facing = -this.facing;
-    this.execKind = Math.random() < 0.5 ? 'decap' : 'impale'; this.struck = false; this.set('execute'); this.vx = 0;
+    const X = G.execKindFor ? G.execKindFor(e, this) : { kind: Math.random() < 0.5 ? 'decap' : 'impale' };
+    this.execKind = X.kind; this.execText = X.text || null; this.execHit = 0; this.struck = false; this.set('execute'); this.vx = 0;
   }
   get invulnerable() { return this.dead || this.pitInv > 0 || this.state === 'execute' || (this.state === 'roll' && this.t < 0.32); }
 
@@ -146,9 +161,10 @@ G.Player = class {
       if (this.t >= 0.36) this.set('idle');
     } else if (this.state === 'heal') {
       this.vx = 0;
-      if (!this.healed && this.t >= 0.55 && this.curing) { this.healed = true; this.cleanse(55); G.sfx('cleanse'); G.text(this.x, G.GROUND - 90, 'Lily tincture', '#d8c6ff', 13); g.fairy.bark('cleansed', false, 0.7); }
-      if (!this.healed && this.t >= 0.55) { this.healed = true; this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.45); G.sfx('heal'); G.text(this.x, G.GROUND - 90, 'Blessed water', '#d9c9b0', 13); }
-      if (this.t >= 0.9) this.set('idle');
+      if (!this.healed && this.t >= 0.62) this.healFx = 0.7;   // the warmth going through him
+      if (!this.healed && this.t >= 0.62 && this.curing) { this.healed = true; this.cleanse(55); G.sfx('cleanse'); G.text(this.x, G.GROUND - 90, 'Lily tincture', '#d8c6ff', 13); g.fairy.bark('cleansed', false, 0.7); }
+      if (!this.healed && this.t >= 0.62) { this.healed = true; this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.45); G.sfx('heal'); G.text(this.x, G.GROUND - 90, 'Blessed water', '#d9c9b0', 13); }
+      if (this.t >= 1.05) this.set('idle');
     } else if (this.state === 'sit' || this.state === 'rise') {
       // resting at a vigil candle: sit until something is pressed, then get up
       this.vx = 0; this.buf = null;
@@ -176,8 +192,15 @@ G.Player = class {
       if (this.t >= 2.0) { this.set('idle'); this.target = null; }
     } else if (this.state === 'execute') {
       this.vx = 0;
-      if (!this.struck && this.t >= 0.55) { this.struck = true; this.bloody = 1; g.executeStrike(this.target, this); }
-      if (this.t >= 1.3) this.set('idle');
+      const X = G.EXECS[this.execKind] || G.EXECS.decap, e = this.target;
+      while (!this.struck && this.execHit < X.hits.length && this.t >= X.hits[this.execHit]) {   // each blow as its moment comes; the last one kills
+        if (this.execHit === X.hits.length - 1) { this.struck = true; this.bloody = 1; g.executeStrike(e, this); }
+        else if (X.mid && e) X.mid(g, e, this, this.execHit);
+        this.execHit++;
+      }
+      if (e && e.lifting) e.lift = Math.min(70 * e.scale, (e.lift || 0) + 140 * e.scale * dt);   // up on the blade
+      if (X.step && this.struck && this.t < X.dur) this.x += this.facing * X.step * dt;
+      if (this.t >= X.dur) this.set('idle');
     }
 
     // stamina
@@ -241,7 +264,9 @@ G.Player = class {
     } else if (s === 'hurt') {
       P.lean = -0.3; P.head = -0.3; P.armA = -0.3; P.w = 1.8; P.footF = 2; P.footB = -12;
     } else if (s === 'heal') {
-      P.bA = 2.4; P.bE = 0.9; P.head = -0.35; P.lean = -0.1; P.armA = 0.2; P.w = 0.6;
+      // the flask off the belt, up under the visor, head back, a long swallow, and down
+      const up = G.ease(Math.min(1, t / 0.25)), down = G.ease(Math.max(0, Math.min(1, (t - 0.72) / 0.3))), k = up * (1 - down), sw = t > 0.25 && t < 0.7 ? Math.sin(t * 22) * 0.04 : 0;
+      P.bA = 0.2 + 2.3 * k; P.bE = 0.9 - 0.3 * k; P.head = -0.45 * k + sw; P.lean = -0.18 * k; P.armA = 0.2; P.w = 0.6; P.footF = 10; P.footB = -9; P.crouch = t > 0.62 && t < 0.8 ? 2 : 0;
     } else if (s === 'charge') {
       G.swing(P, this.weapon.heavy.anim, 0, Math.min(1, t / 0.5)); P.crouch = 6 + Math.sin(t * 40) * (this.chargeReady ? 1 : 0); P.footF = 13; P.footB = -12;
     } else if (s === 'plunge') {
@@ -253,9 +278,7 @@ G.Player = class {
       else if (t < 1.5) { const u = (t - 1.15) / 0.35; Object.assign(P, { armA: 1.8 + u * 1.7, armE: 0.2 + u * 0.6, bA: 1.6 - u * 1.2, bE: 0.3, lean: -0.25 - u * 0.2, head: -0.35, crouch: 2, footF: 14, footB: -14 }); }
       else { const u = Math.min(1, (t - 1.5) / 0.5); Object.assign(P, { armA: 3.5 * (1 - u), armE: 0.8 * (1 - u), bA: 0.4, bE: 0.3, lean: -0.45 * (1 - u), footF: 10, footB: -10 }); }
     } else if (s === 'execute') {
-      P.footF = 14; P.footB = -12; P.crouch = 4;
-      const an = this.execKind === 'decap' ? { a: [3.4, 0.95], e: [0.2, 0.1], w: [4.2, 1.05], lean: [-0.25, 0.45] } : { a: [2.6, 1.15], e: [1.4, 0.1], w: [0.9, 1.15], lean: [-0.2, 0.5] };
-      if (t < 0.5) G.swing(P, an, 0, t / 0.5); else if (t < 0.58) G.swing(P, an, 1, (t - 0.5) / 0.08); else G.swing(P, an, 2, clamp((t - 0.95) / 0.35, 0, 1));
+      G.execPose(P, this.execKind, t);
     } else if (s === 'sit' || s === 'rise') {
       // down onto one knee, then onto the ground beside the flame; rising runs it backwards
       const k = s === 'sit' ? Math.min(1, t / 0.5) : 1 - Math.min(1, t / 0.42);
@@ -285,6 +308,12 @@ G.Player = class {
     }
     if (this.state === 'rip' && this.t > 1.15 && this.t < 1.45 && G.swamp) G.swamp.drawHeld(ctx, this.x + this.facing * 18, o.y - 58 - (this.t - 1.15) * 60, this.facing, g.time);   // her wing, in your fist
     G.drawHumanoid(ctx, o); this.headPos = o.out.head;
+    if (this.state === 'heal' && o.out.head) this.drawFlask(ctx, o, g.time);
+    if (this.healFx > 0) {   // a glow rising through him when the water takes
+      this.healFx -= 1 / 60; const k = this.healFx / 0.7, col = this.curing ? '200,170,255' : '255,220,150', y0 = G.GROUND - this.alt;
+      const gr = ctx.createRadialGradient(this.x, y0 - 40, 4, this.x, y0 - 40, 60); gr.addColorStop(0, `rgba(${col},${0.35 * k})`); gr.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = gr; ctx.fillRect(this.x - 60, y0 - 100, 120, 120);
+      ctx.fillStyle = `rgba(${col},${k})`; for (let i = 0; i < 10; i++) { const a = i * 2.4 + g.time * 3, r = 14 + (i % 3) * 6; ctx.fillRect(Math.round(this.x + Math.cos(a) * r), Math.round(y0 - 10 - (1 - k) * 70 - (i * 7) % 40), 2, 2); }
+    }
     // sword trail
     const swinging = (this.state === 'attack' && this.t >= this.atk.wind - 0.03 && this.t < this.atk.wind + this.atk.active + 0.06) || (this.state === 'execute' && this.t > 0.48 && this.t < 0.64);
     if (swinging && o.out.tip) this.trail.push(o.out.tip); else this.trail.shift();
@@ -627,7 +656,7 @@ G.Enemy = class {
   }
 
   draw(ctx, g) {
-    const d = this.def, o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
+    const d = this.def, o = { x: this.x, y: G.GROUND - Math.round((this.alt + (this.lift || 0)) / 2) * 2, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
     // attack telegraph
     if (this.state === 'windup') {   // a blinking pixel warning over the attacker
       const u = Math.min(1, this.t / this.atk.wind), on = Math.sin(this.t * (14 + u * 30)) > -0.3, x = Math.round(this.x / 2) * 2;

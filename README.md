@@ -78,7 +78,7 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
-Seven **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
+Nine **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
 
 | Side area | Way in | Needs | |
 | --- | --- | --- | --- |
@@ -88,13 +88,15 @@ Seven **side areas** branch off the main road. Neither is needed to finish the g
 | The Gloamwater | an old causeway east out of the Weeping Fen, past where the Matron fell | nothing: and you must go, for the wings | a drowned mire where the sickness first came up out of the ground. **Slowing water** (see below), boardwalks on stilts, Bloodflies, Weeping Moths and the Mire-Drowned; Osk the Ferryman, Hagge Wren the Mire-Wife, and Ser Pell of the Long Battalion. Boss: **the Lamplight Mother** |
 | The Under-Hold | a grate behind the chapel in Brannoc's Hold | nothing | the town's catacombs: rats as big as dogs, Catacomb Ghouls, the torn-out death ledgers, and Brother Quill the archivist, who knows where the muster book went. Mini-boss: **the Gravewarden of Brannoc** |
 | The Ashfall Orchard | Hollowmere's first lane | nothing (one relic wants the wings) | the burnt orchard, still warm: Ash-Pickers with coal-bright eyes, and Teodor, who lit it with his wife inside. Mini-boss: **the Charcoal Widow** |
+| The Hanging Wood | behind the last gibbet of the Gallows Road, past Gaunt | nothing | a wood where every tree is a gibbet: Noosed Dead swinging their ropes, crows, and Wilm, Gaunt's son, who cut the hanged down at night and knows all seventy-one names. Mini-boss: **the Carrion King** |
+| The Frozen Chapel | a side-path off the Pilgrims' Pass | nothing (the wind still blows) | a choir frozen mid-hymn and still singing, and Gerd the blind bell-ringer. Mini-boss: **Abbot Ulric, the Frozen**, who calls the wind down the nave |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
 
 ## Collectables and tools
 
-**Weeping icons** — forty-three small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 43 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — forty-seven small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 47 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -309,6 +311,8 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/skills.js` | Weapon Arts: marks, the per-weapon trees, the new moves and each weapon's art |
 | `js/optional.js` | the Under-Hold and the Ashfall Orchard, and the relics in the trials |
 | `js/wardrobe.js` | the Wardrobe: knight, weapon, wing and Misery skins, their unlocks and the screen |
+| `js/executions.js` | the executions: choreography per kind of foe and per boss |
+| `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -371,7 +375,31 @@ The top of each tree (3 marks, both branches, and a **Martyr's Relic**) is that 
 | The Abbess's Scythe | **Harvest**: every kill restores your stamina and 4% of your life |
 | Pilgrim's Ice-Axe | **Frostbite**: what you strike is slowed for three seconds |
 
-**Martyr's Relics** (seven so far): two in the Under-Hold and two in the Ashfall Orchard (one of each behind its mini-boss), and one at the far end of each of the three trials.
+**Martyr's Relics** (eleven so far: two each in the Hanging Wood and the Frozen Chapel too): two in the Under-Hold and two in the Ashfall Orchard (one of each behind its mini-boss), and one at the far end of each of the three trials.
+
+## Executions
+
+Each kind of foe dies its own way:
+
+| Who | Execution |
+| --- | --- |
+| hounds, wolves, rats | **pinned**: the blade straight down through them |
+| crows, moths, bloodflies | **torn apart**: caught in both hands and pulled in two |
+| bloats | **ruptured**: one thrust, then step back from the fountain |
+| headsmen, wardens and other big ones | **hamstrung**: a cut behind the knee, then the head while they kneel |
+| the rest | a beheading, an impaling, or a flurry of cuts (the Seventh Knife always cuts many times) |
+
+Every boss has its own:
+
+| Boss | Execution |
+| --- | --- |
+| Gaunt, the Windcaller, the Gravewarden | hamstrung, then beheaded |
+| the Drowned Matron, the Standard-Bearer, Abbot Ulric | skewered, lifted high on the blade, then flung down |
+| Malvern, the Charcoal Widow | six cuts and a thrust ("SEVEN CUTS") |
+| the Carrion King | torn apart |
+| Ser Garrick, the Abbess, the Lamplight Mother | a quiet thrust to the heart, kneeling with them ("AT REST") |
+
+**Drinking**: the knight takes the flask off his belt, tips it up under his visor and drinks it down. A glow rises through him when it takes: gold for blessed water, lavender for a lily tincture.
 
 ## Execute or spare
 
