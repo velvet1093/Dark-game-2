@@ -39,6 +39,21 @@
     // six cuts and a thrust
     flurry: { dur: 1.8, hits: [0.2, 0.35, 0.5, 0.65, 0.8, 0.95, 1.22], text: 'CUT TO RIBBONS', keys: flurry,
       mid: (g, e, p, i) => { G.blood(e.x - p.facing * 4, G.GROUND - 60 * e.scale, 10, p.facing * (i % 2 ? -1 : 1), 260); G.sfx('swing'); G.sfx('hit'); g.hitstop = 0.03; } },
+    // the Matron: by the hair, down into the black water, and held there until it stops
+    drown: { dur: 2.6, hits: [0.45, 2.05], quiet: true, text: 'RETURNED TO THE WATER',
+      keys: [K(0, BASE), K(0.35, { armA: 1.5, armE: 0.3, bA: 1.4, bE: 0.4, lean: 0.35, crouch: 4 }), K(0.6, { armA: 1.1, armE: 0.6, bA: 1.0, bE: 0.6, lean: 0.6, crouch: 14, footF: 14, footB: -16 }), K(2.05, { armA: 1.0, armE: 0.7, bA: 0.9, bE: 0.7, lean: 0.65, crouch: 16, footF: 14, footB: -16 }), K(2.6, BASE)],
+      wobble: (P, t) => { if (t > 0.6 && t < 2.0) { const k = 1 - (t - 0.6) / 1.4; P.lean += Math.sin(t * 38) * 0.06 * k; P.armA += Math.sin(t * 31) * 0.08 * k; } },   // she fights it, less and less
+      mid: (g, e) => { e.sinking = true; G.sfx('splat'); G.sfx('scream'); g.shake = 6; },
+      fin: (g, e) => { e.sinking = false; e.sink = Math.max(e.sink || 0, 46 * e.scale); G.sfx('bell'); g.slow = 0.6; } },
+    // the Standard-Bearer: strike the sword from his hands, salute him, run him through, and let the colours fall over him
+    colours: { dur: 2.6, hits: [0.32, 1.28], text: 'RELIEVED OF DUTY',
+      keys: [K(0, BASE), K(0.2, RISE0), K(0.32, RISE1), K(0.55, RISE1), K(0.8, { armA: 2.0, armE: 1.25, w: 3.14, lean: 0, head: 0.05, footF: 9, footB: -9 }), K(1.1, { armA: 2.0, armE: 1.25, w: 3.14, lean: 0, footF: 9, footB: -9 }), K(1.2, THR0), K(1.28, THR1), K(2.0, THR1), K(2.6, BASE)],
+      mid: (g, e, p) => {   // the greatsword spins away
+        e.disarmed = true; G.sfx('block'); G.sfx('guardbreak'); G.spark(e.x, G.GROUND - 70 * e.scale, 20); g.hitstop = 0.1; g.shake = 8;
+        const [jx, jy] = e.joint('armF'); G.gib('weapon', jx, jy, p.facing, e.def.look, { wtype: e.def.weapon, wlen: e.def.wlen, scale: e.scale });
+        G.text(e.x, G.GROUND - 150 * e.scale, 'DISARMED', '#d9c9b0', 15);
+      },
+      fin: (g, e) => { e.bannerT = 0; G.sfx('bell'); g.slow = 0.6; } },
     // kneel with them, and a slow thrust to the heart
     mercy: { dur: 2.1, hits: [1.1], quiet: true, text: 'AT REST', keys: [K(0, BASE), K(0.6, { crouch: 10, lean: 0.2, armA: 1.6, armE: 0.3, w: 1.5, head: 0.3, footF: 10, footB: -16 }), K(1.1, { crouch: 12, lean: 0.5, armA: 1.2, armE: 0.1, w: 1.15, head: 0.4 }), K(1.6, { crouch: 12, lean: 0.5, armA: 1.2, w: 1.15, head: 0.5 }), K(2.1, BASE)],
       fin: (g) => { G.sfx('bell'); g.slow = 0.8; } },
@@ -46,8 +61,8 @@
 
   // who dies how
   const BOSS = {
-    hangman: ['hamstring', 'THE HEADSMAN, HEADLESS'], matron: ['skewer', 'LIFTED FROM THE WATER'], garrick: ['mercy', 'THE DOOR IS OPEN'],
-    bearer: ['skewer', 'RELIEVED OF DUTY'], malvern: ['flurry', 'SEVEN CUTS'], abbess: ['mercy', 'WASHED CLEAN'], windcaller: ['hamstring', 'THE WIND FALLS STILL'],
+    hangman: ['hamstring', 'THE HEADSMAN, HEADLESS'], matron: ['drown', 'RETURNED TO THE WATER'], garrick: ['mercy', 'THE DOOR IS OPEN'],
+    bearer: ['colours', 'RELIEVED OF DUTY'], malvern: ['flurry', 'SEVEN CUTS'], abbess: ['mercy', 'WASHED CLEAN'], windcaller: ['hamstring', 'THE WIND FALLS STILL'],
     mothmother: ['mercy', 'THE LIGHT GOES OUT'], gravewarden: ['hamstring', 'HE KEEPS NO ONE NOW'], widow: ['flurry', 'THE FIRE GOES OUT'],
     crowking: ['wingtear', 'THE KING IS DEAD'], abbot: ['skewer', 'THE CHOIR IS SILENT'],
   };
@@ -67,5 +82,6 @@
     let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
     const [t0, a] = keys[i], [t1, b] = keys[i + 1], u = G.clamp((t - t0) / Math.max(0.001, t1 - t0), 0, 1), e = G.ease ? G.ease(u) : u;
     for (const k of Object.keys(BASE)) { const va = a[k] != null ? a[k] : BASE[k], vb = b[k] != null ? b[k] : BASE[k]; P[k] = va + (vb - va) * e; }
+    const X = G.EXECS[kind]; if (X && X.wobble) X.wobble(P, t);
   };
 })();

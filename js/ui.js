@@ -107,9 +107,9 @@
         clearInterval(timer);
         if (i >= lines.length) { this.clear(); if (done) done(); return; }
         const [who, text] = lines[i++]; full = text; shown = 0;
-        const wist = who === 'Misery'; let n = 0;
-        if (wist) G.sfx('chime');
-        this.show(`<div class="dialogue${wist ? ' wist' : ''}"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ ${esc(G.keyName('use'))}</div></div>`, next);
+        const wist = who === 'Misery', voice = G.voice && who === G.voice.WHO; let n = 0;
+        if (wist) G.sfx('chime'); if (voice) G.voice.flash();
+        this.show(`<div class="dialogue${wist ? ' wist' : ''}${voice ? ' voice' : ''}"><div class="who">${esc(who)}</div><div class="txt"></div><div class="more">▼ ${esc(G.keyName('use'))}</div></div>`, next);
         const t = el().querySelector('.txt');
         timer = setInterval(() => { shown = Math.min(full.length, shown + 2); if (n++ % 2 === 0 && shown < full.length) G.sfx('blip', wist ? 1100 : who === 'Knight' ? 150 : 200); if (t.isConnected) t.textContent = full.slice(0, shown); if (shown >= full.length || !t.isConnected) clearInterval(timer); }, 22);
       };

@@ -668,8 +668,26 @@ G.Enemy = class {
       const ay = G.GROUND - this.alt - 60 * this.scale, gr = ctx.createRadialGradient(this.x, ay, 4, this.x, ay, 110 * this.scale);
       gr.addColorStop(0, `rgba(255,20,30,${0.6 + Math.sin(g.time * 8) * 0.15})`); gr.addColorStop(0.5, 'rgba(200,10,20,0.25)'); gr.addColorStop(1, 'rgba(220,20,30,0)'); ctx.fillStyle = gr; ctx.fillRect(this.x - 120 * this.scale, ay - 120 * this.scale, 240 * this.scale, 240 * this.scale);
     }
+    if (this.sinking) this.sink = Math.min(46 * this.scale, (this.sink || 0) + 30 * this.scale / 60);   // going under
+    if (this.sink) { o.y += Math.round(this.sink); o.y = Math.round(o.y / 2) * 2; }
+    if (this.disarmed) o.weapon = 'none';
     const fade = this.leaving ? Math.max(0, 1 - this.leaving / 2.2) : 1; if (fade < 1) { ctx.save(); ctx.globalAlpha = fade; }
+    if (this.sink) { ctx.save(); ctx.beginPath(); ctx.rect(this.x - 200, 0, 400, G.GROUND + 2); ctx.clip(); }   // nothing shows below the waterline
     if (d.model) G.drawBeast(ctx, this, g.time); else { G.drawHumanoid(ctx, o); this.out = o.out; }
+    if (this.sink) {
+      ctx.restore();
+      const gy = G.GROUND, k = this.sinking ? 1 : 0.4;   // rings on the black water, and bubbles while she still breathes
+      ctx.strokeStyle = `rgba(150,190,170,${0.5 * k})`; ctx.lineWidth = 2;
+      for (let r = 0; r < 3; r++) { const rr = ((g.time * 30 + r * 14) % 42) + 8; ctx.beginPath(); ctx.ellipse(this.x, gy, rr * this.scale, 3, 0, 0, 7); ctx.stroke(); }
+      if (this.sinking) { ctx.fillStyle = 'rgba(210,230,220,0.85)'; for (let b = 0; b < 4; b++) { const ph = (g.time * 1.8 + b * 0.27) % 1; ctx.fillRect(Math.round(this.x - 14 + b * 9 + Math.sin(g.time * 5 + b) * 3), Math.round(gy - 4 - ph * 26), 3, 3); } }
+    }
+    if (this.bannerT != null) {   // the Long Battalion's colours, settling over him
+      this.bannerT = Math.min(1.6, this.bannerT + 1 / 60); const k = G.ease(Math.min(1, this.bannerT / 1.4)), bx = this.x - 30, by = G.GROUND - 120 + k * 102, sw = (1 - k) * Math.sin(g.time * 3) * 10;
+      ctx.save(); ctx.translate(bx + 30 + sw, by); ctx.rotate((1 - k) * 0.25);
+      ctx.fillStyle = '#7a1a14'; ctx.beginPath(); ctx.moveTo(-34, -4); ctx.lineTo(34, -4); ctx.lineTo(30 + Math.sin(g.time * 2) * 2 * (1 - k), 14 - k * 4); ctx.lineTo(-30, 14 - k * 4); ctx.fill();
+      ctx.fillStyle = '#c9a13b'; ctx.beginPath(); ctx.arc(0, 4 - k * 2, 6, 0, 7); ctx.fill(); for (let r = 0; r < 8; r++) { const a2 = r * Math.PI / 4; ctx.fillRect(Math.round(Math.cos(a2) * 9) - 1, Math.round(4 - k * 2 + Math.sin(a2) * 9 * (1 - k * 0.4)) - 1, 2, 2); }   // the sun of Osric
+      ctx.fillStyle = '#5a0e0a'; ctx.fillRect(-34, -4, 68, 2); ctx.restore();
+    }
     if (fade < 1) ctx.restore();
     if (!this.dead && !d.boss && this.hp < this.maxHp && this.state !== 'executed') {
       const w = 40 * this.scale, y = G.GROUND - this.alt - (d.height || (this.crawling ? 34 : 96 * this.scale));

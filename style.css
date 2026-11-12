@@ -227,3 +227,8 @@ body.on-ledge #t-down { display: block; }
 .wd-list .btn small { display: block; font-size: .85em; }
 .wd-nav { width: auto !important; }
 @media (max-width: 700px) { .wd-body { flex-direction: column; height: 66%; } .opts.wd-list { width: 100%; } .wd-prev img { width: 7em; height: 7em; } }
+
+/* ---- the Voice ---- */
+.dialogue.voice { border-color: #c9a13b; background: rgba(30, 20, 4, .94); box-shadow: 0 0 1.4em rgba(255, 210, 110, .45); }
+.dialogue.voice .who { color: #ffe08a; letter-spacing: .3em; }
+.dialogue.voice .txt { color: #fff1c0; font-style: italic; }

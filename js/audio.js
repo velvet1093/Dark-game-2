@@ -54,6 +54,7 @@
   const SFX = {
     swing: () => noise(0.13, 0.16, 1600, 'highpass'),
     whoosh: () => noise(0.38, 0.1, 700, 'bandpass'),
+    voice: () => { tone(880, 1.4, 'sine', 0.05); tone(1318.5, 1.6, 'sine', 0.035, 0, 0.06); tone(1760, 1.2, 'sine', 0.025, 0, 0.12); noise(0.8, 0.03, 5000, 'highpass'); },
     gust: () => { noise(2.2, 0.22, 380, 'bandpass'); noise(1.6, 0.12, 900, 'bandpass', 0.3); },
     horn: () => { tone(98, 1.6, 'sawtooth', 0.22, 92); tone(147, 1.4, 'sawtooth', 0.12, 140, 0.1); noise(1.2, 0.15, 300); },
     hit: () => { noise(0.12, 0.4, 700); tone(110, 0.1, 'square', 0.12, 45); },

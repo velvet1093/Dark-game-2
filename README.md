@@ -313,6 +313,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/wardrobe.js` | the Wardrobe: knight, weapon, wing and Misery skins, their unlocks and the screen |
 | `js/executions.js` | the executions: choreography per kind of foe and per boss |
 | `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
+| `js/voice.js` | the Voice: the goddess only the knight can hear |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -394,12 +395,27 @@ Every boss has its own:
 | Boss | Execution |
 | --- | --- |
 | Gaunt, the Windcaller, the Gravewarden | hamstrung, then beheaded |
-| the Drowned Matron, the Standard-Bearer, Abbot Ulric | skewered, lifted high on the blade, then flung down |
+| the Drowned Matron | **returned to the water**: taken by the hair and held under the black water until she stops fighting; rings and bubbles, then still |
+| the Standard-Bearer | **relieved of duty**: his greatsword struck spinning from his hands, a salute with the blade, a thrust through, and the Battalion's colours falling over him |
+| Abbot Ulric | skewered, lifted high on the blade, then flung down |
 | Malvern, the Charcoal Widow | six cuts and a thrust ("SEVEN CUTS") |
 | the Carrion King | torn apart |
 | Ser Garrick, the Abbess, the Lamplight Mother | a quiet thrust to the heart, kneeling with them ("AT REST") |
 
 **Drinking**: the knight takes the flask off his belt, tips it up under his visor and drinks it down. A glow rises through him when it takes: gold for blessed water, lavender for a lily tincture.
+
+## The Voice
+
+The knight is guided by a goddess, and only he can hear her. Whenever she speaks the world **flashes gold** and a glass note sounds. Her words appear in gold across the screen without stopping the game, or in a gold dialogue box at the turns of the story.
+
+She speaks:
+- before Misery finds him, at the very start ("Rise, little knight. Rise.")
+- the first time he enters each place
+- at his first rest, and when he rises after a death
+- sometimes after a boss falls
+- before the last choice
+
+No one else hears her. Misery only notices him listening to nothing ("Who are you nodding at? There is nobody there. ...Is there?"). Saint Hild feels something bright behind his eyes for a moment. Ser Garrick heard her once, until he took his name back.
 
 ## Execute or spare
 

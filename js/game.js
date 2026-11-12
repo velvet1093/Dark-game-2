@@ -53,7 +53,7 @@
       // everything that can be stood on: ledges, and the tops of rubble walls
       this.surfAll = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h })));
       G.traps.init(this, L); this.surf = this.surfAll.filter(pl => !pl.fake && !pl.off); this.fairy.place(this.player);
-      G.music(musicFor(L)); G.ambience(AMB[L.theme]); this.flags['reached_' + idx] = 1;
+      G.music(musicFor(L)); G.ambience(AMB[L.theme]); this.flags['reached_' + idx] = 1; if (G.voice) G.voice.place(idx);
       this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
@@ -65,7 +65,7 @@
       if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.inside ? this.inside.door.x : this.player.x, n: this.ichor }; this.ichor = 0; }   // dying indoors leaves the stain at the door
       this.watchUsed = false;
       const p = this.player; p.turnT = null; p.inf = Math.min(p.inf, 50);   // you wake with the fever broken, not gone
-      this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save();
+      this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save(); if (G.voice) G.voice.death();
       if (this.level.shrines.includes(this.cp.x)) { const q = this.player; q.x = this.cp.x - 42; q.facing = 1; q.set('sit'); q.t = 0.6; }   // you wake beside the candle, already sitting
     },
     onPlayerDeath() {
@@ -313,6 +313,7 @@
       this.player.reset(); this.spawnEnemies(); this.cleared = {}; for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
       this.cp = { lv: this.levelIdx, x }; this.watchUsed = false; this.save();
       if (this.level.memoryRest && !this.inside) this.remember(this.level.memoryRest);
+      if (G.voice) G.voice.queue('rest', 'Rest. I keep the flame while you sleep.');
       const p = this.player; p.x = x + (p.x < x ? -42 : 42); p.facing = p.x < x ? 1 : -1; p.vx = 0; p.set('sit');   // sit down by the flame, facing it
       G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); this.restMenuT = 0.85;   // sit down first, then the candle's menu
     },
@@ -369,6 +370,7 @@
       this.marks = (this.marks || 0) + 1; this.marksEarned = (this.marksEarned || 0) + 1; G.questLog.banners.push({ kind: 'Mark of Martyrdom', title: 'A boss gives a mark', sub: 'Spend marks on Weapon Arts at a vigil candle', t: 3.5 });
       if (B.grants) this.gainAbility(B.grants);
       if (B.memory) this.remember(B.memory);
+      if (G.voice) G.voice.boss();
       this.bossFight = false; this.boss = null; G.sfx('bell'); G.music(B.final ? null : musicFor(this.level)); this.save();
     },
     // The Lamplight Mother's wings: torn out before the end, and yours from then on.
@@ -457,6 +459,7 @@
         if (this.ringT > 2.8) { this.ringT = 0; G.sfx('cleanse'); this.enterBuilding({ x: sr.x, to: sr.to }); return; }
         if (!this.toldRing && !this.flags.court_met && Math.abs(p.x - sr.x) < 200) { this.toldRing = 1; this.fairy.cd = 0; this.fairy.sayLine(G.FAIRY.ringWarn); }   // she would rather you did not
       }
+      if (G.voice) G.voice.tick(this, dt);
       G.fxUpdate(dt);
       if (!p.dead && p.hp < p.maxHp * 0.35 && (this.heartT -= dt) <= 0) { this.heartT = 0.85; G.sfx('heart'); }
 
@@ -520,6 +523,7 @@
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 2.2)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);
+      if (G.voice) G.voice.draw(ctx, this, W, H);   // the Voice: a gold flash, and her words
     },
 
     drawWorldProps(L, t) {
