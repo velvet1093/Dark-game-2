@@ -177,7 +177,7 @@
       for (const e of g.enemies) {
         if (e.dead || e.dormant || e.state === 'executed' || this.sheltered(L, e.x, s.dir)) continue;
         const m = e.def.windMul != null ? e.def.windMul : e.def.fly ? 1.2 : 0.6;
-        if (m) { e.x += F * m * 0.7 * dt; if (g.bossFight) e.x = G.clamp(e.x, L.boss.gate + 24, L.boss.end + 20); }
+        if (m) { e.x += F * m * 0.7 * dt; if (g.bossFight) e.x = G.clamp(e.x, G.arena(L.boss)[0], G.arena(L.boss)[1]); }
       }
       // Misery is very light
       if (!g.fairyAway && !g.fairy.sitting) g.fairy.x += F * 0.9 * dt;

@@ -81,7 +81,7 @@ G.Player = class {
     this.execKind = X.kind; this.execText = X.text || null; this.execHit = 0; this.struck = false; this.set('execute'); this.vx = 0; this.qte = null; this.qteDone = false;
     const XD = G.EXECS && G.EXECS[X.kind]; if (XD && XD.close) this.x = e.x - this.facing * XD.close * e.scale;   // close enough to take hold
   }
-  get invulnerable() { return this.dead || this.pitInv > 0 || this.state === 'execute' || (this.state === 'roll' && this.t < 0.32); }
+  get invulnerable() { return this.dead || this.pitInv > 0 || this.state === 'execute' || this.state === 'drowning' || (this.state === 'roll' && this.t < 0.32); }
 
   damage(dmg, fromX, g) {
     if (this.invulnerable || this.state === 'rip') return false;   // nothing interrupts the tearing
@@ -185,6 +185,10 @@ G.Player = class {
         this.plungeT = 0.35;
       }
       if (this.plunged && (this.plungeT -= dt) <= 0) { this.plunged = false; this.set('idle'); }
+    } else if (this.state === 'drowning') {   // held under the black water until it is over
+      this.vx = 0; this.sinkT = this.t;
+      if (Math.random() < dt * 6) G.sfx(this.t < 1.6 ? 'splat' : 'heart');
+      if (this.t >= 2.6 && !this.dead) { this.hp = 0; this.dead = true; this.set('dead'); this.sinkT = 2.6; G.sfx('death'); g.onPlayerDeath(); if (this.target) this.target.drowner = false; }
     } else if (this.state === 'rip') {   // tearing out the Lamplight Mother's wings
       this.vx = 0; const e = this.target;
       if (e) { e.ripSide = (this.x >= e.x ? 1 : -1) * e.facing; e.ripPull = this.t < 0.35 ? 0 : this.t < 1.15 ? Math.min(1, (this.t - 0.35) / 0.6) : 0; }
@@ -204,11 +208,10 @@ G.Player = class {
         e.struggle = 1 - Q.fill; e.sinkTarget = (26 + Q.fill * 34) * e.scale;   // only her head and arms above the water
         if (Math.random() < dt * (4 + e.struggle * 10)) G.sfx(Math.random() < 0.3 ? 'scream' : 'splat');
         if (Q.fill >= 1) { this.qteDone = true; this.qte = null; e.struggle = 0.5; e.sinkTarget = 44 * e.scale; G.text(e.x, G.GROUND - 120, 'HELD UNDER', '#e0d8c8', 16); g.hitstop = 0.08; }
-        else if (Q.fill <= 0 || Q.time <= 0) {   // she breaks free and throws him off
-          this.qte = null; e.struggle = 0; e.sinking = false; e.sinkTarget = null; e.sink = 0; e.set('broken'); e.vx = 0;
-          G.text(e.x, G.GROUND - 140, 'SHE BREAKS FREE', '#e0222c', 18); G.sfx('roar'); g.shake = 12;
-          G.blood(e.x, G.GROUND - 30, 20, -this.facing, 260);
-          this.set('hurt'); this.vx = -this.facing * 260; this.hp = Math.max(1, this.hp - this.maxHp * 0.12); this.flash = 0.2; this.target = null;
+        else if (Q.fill <= 0 || Q.time <= 0) {   // she comes up out of the water, takes him by the head, and pulls him under instead
+          this.qte = null; e.struggle = 0; e.sinking = false; e.sinkTarget = 0; e.drowner = true;
+          G.text(e.x, G.GROUND - 160, 'SHE DRAGS YOU UNDER', '#e0222c', 20); G.sfx('roar'); G.sfx('splat'); g.shake = 14;
+          this.x = e.x - this.facing * 34 * e.scale; this.set('drowning'); this.vx = 0; this.flash = 0.2; g.fairy.cd = 0; g.fairy.bark('death', true);
           return;
         }
       }
@@ -297,6 +300,9 @@ G.Player = class {
       else if (t < 1.15) { const tug = Math.sin((t - 0.35) * 6 * Math.PI) * 0.12; Object.assign(P, { armA: 1.8, armE: 0.2, bA: 1.6, bE: 0.3, lean: -0.25 + tug, head: -0.2, crouch: 4, footF: 16, footB: -14 }); }
       else if (t < 1.5) { const u = (t - 1.15) / 0.35; Object.assign(P, { armA: 1.8 + u * 1.7, armE: 0.2 + u * 0.6, bA: 1.6 - u * 1.2, bE: 0.3, lean: -0.25 - u * 0.2, head: -0.35, crouch: 2, footF: 14, footB: -14 }); }
       else { const u = Math.min(1, (t - 1.5) / 0.5); Object.assign(P, { armA: 3.5 * (1 - u), armE: 0.8 * (1 - u), bA: 0.4, bE: 0.3, lean: -0.45 * (1 - u), footF: 10, footB: -10 }); }
+    } else if (s === 'drowning') {
+      const k = Math.max(0, 1 - t / 2.4), tt = G.game.time;
+      Object.assign(P, { crouch: 2, lean: -0.3 + Math.sin(tt * 14) * 0.3 * k, head: -0.4 + Math.sin(tt * 18) * 0.4 * k, armA: Math.PI - 0.6 + Math.sin(tt * 20) * 0.7 * k, armE: 0.4 + Math.sin(tt * 24) * 0.6 * k, bA: Math.PI + 0.4 + Math.sin(tt * 17) * 0.7 * k, bE: 0.5, footF: 6, footB: -6, w: 3.0 });
     } else if (s === 'execute') {
       G.execPose(P, this.execKind, t);
       if (this.qte) { const sh = this.qte.shove; P.crouch += sh * 5; P.lean += sh * 0.12 + Math.sin(G.game.time * 30) * 0.04 * (1 - this.qte.fill); P.armE += sh * 0.25; }   // shoving her down
@@ -317,7 +323,8 @@ G.Player = class {
     const pose = this.pose();
     if (this.air && (this.state === 'idle' || this.state === 'block')) { pose.footF = 9; pose.footB = -3; pose.liftF = 7; pose.liftB = 3; pose.crouch = 2; pose.lean = 0.15; }
     if (this.air && this.alt > 0) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }
-    const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2, facing: this.facing, scale: 1.05, pose, look: G.wardrobe ? G.wardrobe.look(g) : this.look, steel: G.wardrobe ? G.wardrobe.steel(g, g.weaponId) : null, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
+    const sinkP = this.sinkT != null && (this.state === 'drowning' || this.dead) ? Math.min(70, this.sinkT * 34) : 0;
+    const o = { x: this.x, y: G.GROUND - Math.round(this.alt / 2) * 2 + Math.round(sinkP / 2) * 2, facing: this.facing, scale: 1.05, pose, look: G.wardrobe ? G.wardrobe.look(g) : this.look, steel: G.wardrobe ? G.wardrobe.steel(g, g.weaponId) : null, weapon: this.weapon.draw, wlen: this.weapon.len, shield: true, flash: this.flash, bloody: this.bloody, time: g.time, vx: this.vx };
     if (this.state === 'roll' && this.t < 0.32) o.alpha = 0.75;
     this.wingT = Math.max(0, (this.wingT || 0) - 1 / 60);
     const wantW = (this.gliding || this.wingT > 0) && this.air ? 1 : 0;   // the wings unfold quickly and fold away gently
@@ -333,7 +340,13 @@ G.Player = class {
       o.weapon = 'none'; const sx = this.x - this.facing * 22, gy = G.GROUND;
       ctx.fillStyle = '#7d808c'; ctx.fillRect(sx - 1, gy - 30, 3, 32); ctx.fillStyle = '#eef0f5'; ctx.fillRect(sx - 1, gy - 30, 1, 30); ctx.fillStyle = '#c9a13b'; ctx.fillRect(sx - 6, gy - 32, 13, 3); ctx.fillStyle = '#3a2a1e'; ctx.fillRect(sx - 1, gy - 42, 3, 10); ctx.fillStyle = '#c9a13b'; ctx.fillRect(sx - 2, gy - 45, 5, 3);
     }
+    if (sinkP) { ctx.save(); ctx.beginPath(); ctx.rect(this.x - 200, 0, 400, G.GROUND + 2); ctx.clip(); }
     G.drawHumanoid(ctx, o); this.headPos = o.out.head;
+    if (sinkP) {
+      ctx.restore(); const gy = G.GROUND, k = this.dead ? 0.3 : 1;
+      ctx.strokeStyle = `rgba(150,190,170,${0.5 * k})`; ctx.lineWidth = 2; for (let r = 0; r < 3; r++) { const rr = ((g.time * 30 + r * 14) % 42) + 8; ctx.beginPath(); ctx.ellipse(this.x, gy, rr, 3, 0, 0, 7); ctx.stroke(); }
+      if (!this.dead) { ctx.fillStyle = 'rgba(220,236,228,0.85)'; for (let sp = 0; sp < 10; sp++) { const ph = (g.time * (2 + sp % 3) + sp * 0.37) % 1; ctx.fillRect(Math.round(this.x + Math.sin(sp * 2.1 + g.time * 4) * 30 * ph), Math.round(gy - 4 - Math.sin(ph * Math.PI) * 40), 3, 3); } }
+    }
     if (this.state === 'heal' && o.out.head) this.drawFlask(ctx, o, g.time);
     if (this.healFx > 0) {   // a glow rising through him when the water takes
       this.healFx -= 1 / 60; const k = this.healFx / 0.7, col = this.curing ? '200,170,255' : '255,220,150', y0 = G.GROUND - this.alt;
@@ -530,14 +543,14 @@ G.Enemy = class {
       this.spawnT = (this.spawnT == null ? sp.first || sp.every : this.spawnT) - dt * (this.enraged ? 1.8 : this.phase2 ? 1.3 : 1);
       const alive = g.enemies.filter(e => e.type === sp.type && !e.dead).length;
       if (this.spawnT <= 0) { this.spawnT = sp.every; if (alive < sp.max + (this.hard ? 1 : 0)) {
-        const side = Math.random() < 0.5 ? g.level.boss.gate + 60 : g.level.boss.end - 20, e = new G.Enemy(sp.type, side); e.alt = 200; e.set('chase'); g.enemies.push(e);
+        const AR = G.arena(g.level.boss), side = Math.random() < 0.5 ? AR[0] + 36 : AR[1] - 40, e = new G.Enemy(sp.type, side); e.alt = 200; e.set('chase'); g.enemies.push(e);
         G.text(this.x, gy - 140 * this.scale, sp.text || 'SHE CALLS', '#e0b84a', 14); G.sfx('whoosh');
       } }
     }
     const sm = this.def.summon;   // some bosses call for help as their health falls
     if (sm && this.hp > 0 && this.state !== 'broken' && this.state !== 'executed' && (this.summoned || 0) < sm.at.length && this.hp < this.maxHp * sm.at[this.summoned || 0]) {
       this.summoned = (this.summoned || 0) + 1; G.sfx('roar'); G.text(this.x, gy - 170, sm.text || 'SHE CALLS HER HOUNDS', '#e0222c', 16); g.shake = 8;
-      for (let k = 0; k < sm.n + (this.hard ? 1 : 0); k++) { const e = new G.Enemy(sm.type, clamp(this.x + (k ? -1 : 1) * rand(150, 210), g.level.boss.gate + 40, g.level.boss.end)); e.set('chase'); g.enemies.push(e); }
+      for (let k = 0; k < sm.n + (this.hard ? 1 : 0); k++) { const e = new G.Enemy(sm.type, clamp(this.x + (k ? -1 : 1) * rand(150, 210), G.arena(g.level.boss)[0] + 16, G.arena(g.level.boss)[1] - 20)); e.set('chase'); g.enemies.push(e); }
     }
     // ledges: walking off an edge, and flight through the air. Nothing fights in mid-air.
     if (!this.def.fly) {
@@ -635,7 +648,7 @@ G.Enemy = class {
     const px0 = this.x; this.x += this.vx * dt;
     if (this.state !== 'chase') this.vx *= Math.pow(0.002, dt);
     this.x = clamp(this.x, 30, g.level.length - 30);
-    if (boss && !this.dormant) this.x = clamp(this.x, g.level.boss.gate + 30, g.level.boss.end);
+    if (boss && !this.dormant) this.x = clamp(this.x, G.arena(g.level.boss)[0] + 6, G.arena(g.level.boss)[1] - 20);
     this.x = g.gateClamp(px0, this.x, this.alt, this.def.fly);
     // on a ledge, with the quarry level or above: stay on it rather than stepping off the edge
     if (!this.def.fly && !this.air && this.alt > 0 && (p.alt || 0) >= this.alt - 5 && this.state !== 'stagger') {
@@ -674,6 +687,7 @@ G.Enemy = class {
     else if (s === 'strike') { P.footF = 14; P.footB = -10; G.swing(P, a.anim, 1, Math.min(1, t / a.active)); }
     else if (s === 'recover') { P.footF = 12; P.footB = -9; G.swing(P, a.anim, 2, Math.min(1, t / (a.rec * m.speed))); }
     else if (s === 'stagger') { P.lean = -0.35; P.head = -0.4; P.armA = -0.4; P.bA = -0.9; P.footF = 2; P.footB = -13; }
+    else if (this.drowner) { Object.assign(P, { crouch: 12, lean: 0.6, head: 0.3, armA: 0.7, armE: 0.4, bA: 0.6, bE: 0.4, footF: 14, footB: -14 }); }
     else if (s === 'executed' && this.struggle > 0) {   // held under: arms clawing up out of the water, head thrashing
       const k = this.struggle, tt = G.game.time;
       Object.assign(P, { crouch: 4, lean: -0.3 + Math.sin(tt * 13) * 0.25 * k, head: -0.4 + Math.sin(tt * 17) * 0.4 * k, armA: Math.PI - 0.7 + Math.sin(tt * 19) * 0.7 * k, armE: 0.4 + Math.sin(tt * 23) * 0.6 * k, bA: Math.PI + 0.5 + Math.sin(tt * 16 + 1) * 0.7 * k, bE: 0.5 + Math.sin(tt * 21) * 0.5 * k, footF: 6, footB: -6 });

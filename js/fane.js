@@ -61,14 +61,12 @@
   G.BESTIARY_EXTRA.people.push({ id: 'bettany', name: 'Old Bettany', look: 'bettany', text: 'A hermit who sweeps the Fane of the Dawn. She does not know whose house it was. Nobody does.' });
 
   // ---- the way in: a fallen bridge at the very start of the road
-  G.LEVELS[0].passages = (G.LEVELS[0].passages || []).concat([{ x: 64, to: FANE, at: 120, needs: 'dj', label: 'Cross the gorge to the west',
-    shut: 'The old bridge lies broken in the gorge. There is no way across. Not yet',
-    wist: 'West? There is nothing west but the sea and some old stones. Nobody goes west.',
-    slides: ['You cross where the bridge was, on air and nerve.\n\nOn the far side the road climbs to the cliff top, and there, facing the sea and the east at once, stands a temple older than Morrowmere.\n\nThe sky over it is the colour of a dawn that has not quite come.'] }]);
-
+  // ---- the way in: the road simply goes on west, over a gorge where the bridge used to be
+  G.LEVELS[0].edgeL = { to: FANE, at: 4290, needs: 'dj', shut: 'The road ends at a gorge. The bridge that crossed it is long gone. Not yet',
+    wist: 'West? There is nothing west but the sea and some old stones. Nobody goes west.' };
   G.LEVELS.push({
     name: 'The Fane of the Dawn', chapter: 'West of the Gallows Road', theme: 'dawn', length: 4400, seed: 221,
-    back: { to: 0, at: 130 }, backLabel: 'Cross back over the gorge',
+    noBack: true, edgeR: { to: 0, at: 60 },
     shrines: [240, 2300],
     statues: [{ x: 1000 }, { x: 2050 }, { x: 3300, big: true }],
     enemies: [['dawnmoth', 600], ['sentinel', 820], ['dawnmoth', 1250], ['dawnmoth', 1290], ['sentinel', 1600], ['sentinel', 1900], ['dawnmoth', 2600], ['sentinel', 2800], ['dawnmoth', 3050], ['dawnmoth', 3100], ['sentinel', 3200, 'unfair']],
@@ -98,6 +96,14 @@
     },
   });
 
+  // you come in from the east: lay the Fane out the other way round, with the Oathwarden at its western end
+  (L => {
+    const N = L.length, m = x => N - x;
+    L.shrines = L.shrines.map(m).reverse(); L.statues.forEach(st => { st.x = m(st.x); });
+    L.enemies.forEach(e => { e[1] = m(e[1]); }); L.npcs.forEach(n => { n.x = m(n.x); }); L.lore.forEach(n => { n.x = m(n.x); }); L.items.forEach(it => { it.x = m(it.x); });
+    L.platforms.forEach(p => { p.x = N - p.x - p.w; }); L.pits.forEach(p => { p.x = N - p.x - p.w; });
+    const B = L.boss; B.gate = m(B.gate); B.x = m(B.x); B.end = m(B.end);   // end < gate: the arena faces west
+  })(G.LEVELS[FANE]);
   // ---- the dawn: a pale gold horizon, broken columns, a sun that never clears the sea
   // her first words there
   if (G.voice) {

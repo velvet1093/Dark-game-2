@@ -64,7 +64,7 @@
     respawn() {
       if (this.ichor > 0) { this.stain = { lv: this.levelIdx, x: this.inside ? this.inside.door.x : this.player.x, n: this.ichor }; this.ichor = 0; }   // dying indoors leaves the stain at the door
       this.watchUsed = false;
-      const p = this.player; p.turnT = null; p.inf = Math.min(p.inf, 50);   // you wake with the fever broken, not gone
+      const p = this.player; p.turnT = null; p.inf = Math.min(p.inf, 50); p.sinkT = null;   // you wake with the fever broken, not gone
       this.loadLevel(this.cp.lv, this.cp.x); this.card = 0; this.save(); if (G.voice) G.voice.death();
       if (this.level.shrines.includes(this.cp.x)) { const q = this.player; q.x = this.cp.x - 42; q.facing = 1; q.set('sit'); q.t = 0.6; }   // you wake beside the candle, already sitting
     },
@@ -118,7 +118,7 @@
       if (this.inside) { if (near(60, 50)) return { x: 60, y: G.GROUND - 130, label: L.exitLabel || 'Leave ' + this.level.name, fn: () => this.leaveBuilding() }; return null; }
       for (const h of L.hooks || []) if (near(h.x, h.r || 50) && (!h.when || h.when(this))) return { x: h.x, y: G.GROUND - 120, label: h.label, fn: () => h.fn(this) };   // one-off things that happen at a place
       for (const d of L.doors || []) if (near(d.x, 36) && (!d.needs || this.flags[d.needs])) return { x: d.x, y: G.GROUND - 110, label: 'Enter ' + G.INTERIORS[d.to].name, fn: () => this.enterBuilding(d) };
-      if (this.levelIdx > 0 && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: L.backLabel || 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
+      if (this.levelIdx > 0 && !L.noBack && near(BACK_X, 50)) return { x: BACK_X + 30, y: G.GROUND - 150, label: L.backLabel || 'Go back to ' + G.LEVELS[this.levelIdx - 1].name, fn: () => this.travelBack() };
       for (const q of L.passages || []) if (near(q.x, 50)) {
         const tool = !q.needs || this.hasTool(q.needs);
         return { x: q.x, y: G.GROUND - 150, label: tool ? q.label : q.shut, fn: () => (tool ? this.travelTo(q.to, q.at, q.slides) : this.gateRefused(q)) };
@@ -427,7 +427,7 @@
       const p = this.player, L = this.level;
       this.lvT += dt; this.card -= dt; this.fade = Math.max(0, this.fade - dt); this.shake = Math.max(0, this.shake - dt * 40);
 
-      this.bounds = this.bossFight ? [L.boss.gate + 24, L.boss.end + 20] : [30, L.length - 30];
+      this.bounds = this.bossFight ? G.arena(L.boss) : [30, L.length - 30];
       this.prompt = (p.state === 'idle' || p.state === 'block') && !p.air ? this.findInteract() : null;
       if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); return; }   // the world may have changed under us; pick up next frame
 
@@ -436,6 +436,13 @@
       p.update(dt, this);
       if (L.waters) G.swamp.afterPlayer(this, px0, pAir, dt);
       G.wind.tick(this, dt);
+      for (const [side, E] of [[-1, L.edgeL], [1, L.edgeR]]) {   // walking off the end of a place into the next
+        if (!E || this.inside || this.bossFight || p.dead || p.air) continue;
+        const at = side < 0 ? p.x <= 32 : p.x >= L.length - 32, pushing = G.input.down(side < 0 ? 'left' : 'right');
+        if (!at || !pushing) { if (!at) E.told = false; continue; }
+        if (!E.needs || this.hasTool(E.needs)) { this.cp = { lv: E.to, x: E.at }; this.fade = 0.6; G.sfx('page'); this.loadLevel(E.to, E.at); this.player.facing = side; this.save(); return; }
+        if (!E.told) { E.told = true; G.sfx('block'); G.text(side < 0 ? p.x + 300 : p.x - 300, G.GROUND - 200, E.shut, '#d9c9b0', 14); this.fairy.cd = 0; if (E.wist) this.fairy.sayLine(E.wist); }
+      }
       this.seen = this.seen || {};
       const fresh = this.enemies.filter(e => !this.seen[e.type] && !e.dormant && this.onScreen(e.x));
       if (fresh.length) { const names = [...new Set(fresh.map(e => { this.seen[e.type] = 1; return e.def.name; }))]; G.questLog.banners.push({ kind: names.length > 1 ? 'New bestiary entries' : 'New bestiary entry', title: names.join(', '), sub: 'Press ' + G.keyName('bestiary') + ' to read', t: 3 }); }
@@ -467,7 +474,7 @@
       for (const [i, k] of (L.gates || []).entries()) {   // Misery cannot resist remarking on a way you cannot take
         if (!this.toldGate[i] && !this.gateOpen(i) && !this.hasTool(k.need) && Math.abs(p.x - k.x) < 170) { this.toldGate[i] = 1; this.fairy.cd = 0; this.fairy.sayLine(k.wist); }
       }
-      if (this.boss && this.boss.dormant && !p.dead && p.x > L.boss.gate + 70) {
+      if (this.boss && this.boss.dormant && !p.dead && G.arenaIn(L.boss, p.x)) {
         p.vx = 0; p.set('idle');
         const met = 'boss_' + L.boss.type + '_met';
         G.ui.dialogue(this.flags[met] ? L.boss.retry : (L.boss.final ? G.FAIRY.boss : []).concat((this.flags.named && L.boss.introNamed) || L.boss.intro), () => { this.flags[met] = 1; this.bossFight = true; this.boss.dormant = false; G.sfx('bell'); G.music('boss'); });
@@ -478,7 +485,8 @@
       if (p.dead && (this.deathT += dt) > 1.7) { this.deathT = -99; this.fairy.say = null; G.ui.death(this.ichor, () => this.respawn(), this.fairy.last.death, this.flags.deaths, p.turned); }
 
       let target = p.x - W * 0.42 + p.facing * 40;
-      target = clamp(target, this.bossFight ? L.boss.gate - 110 : 0, L.length - W);
+      const west = L.boss && L.boss.end < L.boss.gate;
+      target = clamp(target, this.bossFight && !west ? L.boss.gate - 110 : 0, this.bossFight && west ? Math.max(0, L.boss.gate + 110 - W) : L.length - W);
       this.cam += (target - this.cam) * Math.min(1, dt * 5);
     },
 
@@ -624,7 +632,15 @@
         ctx.beginPath(); ctx.moveTo(x - 46, gy - 150); ctx.quadraticCurveTo(x, gy - 215, x + 46, gy - 150); ctx.lineTo(x + 32, gy - 150); ctx.quadraticCurveTo(x, gy - 190, x - 32, gy - 150); ctx.fill();
       };
       if (L.exit) arch(L.exit.x, 'rgba(150,40,30,0.28)');
-      if (this.levelIdx > 0 && !this.inside) arch(BACK_X, 'rgba(90,90,120,0.22)');
+      for (const [side, E] of [[-1, L.edgeL], [1, L.edgeR]]) if (E && !this.inside) {   // the gorge at the end of the road, and the stub of the old bridge
+        const x0 = side < 0 ? -80 : L.length + 6, x1 = side < 0 ? 22 : L.length + 80, edge = side < 0 ? 22 : L.length - 22;
+        ctx.fillStyle = '#020102'; ctx.fillRect(Math.min(x0, x1), gy - 3, Math.abs(x1 - x0), G.H - gy + 3);
+        ctx.fillStyle = '#1a1012'; ctx.fillRect(edge - (side < 0 ? 4 : 0), gy - 3, 4, 90);
+        ctx.fillStyle = '#3a2618'; for (let k = 0; k < 4; k++) ctx.fillRect(edge + side * (6 + k * 11), gy - 4 + k * 3, 9, 4);   // planks hanging over the drop
+        ctx.fillStyle = '#5e4028'; ctx.fillRect(edge - side * 2, gy - 34, 4, 34); ctx.fillStyle = '#2a1e14'; ctx.fillRect(edge - side * 2, gy - 36, 4 + 0, 3);
+        ctx.strokeStyle = '#4a3a2a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(edge, gy - 30); ctx.quadraticCurveTo(edge + side * 24, gy - 6, edge + side * 40, gy + 20); ctx.stroke();   // a snapped rope
+      }
+      if (this.levelIdx > 0 && !L.noBack && !this.inside) arch(BACK_X, 'rgba(90,90,120,0.22)');
       if (!this.inside) for (const q of L.passages || []) {   // a stair going down, off the main road
         const open = !q.needs || this.hasTool(q.needs);
         arch(q.x, open ? 'rgba(120,150,190,0.24)' : 'rgba(70,70,80,0.16)');
@@ -640,7 +656,7 @@
       // boss altar & fog door
       if (L.boss) {
         if (L.boss.final) {
-          const ax = L.boss.end + 130; glow(ax, gy - 90, 170, 'rgba(170,20,30,0.3)');
+          const ax = L.boss.end < L.boss.gate ? L.boss.end - 130 : L.boss.end + 130; glow(ax, gy - 90, 170, 'rgba(170,20,30,0.3)');
           ctx.fillStyle = '#0a0708'; ctx.fillRect(ax - 60, gy - 30, 150, 30); ctx.fillRect(ax + 30, gy - 190, 8, 160); ctx.fillRect(ax + 12, gy - 165, 44, 7);
         }
         if (!this.flags['boss_' + L.boss.type + '_dead']) {

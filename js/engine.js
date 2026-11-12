@@ -180,3 +180,7 @@ G.fxUpdate = dt => {
     if (s.t <= 0) f.sparks.splice(i, 1);
   }
 };
+
+// A boss arena's walkable span. Most arenas open to the right of their gate; a few (end < gate) face west.
+G.arena = B => (B.end < B.gate ? [B.end - 20, B.gate - 24] : [B.gate + 24, B.end + 20]);
+G.arenaIn = (B, x) => (B.end < B.gate ? x < B.gate - 70 : x > B.gate + 70);

@@ -90,7 +90,7 @@ Ten **side areas** branch off the main road. Neither is needed to finish the gam
 | The Ashfall Orchard | Hollowmere's first lane | nothing (one relic wants the wings) | the burnt orchard, still warm: Ash-Pickers with coal-bright eyes, and Teodor, who lit it with his wife inside. Mini-boss: **the Charcoal Widow** |
 | The Hanging Wood | behind the last gibbet of the Gallows Road, past Gaunt | nothing | a wood where every tree is a gibbet: Noosed Dead swinging their ropes, crows, and Wilm, Gaunt's son, who cut the hanged down at night and knows all seventy-one names. Mini-boss: **the Carrion King** |
 | The Frozen Chapel | a side-path off the Pilgrims' Pass | nothing (the wind still blows) | a choir frozen mid-hymn and still singing, and Gerd the blind bell-ringer. Mini-boss: **Abbot Ulric, the Frozen**, who calls the wind down the nave |
-| The Fane of the Dawn | a fallen bridge at the very start of the Gallows Road, west of where you wake | the wings | a ruined temple on the sea cliffs under a dawn that never quite comes. Faceless Sentinels and Dawn-Moths, Old Bettany who sweeps it and does not know whose house it was, votive tablets of vows kept. Boss: **the Oathwarden**, a great statue that holds every oath. It leaves the **Dawnbrand** (art: Dawnfire) |
+| The Fane of the Dawn | walk off the west end of the Gallows Road, left of where you wake, over the gorge where the bridge fell | the wings | a ruined temple on the sea cliffs under a dawn that never quite comes. Faceless Sentinels and Dawn-Moths, Old Bettany who sweeps it and does not know whose house it was, votive tablets of vows kept. Boss: **the Oathwarden**, a great statue that holds every oath. It leaves the **Dawnbrand** (art: Dawnfire) |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
@@ -397,7 +397,7 @@ Every boss has its own:
 | Boss | Execution |
 | --- | --- |
 | Gaunt, the Windcaller, the Gravewarden | hamstrung, then beheaded |
-| the Drowned Matron | **returned to the water**: the knight drives his sword into the mud, takes her head in both hands and forces her down. **Mash Use (E, or the Use button on touch)** to hold her under while she claws and thrashes up out of the water. Fill the bar before it runs out and she slowly goes under and is still. Fail and she **breaks free**, throwing you off (some damage), and you must break her again |
+| the Drowned Matron | **returned to the water**: the knight drives his sword into the mud, takes her head in both hands and forces her down. **Mash Use (E, or the Use button on touch)** to hold her under while she claws and thrashes up out of the water. Fill the bar before it runs out and she slowly goes under and is still. Fail and **she drowns you instead**: she rises out of the water, takes your head, and holds you under until you die |
 | the Standard-Bearer | **relieved of duty**: his greatsword struck spinning from his hands, a salute with the blade, a thrust through, and the Battalion's colours falling over him |
 | Abbot Ulric | skewered, lifted high on the blade, then flung down |
 | Malvern, the Charcoal Widow | six cuts and a thrust ("SEVEN CUTS") |
