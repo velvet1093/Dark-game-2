@@ -40,7 +40,7 @@ G.Player = class {
   cleanse(amount) { this.inf = Math.max(0, this.inf - amount); if (this.inf < 100) this.turnT = null; }
   reset() {
     this.hp = this.maxHp; this.st = this.maxSt; this.flasks = this.flaskMax;
-    this.state = 'idle'; this.t = 0; this.vx = 0; this.dead = false; this.walk = 0;
+    this.state = 'idle'; this.t = 0; this.vx = 0; this.dead = false; this.walk = 0; this.gorgeDead = false;
     this.combo = 0; this.buf = null; this.stDelay = 0; this.flash = 0; this.bloody = 0; this.trail = []; this.turned = false; this.curing = false; this.alt = 0; this.vy = 0; this.air = false; this.dropT = 0; this.pitInv = 0; this.pitRef = null; this.safeX = null;
   }
   set(state) { this.state = state; this.t = 0; }
@@ -103,7 +103,7 @@ G.Player = class {
   update(dt, g) {
     const I = G.input, w = this.weapon;
     this.t += dt; this.flash -= dt; this.bloody = Math.max(0, this.bloody - dt * 0.03);
-    if (this.dead) { this.vx *= Math.pow(0.002, dt); this.x += this.vx * dt; this.alt = Math.max(0, this.alt - 500 * dt); return; }
+    if (this.dead) { if (this.gorgeDead) return; this.vx *= Math.pow(0.002, dt); this.x += this.vx * dt; this.alt = Math.max(0, this.alt - 500 * dt); return; }
     if (this.turnT != null && this.state !== 'execute' && (this.turnT -= dt) <= 0) {
       // out of time: the knight turns
       this.turnT = null; this.turned = true; this.hp = 0; this.dead = true; this.set('dead'); G.sfx('death'); G.sfx('roar'); g.onPlayerDeath(); return;
@@ -320,6 +320,7 @@ G.Player = class {
   }
 
   draw(ctx, g) {
+    if (this.gorgeDead) return;   // gone down into the dark
     const pose = this.pose();
     if (this.air && (this.state === 'idle' || this.state === 'block')) { pose.footF = 9; pose.footB = -3; pose.liftF = 7; pose.liftB = 3; pose.crouch = 2; pose.lean = 0.15; }
     if (this.air && this.alt > 0) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; const w = Math.max(6, 18 - this.alt * 0.1); ctx.fillRect(Math.round((this.x - w) / 2) * 2, G.GROUND + 2, Math.round(w) * 2, 4); }

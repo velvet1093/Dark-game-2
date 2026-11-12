@@ -267,7 +267,10 @@
     pitAt(x) { const ps = this.level.pits; if (ps) for (const q of ps) if (x > q.x + 6 && x < q.x + q.w - 6) return q; return null; },
     impale(p, pk) {
       p.state = 'idle'; p.t = 0; p.pitInv = 0;
-      if (pk && pk.gorge) { p.damage(18, p.x, this); G.sfx('thud'); this.shake = 8; G.text(p.x, G.GROUND - 70, 'TOO FAR', '#d9c9b0', 16); }   // into the gorge, and a long climb back
+      if (pk && pk.gorge) {   // into the gorge: there is no climbing back out of that
+        p.alt = -200; p.vy = 0; p.air = false; p.hp = 0; p.dead = true; p.set('dead'); p.gorgeDead = true;
+        G.sfx('thud'); G.sfx('death'); this.shake = 12; G.text(p.x, G.GROUND - 90, 'YOU FELL', '#d9c9b0', 20); this.onPlayerDeath(); return;
+      }
       else { p.damage(24, p.x, this); G.blood(p.x, G.GROUND + 30, 34, 0, 280); G.sfx('sever'); this.shake = 10; G.text(p.x, G.GROUND - 70, 'IMPALED', '#e0222c', 16); }
       if (pk) p.x = (p.safeX != null ? p.safeX : pk.x - 30) < pk.x + pk.w / 2 ? pk.x - 24 : pk.x + pk.w + 24;   // climb out the side you fell from
       p.alt = 0; p.vy = 0; p.vx = 0; p.air = false; p.pitRef = null; p.pitInv = 0.7;
