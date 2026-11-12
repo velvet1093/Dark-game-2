@@ -67,7 +67,7 @@
 
   // ---- the way up: a goat path behind Hollowmere's last houses
   G.LEVELS[3].passages = (G.LEVELS[3].passages || []).concat([{ x: 4860, to: LV, at: 120, needs: 'dj', label: 'Climb the Pilgrims\' Pass',
-    shut: 'A goat path up the cliff. You would need to jump twice as high', wist: 'Up THERE? It is all wind and old monks. Nobody dies interestingly in the snow. They just stop.',
+    shut: 'A goat path up a sheer cliff. There is no way up. Not yet', wist: 'Up THERE? It is all wind and old monks. Nobody dies interestingly in the snow. They just stop.',
     slides: ['The goat path climbs out of the village and keeps climbing, past the last fences, past the last trees.\n\nThe snow begins. Then the wind.\n\nAbove, on the saddle of the mountain, a monastery bell is swinging. Nobody is ringing it. The wind is.'] }]);
 
   const SHELTERS = [680, 1180, 1700, 2230, 2980, 3620, 4240, 4880, 5400];

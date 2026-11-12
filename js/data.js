@@ -559,8 +559,8 @@ G.LEVELS = [
       { x: 3780, title: "The Doctor's Ledger", text: 'Subject 388 wept nine days before turning.\nSubject 391: eleven.\n\nThe miller\'s girl: four hundred and six days. Still lucid. Still weeping.\n\nShe is not immune. She is the well it is drawn from. God forgive me — I told the Bishop.' },
     ],
     gates: [
-      { x: 2580, kind: 'wall', h: 128, need: 'dj', shut: 'Fallen masonry. Too high to climb. Something with wings could get over', hint: 'Jump, then jump again in mid-air',
-        wist: 'A wall. You cannot fly, can you? I can. It is wonderful. ...There is a moth in the black water east of the fen with lovely big wings. Not that you would ever.' },
+      { x: 2580, kind: 'wall', h: 128, need: 'dj', shut: 'Fallen masonry. Too high to climb. Not yet', hint: 'Jump, then jump again in mid-air',
+        wist: 'A wall. You cannot fly, can you? I can. It is wonderful. ...There is something out in the black water east of the fen that never touches the ground. Not that you would ever go and look.' },
       { x: 6250, kind: 'veil', need: 'lantern', shut: 'A red veil. It wants a blessed light', open: 'Part the veil with the Lily Lantern',
         wist: 'Pretty, is it not? It eats people. Somebody left a lamp up on those boards behind us, but I would not bother.' },
     ],

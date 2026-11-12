@@ -69,6 +69,7 @@ G.Player = class {
   // A blow landing, with whatever the weapon's skills add to it.
   landHit(e, a, dmg, g, w) {
     const S = G.skills, art = S && S.art(g), fx = { bleed: w.bleed * (S && S.has(g, 'bleed') ? 1.6 : 1) };
+    if (art === 'dawnbrand' && a.poiseBreak) { dmg *= 1.4; if (G.voice) G.game.voiceFlash = Math.max(G.game.voiceFlash || 0, 0.45); }   // Dawnfire
     if (art === 'knife' && (this.cut7 = (this.cut7 || 0) + 1) % 7 === 0) e.bleed = Math.max(e.bleed, 100 - fx.bleed);   // the seventh cut
     e.takeHit(dmg, a, this.facing, g, fx); this.bloody = Math.min(1, this.bloody + 0.25);
     if (art === 'iceaxe' && !e.dead) { if (!(e.frostT > 0)) G.text(e.x, G.GROUND - 120 * e.scale, 'FROSTBITE', '#b8d8f0', 12); e.frostT = 3; }

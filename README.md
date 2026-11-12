@@ -78,7 +78,7 @@ The Weeping is a sickness, not a curse. The things on the road are **living peop
 | IV | Hollowmere | your home village |
 | V | Cathedral of Saint Avaric | the source |
 
-Nine **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
+Ten **side areas** branch off the main road. Neither is needed to finish the game; each is reached by a stair at the roadside that needs a tool, so they are worth coming back for:
 
 | Side area | Way in | Needs | |
 | --- | --- | --- | --- |
@@ -90,13 +90,14 @@ Nine **side areas** branch off the main road. Neither is needed to finish the ga
 | The Ashfall Orchard | Hollowmere's first lane | nothing (one relic wants the wings) | the burnt orchard, still warm: Ash-Pickers with coal-bright eyes, and Teodor, who lit it with his wife inside. Mini-boss: **the Charcoal Widow** |
 | The Hanging Wood | behind the last gibbet of the Gallows Road, past Gaunt | nothing | a wood where every tree is a gibbet: Noosed Dead swinging their ropes, crows, and Wilm, Gaunt's son, who cut the hanged down at night and knows all seventy-one names. Mini-boss: **the Carrion King** |
 | The Frozen Chapel | a side-path off the Pilgrims' Pass | nothing (the wind still blows) | a choir frozen mid-hymn and still singing, and Gerd the blind bell-ringer. Mini-boss: **Abbot Ulric, the Frozen**, who calls the wind down the nave |
+| The Fane of the Dawn | a fallen bridge at the very start of the Gallows Road, west of where you wake | the wings | a ruined temple on the sea cliffs under a dawn that never quite comes. Faceless Sentinels and Dawn-Moths, Old Bettany who sweeps it and does not know whose house it was, votive tablets of vows kept. Boss: **the Oathwarden**, a great statue that holds every oath. It leaves the **Dawnbrand** (art: Dawnfire) |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
 An archway at the near end of each side area climbs back to the stair you came down.
 
 ## Collectables and tools
 
-**Weeping icons** — forty-seven small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 47 three points of Vigor. The journal and the HUD show the count.
+**Weeping icons** — forty-nine small gilt paintings of the Saint: three in every area (side areas included), four inside buildings, one at the far end of each trial, and one somewhere secret. Finding 5 earns a permanent extra flask, 10 a permanent extra tincture vial, and all 49 three points of Vigor. The journal and the HUD show the count.
 
 Not all of them can be reached when you first see them. Three tools open the way, and each is found in a different area from most of the things it unlocks, so it pays to go back:
 
@@ -314,6 +315,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/executions.js` | the executions: choreography per kind of foe and per boss |
 | `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
 | `js/voice.js` | Aurelle, the goddess only the knight can hear |
+| `js/fane.js` | the Fane of the Dawn and Aurelle's statues |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
 | `js/fairy.js` | Misery: lines, behaviour and drawing |
 | `js/sprites.js` | hand-placed pixel sprites for the hound, the crow and Misery |
@@ -414,6 +416,8 @@ She speaks:
 - at his first rest, and when he rises after a death
 - sometimes after a boss falls
 - before the last choice
+
+**Her statues** stand in the Fane of the Dawn and beside the Chapel of the Lily in Brannoc's Hold: a robed woman with a sun at her back, her face worn smooth. Nobody living remembers whose they are. Kneel before one and she answers, and once between rests her warmth gives back a quarter of your life.
 
 No one else knows of her. Only Misery notices him listening to nothing ("Who are you nodding at? There is nobody there. ...Is there?").
 

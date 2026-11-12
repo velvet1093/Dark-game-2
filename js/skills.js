@@ -30,6 +30,7 @@
     knife: { name: 'The Seventh Cut', how: 'Every seventh hit opens a haemorrhage.' },
     scythe: { name: 'Harvest', how: 'Every kill restores your stamina and 4% of your life.' },
     iceaxe: { name: 'Frostbite', how: 'What you strike is slowed for three seconds.' },
+    dawnbrand: { name: 'Dawnfire', how: 'Every guard-breaking blow sears for 40% more, and lights the knight gold.' },
   };
   const markNeed = g => 260 + (g.marksEarned || 0) * 30;
 

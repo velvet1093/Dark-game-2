@@ -320,6 +320,7 @@ const THEMES = {
   mountain: { sky: ['#0a0c14', '#1a2030', '#3a3c4e'], moon: true, mid: ['peak', 'pine', 'pine', 'peak', 'pine'], near: ['pine', 'rock', 'cross', 'pine', 'rock', 'stake'], ground: '#6a7080', edge: '#c0c8d8', weather: 'snow', snow: true },
   swamp: { sky: ['#040806', '#0c1610', '#1e2a1a'], moon: true, mid: ['willow', 'tree', 'stilt', 'willow', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#0a100c', edge: '#1e2c20', weather: 'spores', water: true },
   orchard: { sky: ['#0a0606', '#2a0e08', '#6a2410'], moon: true, mid: ['tree', 'tree', 'house', 'tree', 'cart', 'tree'], near: ['stake', 'fence', 'grave', 'cross', 'stake', 'fence'], ground: '#140c0a', edge: '#3a1e14', weather: 'ash' },
+  dawn: { sky: ['#1a1428', '#6a4058', '#f0b070'], mid: ['cloister', 'wall', 'cloister', 'tree'], near: ['grave', 'lilies', 'cross', 'candles', 'lilies'], ground: '#1a1416', edge: '#5a4a3a', weather: 'ash' },
   crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
 
@@ -648,6 +649,14 @@ G.drawFar = (ctx, level, cam, t) => {
     ctx.lineTo(W, gy); ctx.fill();
     ctx.fillStyle = 'rgba(170,180,200,0.35)';
     for (let x = 0; x <= W; x += 6) { const wx = x + off * 0.5, top = gy - 150 - Math.abs(Math.sin(wx * 0.0042)) * 150 - Math.sin(wx * 0.017) * 22; if (top < gy - 230) ctx.fillRect(x, top, 6, Math.min(30, gy - 230 - top + 6)); }
+    ctx.fillStyle = '#150b0f';
+  }
+  else if (th === 'dawn') {                            // the sea, and a sun that never quite clears it
+    const sx = W * 0.62 - off * 0.05, sy = gy - 64, sg = ctx.createRadialGradient(sx, sy, 10, sx, sy, 260); sg.addColorStop(0, 'rgba(255,220,150,0.55)'); sg.addColorStop(1, 'rgba(255,170,90,0)'); ctx.fillStyle = sg; ctx.fillRect(sx - 260, sy - 260, 520, 330);
+    ctx.fillStyle = '#ffd890'; ctx.beginPath(); ctx.arc(sx, sy + 8, 46, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#2a2034'; ctx.fillRect(0, gy - 60, W, 60);
+    ctx.fillStyle = 'rgba(255,210,140,0.35)'; for (let k = 0; k < 10; k++) ctx.fillRect(sx - 60 + ((k * 37) % 120) - (k % 3) * 6, gy - 54 + k * 5, 30 - k * 2, 2);
+    ctx.fillStyle = '#1a1424'; each(520, (x, h) => { const y = gy - 60; for (let c = 0; c < 5; c++) { const hh = 70 + ((h >>> c) % 60); if ((h >>> (c + 3)) % 4) ctx.fillRect(x + c * 26, y - hh, 10, hh); } ctx.fillRect(x - 4, y - 6, 140, 6); });   // broken columns on the headland
     ctx.fillStyle = '#150b0f';
   }
   else if (th === 'orchard') each(130, (x, h) => {   // the orchard, rows of burnt trees, some still smouldering

@@ -6,8 +6,8 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
-  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain', orchard: 'wind' };
-  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road', orchard: 'village' }[L.theme] || L.theme);
+  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain', orchard: 'wind', dawn: 'wind' };
+  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road', orchard: 'village', dawn: 'court' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
@@ -311,7 +311,7 @@
     },
     rest(x) {
       this.player.reset(); this.spawnEnemies(); this.cleared = {}; for (const n of this.npcs) if (!n.dead) n.hp = n.maxHp;
-      this.cp = { lv: this.levelIdx, x }; this.watchUsed = false; this.save();
+      this.cp = { lv: this.levelIdx, x }; this.watchUsed = false; this.kneelHealed = false; this.save();
       if (this.level.memoryRest && !this.inside) this.remember(this.level.memoryRest);
       if (G.voice) G.voice.queue('rest', 'Rest. I keep the flame while you sleep.');
       const p = this.player; p.x = x + (p.x < x ? -42 : 42); p.facing = p.x < x ? 1 : -1; p.vx = 0; p.set('sit');   // sit down by the flame, facing it
@@ -663,6 +663,7 @@
         ctx.stroke();
         ctx.fillStyle = 'rgba(255,190,110,0.5)'; ctx.beginPath(); ctx.moveTo(x - 20 * k, gy); ctx.lineTo(x - 20 * k, gy - 52 * k); ctx.quadraticCurveTo(x, gy - 84 * k, x + 20 * k, gy - 52 * k); ctx.lineTo(x + 20 * k, gy); ctx.fill();
       }
+      if (!this.inside && G.drawStatue) for (const st of L.statues || []) { if (st.litT > 0) st.litT -= 1 / 60; G.drawStatue(ctx, st.x, gy, t, st.big, st.litT > 0); }   // Aurelle, faceless
       // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
         if (this.flags['item_' + this.lvKey() + '_' + i] || (it.needs && !this.flags[it.needs])) return;

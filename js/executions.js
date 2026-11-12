@@ -64,7 +64,7 @@
     hangman: ['hamstring', 'THE HEADSMAN, HEADLESS'], matron: ['drown', 'RETURNED TO THE WATER'], garrick: ['mercy', 'THE DOOR IS OPEN'],
     bearer: ['colours', 'RELIEVED OF DUTY'], malvern: ['flurry', 'SEVEN CUTS'], abbess: ['mercy', 'WASHED CLEAN'], windcaller: ['hamstring', 'THE WIND FALLS STILL'],
     mothmother: ['mercy', 'THE LIGHT GOES OUT'], gravewarden: ['hamstring', 'HE KEEPS NO ONE NOW'], widow: ['flurry', 'THE FIRE GOES OUT'],
-    crowking: ['wingtear', 'THE KING IS DEAD'], abbot: ['skewer', 'THE CHOIR IS SILENT'],
+    crowking: ['wingtear', 'THE KING IS DEAD'], oathwarden: ['hamstring', 'THE OATH IS BROKEN'], abbot: ['skewer', 'THE CHOIR IS SILENT'],
   };
   G.execKindFor = (e, p) => {
     const d = e.def;

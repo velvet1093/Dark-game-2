@@ -79,7 +79,7 @@
 
   // ---- the ways in
   G.LEVELS[0].passages = [{ x: 250, to: 5, at: 120, needs: 'dj', label: 'Climb down the cliff path to the harbour',
-    shut: 'The cliff path has fallen. Too far to climb back up without wings', wist: 'Down there? It is only a shipwreck. Full of men who were sure they were coming home.',
+    shut: 'The cliff path has crumbled away. You could get down, but never back up. Not yet', wist: 'Down there? It is only a shipwreck. Full of men who were sure they were coming home.',
     slides: ['A broken stair, cut into the cliff.\n\nBelow, a great ship lies on her side in the shallows, her sun-banner still flying at the stern.\n\nYou know her. You sailed home on her.'] }];
   G.LEVELS[4].passages = [{ x: 2600, to: 6, at: 120, needs: 'lantern', label: 'Descend into the Ossuary',
     shut: 'A stair into the dark. You would need a light', wist: 'It is so dark down there. Lovely. Do go first.',
