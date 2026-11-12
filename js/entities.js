@@ -502,6 +502,9 @@ G.Enemy = class {
   }
 
   update(dt, g) {
+    if (g.flags && g.flags.nell_bound && (this.type === 'moth' || this.type === 'bloodfly') && !this.dead && this.state !== 'broken' && this.state !== 'executed') {   // Nell's children: they will not touch him
+      this.t += dt; this.flash -= dt; if (this.state !== 'idle') this.set('idle'); this.vx = 0; this.alt += ((this.def.flyAlt || 120) + Math.sin(g.time * 2 + this.id) * 10 - this.alt) * Math.min(1, dt * 2); return;
+    }
     if (this.frostT > 0) { this.frostT -= dt; dt *= 0.65; }   // Frostbite: everything it does, slower
     this.t += dt; this.flash -= dt; this.cd -= dt;
     if (this.leaving) {   // spared: it turns away and is gone

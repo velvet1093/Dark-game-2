@@ -116,6 +116,12 @@
         this.mg = this.mg || { id: 7, def: { scale: 1 }, limbs: { head: {}, armF: {}, armB: {} }, wingless: true, flash: 0, alt: 0, dead: false, state: 'broken' };
         Object.assign(this.mg, { x: this.x, facing: g.player.x >= this.x ? 1 : -1, calm });
         G.drawMothGirlSprite(ctx, this.mg, g.time);
+        if (g.flags.nell_bound) {   // an iron collar, and a chain to a stake in the mud
+          const gy = G.GROUND, cx = this.x, cy = gy - 42, sx = this.x + (g.player.x < this.x ? 44 : -44);
+          ctx.fillStyle = '#3a3438'; ctx.fillRect(cx - 7, cy, 14, 4); ctx.fillStyle = '#6a646c'; ctx.fillRect(cx - 7, cy, 14, 1);
+          ctx.fillStyle = '#2a2428'; ctx.fillRect(sx - 2, gy - 22, 5, 24); ctx.fillStyle = '#5a4a3a'; ctx.fillRect(sx - 3, gy - 24, 7, 3);
+          ctx.fillStyle = '#5a5458'; for (let k = 0; k <= 10; k++) { const u = k / 10, x = sx + (cx - sx) * u, y = gy - 20 + (cy + 2 - (gy - 20)) * u + Math.sin(u * Math.PI) * 10; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 2); }
+        }
         const m = G.questLog.marker(this.def.id);
         if (m) { ctx.font = 'bold 27px "Jersey 15", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#e0b84a'; ctx.fillText(m, this.x, G.GROUND - 100); }
         return;

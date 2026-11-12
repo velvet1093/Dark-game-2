@@ -18,7 +18,7 @@
       ['Nell', 'Don\'t... oh. It is you. The one who took them.'],
       ['Nell', '...And let me go. Nobody has ever let me go. Not the water, not the moths, not the light.'],
       ['Hagge Wren', 'Found her in my reeds, shaking like a wet cat. I gave her a blanket. She ate a candle.'],
-      ['Nell', 'My name is Nell. Mother was what the moths called me. I was nine, the summer the water came up warm over Hildsmere. I went in to find my brother, and something under the water said: be a light for us.'],
+      ['Nell', 'My name is Nell. Mother was what the moths called me. I was nineteen, the summer the water came up warm over Hildsmere. I went in to find my brother, and something under the water said: be a light for us.'],
       ['Nell', 'It is not water, knight. It is crying. Everyone the mire ever took is crying in it, and it wanted something to cry toward.'],
       ['Misery', 'Lovely. A ghost story. Can we go?'],
       ['Nell', 'The roots on Saint Hild\'s door are the spring\'s. They grow toward the dark and hate the light. My children eat roots. They would eat right through, if something bright went in front of them.'],
@@ -28,7 +28,29 @@
       ['Misery', 'I said NO. I am not a lantern. I am not anybody\'s lantern.'],
     ],
     repeat: [['Nell', 'The roots on the chapel door. My children are waiting in the reeds there. They only need a light.']],
+    repeatBound: [['Nell', 'Master.'], ['Nell', 'They are by the chapel door. They will do what you say. ...Everything does, now.']],
   });
+  // What becomes of her: left be, or bound in iron to your service.
+  G.NELL = {
+    choose(g) {
+      G.ui.choice('Nell sits in the reeds, wingless, waiting to see what you will do with her.', [
+        { label: 'Leave her be <small>— she is free to stay with Wren</small>', fn: () => { g.flags.nell_fate = 'free'; g.save(); G.ui.dialogue([['Nell', '...Thank you. I will be here. My children will be in the reeds, by the chapel door, if you want them.']], () => {}); } },
+        { label: 'Bind her to your service <small>— her moths will be yours</small>', fn: () => this.bind(g) },
+      ]);
+    },
+    bind(g) {
+      g.flags.nell_fate = 'bound'; g.flags.nell_bound = 1; g.save();
+      G.ui.dialogue([
+        ['Knight', 'You will serve me.'],
+        ['Nell', '...Serve.'],
+        ['Hagge Wren', 'Knight. She is not a dog. Whatever she was, she is not a dog.'],
+        ['The Gloamwater', 'The knight takes the eel-chain from the wall of the hut, closes the iron round her neck, and drives the stake into the mud beside her. She does not fight. She has nothing left to fight with.'],
+        ['Nell', 'Yes. Yes, master. My children are yours. They will not touch you. They will go where you send them.'],
+        ['Misery', 'Oh. OH. Look at you. Look at what you have done. I have never been so proud of anyone in my life.'],
+        ['Aurelle', 'A vow taken in iron is still a vow, little knight. I will keep it. I keep them all.'],
+      ], () => { G.sfx('thud'); G.sfx('bell'); G.questLog.banners.push({ kind: 'Nell is bound', title: 'Her moths are yours', sub: 'Weeping Moths and Bloodflies will not attack you', t: 5 }); });
+    },
+  };
   G.QUESTS.moths = {
     title: 'The Moths and the Light', start: { talk: 'nell' }, giver: 'nell', reward: { thorns: 3, ichor: 300 },
     steps: [{ type: 'flag', flag: 'roots_eaten', text: 'Take Nell\'s moths to the roots on the door of Saint Hild\'s, at the far end of the Gloamwater' }],
@@ -38,6 +60,10 @@
   // ---- the roots on the door
   const scene = g => {
     const spared = g.flags.boss_mothmother_spared, mercy = g.flags.court_met, lines = [];
+    if (g.flags.nell_bound) {   // they need no light: they are his
+      G.ui.dialogue([['Knight', 'Eat the roots.'], ['The Gloamwater', 'At the word the moths rise out of the reeds in a white storm, without a light to follow, and settle on the black roots, and eat.'], ['Misery', 'You did not even need me. I am almost offended. ...No. I am delighted.']], () => { g.flags.roots_eaten = 1; g.flags.spring_open = 1; g.read[LV + ':2'] = 1; g.rootsT = 4; G.sfx('cleanse'); G.sfx('bell'); g.shake = 6; G.text(5960, G.GROUND - 160, 'THE ROOTS GIVE WAY', '#e0d8c8', 18); g.save(); });
+      return;
+    }
     if (spared) lines.push(['Knight', 'Nell sent her children.'], ['Misery', 'I can see them. Hundreds of them, in the reeds, all looking at me.']);
     else lines.push(['Knight', 'Her children are still here.'], ['Misery', 'Orphans. You made them orphans. And now they are all looking at me.']);
     lines.push(['Misery', 'I know what you want. I am not your lantern.']);

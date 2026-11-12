@@ -139,7 +139,7 @@
       for (const id of newQ) if (G.QUESTS[id].offer) lines = lines.concat(G.QUESTS[id].offer);
       if (!lines.length) {
         const w = Q.ids('active').map(id => G.QUESTS[id]).find(q => q.giver === d.id && q.waiting);
-        lines = w ? w.waiting : d.repeat || d.lines;
+        lines = w ? w.waiting : (this.flags.nell_bound && d.repeatBound) || d.repeat || d.lines;
       }
       G.ui.dialogue(lines, () => {
         this.flags[key] = 1;
@@ -148,6 +148,7 @@
         this.save();
         if (d.cleanse) this.cleanse(n);
         if (d.shop) G.ui.shop(d.shop);
+        if (d.id === 'nell' && !this.flags.nell_fate && G.NELL) G.NELL.choose(this);   // what becomes of her
         if (d.gift === 'favour' && !this.flags.seelie) {   // the Lantern Court's favour
           this.flags.seelie = 1; this.flags.court_met = 1; G.sfx('questdone'); G.sfx('cleanse');
           G.questLog.banners.push({ kind: 'A favour', title: 'The Lantern Court', sub: 'The infection takes hold a quarter more slowly', t: 5 }); this.save();
