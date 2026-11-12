@@ -62,11 +62,14 @@
 
   // ---- the way in: a fallen bridge at the very start of the road
   // ---- the way in: the road simply goes on west, over a gorge where the bridge used to be
-  G.LEVELS[0].edgeL = { to: FANE, at: 4290, needs: 'dj', shut: 'The road ends at a gorge. The bridge that crossed it is long gone. Not yet',
-    wist: 'West? There is nothing west but the sea and some old stones. Nobody goes west.' };
+  const RD = G.LEVELS[0];
+  RD.minX = -560;                                                        // the road runs on west past where you wake...
+  RD.pits = (RD.pits || []).concat([{ x: -340, w: 150, gorge: true }]);  // ...to a gorge too wide to jump. The wings will carry you over.
+  RD.edgeL = { to: FANE, at: 4290, open: true };                         // and the far bank leads on to the Fane
+  RD.hooks = (RD.hooks || []).concat([{ x: -150, r: 40, label: 'Look across the gorge', fn: g => { g.fairy.cd = 0; g.fairy.sayLine('West? There is nothing over there but the sea and some old stones. Nobody goes west. ...Go on, jump. I would love to watch.'); G.text(-265, G.GROUND - 170, 'The bridge is gone. It is a long way across.', '#d9c9b0', 14); } }]);
   G.LEVELS.push({
     name: 'The Fane of the Dawn', chapter: 'West of the Gallows Road', theme: 'dawn', length: 4400, seed: 221,
-    noBack: true, edgeR: { to: 0, at: 60 },
+    noBack: true, edgeR: { to: 0, at: -480 },
     shrines: [240, 2300],
     statues: [{ x: 1000 }, { x: 2050 }, { x: 3300, big: true }],
     enemies: [['dawnmoth', 600], ['sentinel', 820], ['dawnmoth', 1250], ['dawnmoth', 1290], ['sentinel', 1600], ['sentinel', 1900], ['dawnmoth', 2600], ['sentinel', 2800], ['dawnmoth', 3050], ['dawnmoth', 3100], ['sentinel', 3200, 'unfair']],

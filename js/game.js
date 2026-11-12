@@ -54,7 +54,7 @@
       this.surfAll = (L.platforms || []).concat((L.gates || []).filter(k => k.kind === 'wall').map(k => ({ x: k.x - 18, w: 36, h: k.h })));
       G.traps.init(this, L); this.surf = this.surfAll.filter(pl => !pl.fake && !pl.off); this.fairy.place(this.player);
       G.music(musicFor(L)); G.ambience(AMB[L.theme]); this.flags['reached_' + idx] = 1; if (G.voice) G.voice.place(idx);
-      this.cam = clamp(x - W * 0.42, 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
+      this.cam = clamp(x - W * 0.42, L.minX || 0, L.length - W); this.card = 5; this.deathT = 0; this.lvT = 0; this.bossFight = false; this.mode = 'play';
     },
     spawnEnemies() {
       const L = this.level;
@@ -267,8 +267,8 @@
     pitAt(x) { const ps = this.level.pits; if (ps) for (const q of ps) if (x > q.x + 6 && x < q.x + q.w - 6) return q; return null; },
     impale(p, pk) {
       p.state = 'idle'; p.t = 0; p.pitInv = 0;
-      p.damage(24, p.x, this); G.blood(p.x, G.GROUND + 30, 34, 0, 280); G.sfx('sever'); this.shake = 10;
-      G.text(p.x, G.GROUND - 70, 'IMPALED', '#e0222c', 16);
+      if (pk && pk.gorge) { p.damage(18, p.x, this); G.sfx('thud'); this.shake = 8; G.text(p.x, G.GROUND - 70, 'TOO FAR', '#d9c9b0', 16); }   // into the gorge, and a long climb back
+      else { p.damage(24, p.x, this); G.blood(p.x, G.GROUND + 30, 34, 0, 280); G.sfx('sever'); this.shake = 10; G.text(p.x, G.GROUND - 70, 'IMPALED', '#e0222c', 16); }
       if (pk) p.x = (p.safeX != null ? p.safeX : pk.x - 30) < pk.x + pk.w / 2 ? pk.x - 24 : pk.x + pk.w + 24;   // climb out the side you fell from
       p.alt = 0; p.vy = 0; p.vx = 0; p.air = false; p.pitRef = null; p.pitInv = 0.7;
       if (!G.traps.onImpale(this)) this.fairy.bark('hurt', true);
@@ -427,7 +427,7 @@
       const p = this.player, L = this.level;
       this.lvT += dt; this.card -= dt; this.fade = Math.max(0, this.fade - dt); this.shake = Math.max(0, this.shake - dt * 40);
 
-      this.bounds = this.bossFight ? G.arena(L.boss) : [30, L.length - 30];
+      this.bounds = this.bossFight ? G.arena(L.boss) : [(L.minX || 0) + 30, L.length - 30];
       this.prompt = (p.state === 'idle' || p.state === 'block') && !p.air ? this.findInteract() : null;
       if (this.prompt && G.input.hit('use')) { const f = this.prompt.fn; this.prompt = null; f(); return; }   // the world may have changed under us; pick up next frame
 
@@ -438,7 +438,7 @@
       G.wind.tick(this, dt);
       for (const [side, E] of [[-1, L.edgeL], [1, L.edgeR]]) {   // walking off the end of a place into the next
         if (!E || this.inside || this.bossFight || p.dead || p.air) continue;
-        const at = side < 0 ? p.x <= 32 : p.x >= L.length - 32, pushing = G.input.down(side < 0 ? 'left' : 'right');
+        const at = side < 0 ? p.x <= (L.minX || 0) + 32 : p.x >= L.length - 32, pushing = G.input.down(side < 0 ? 'left' : 'right');
         if (!at || !pushing) { if (!at) E.told = false; continue; }
         if (!E.needs || this.hasTool(E.needs)) { this.cp = { lv: E.to, x: E.at }; this.fade = 0.6; G.sfx('page'); this.loadLevel(E.to, E.at); this.player.facing = side; this.save(); return; }
         if (!E.told) { E.told = true; G.sfx('block'); G.text(side < 0 ? p.x + 300 : p.x - 300, G.GROUND - 200, E.shut, '#d9c9b0', 14); this.fairy.cd = 0; if (E.wist) this.fairy.sayLine(E.wist); }
@@ -486,7 +486,7 @@
 
       let target = p.x - W * 0.42 + p.facing * 40;
       const west = L.boss && L.boss.end < L.boss.gate;
-      target = clamp(target, this.bossFight && !west ? L.boss.gate - 110 : 0, this.bossFight && west ? Math.max(0, L.boss.gate + 110 - W) : L.length - W);
+      target = clamp(target, this.bossFight && !west ? L.boss.gate - 110 : L.minX || 0, this.bossFight && west ? Math.max(0, L.boss.gate + 110 - W) : L.length - W);
       this.cam += (target - this.cam) * Math.min(1, dt * 5);
     },
 
@@ -574,7 +574,23 @@
         ctx.fillStyle = '#020102'; ctx.fillRect(x, gy - 3, w, G.H - gy + 3);
         ctx.fillStyle = wall; ctx.fillRect(x, gy - 3, 4, 70); ctx.fillRect(x + w - 4, gy - 3, 4, 70);
         ctx.fillStyle = th === 'cathedral' ? '#34303a' : '#2a1a1e'; for (const [ox, ww] of [[-6, 8], [w - 4, 10], [6, 4], [w - 14, 6]]) ctx.fillRect(x + ox, gy - 4, ww, 3);   // a crumbling lip
-        if (th === 'fen') {
+        if (pk.gorge) {   // a real gorge: sheer rock, falling away into the dark, and a stream far below
+          const dg = ctx.createLinearGradient(0, gy, 0, G.H); dg.addColorStop(0, '#000000'); dg.addColorStop(1, '#0c0a14'); ctx.fillStyle = dg; ctx.fillRect(x, gy - 3, w, G.H - gy + 3);
+          for (let yy = gy - 3; yy < G.H; yy += 8) {   // jagged rock faces, lit from above, darkening as they fall away
+            const k = 1 - (yy - gy) / (G.H - gy), wl = 10 + ((yy * 7) % 13), wr = 10 + ((yy * 5) % 13);
+            ctx.fillStyle = `rgb(${Math.round(30 + 50 * k)},${Math.round(22 + 34 * k)},${Math.round(24 + 34 * k)})`; ctx.fillRect(x, yy, wl, 8); ctx.fillRect(x + w - wr, yy, wr, 8);
+            ctx.fillStyle = `rgba(150,110,100,${0.35 * k})`; ctx.fillRect(x + wl - 2, yy, 2, 8); ctx.fillRect(x + w - wr, yy, 2, 8);
+          }
+          ctx.fillStyle = '#6a5048'; ctx.fillRect(x - 10, gy - 4, 14, 3); ctx.fillRect(x + w - 4, gy - 4, 14, 3);   // the lips of the drop
+          ctx.fillStyle = 'rgba(120,100,120,0.25)'; for (let k = 0; k < 4; k++) ctx.fillRect(x + 16, gy + 30 + k * 18 + Math.sin(t + k) * 3, w - 32, 6);   // mist in the depths
+          ctx.fillStyle = 'rgba(120,140,160,0.25)'; for (let k = 0; k < 6; k++) ctx.fillRect(x + 20 + ((k * 31 + t * 12) % (w - 40)), G.H - 18 + (k % 2) * 4, 10, 2);
+          // the broken bridge: a stump of planks out over the drop on each bank, a rope hanging into the dark
+          for (const [bx, d] of [[x, 1], [x + w, -1]]) {
+            ctx.fillStyle = '#4a3020'; ctx.fillRect(bx - d * 4 - (d < 0 ? 4 : 0), gy - 46, 6, 46); ctx.fillStyle = '#2a1a10'; ctx.fillRect(bx - d * 4 - (d < 0 ? 4 : 0), gy - 48, 6, 3);
+            ctx.fillStyle = '#5e4028'; for (let k = 0; k < 3; k++) ctx.fillRect(d > 0 ? bx + k * 10 : bx - 10 - k * 10, gy - 4 + k * 2 + (k === 2 ? 4 : 0), 9, 4);
+            ctx.strokeStyle = '#6a5038'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx - d * 2, gy - 42); ctx.quadraticCurveTo(bx + d * 18, gy - 10, bx + d * 22 + Math.sin(t * 1.3 + bx) * 3, gy + 50); ctx.stroke();
+          }
+        } else if (th === 'fen') {
           ctx.fillStyle = '#0c201a'; ctx.fillRect(x + 4, gy + 2, w - 8, 110);                                      // black water, brim-full
           ctx.fillStyle = 'rgba(150,200,175,0.45)'; for (let k = 0; k < 5; k++) { const rx = x + 8 + ((k * 23 + t * 9 + pi * 7) % (w - 20)); ctx.fillRect(Math.round(rx / 2) * 2, gy + 2 + (k & 1) * 6, 8 + (k % 2) * 4, 2); }
           ctx.fillStyle = '#2a4034'; for (let k = x + 6; k < x + w - 4; k += 14) { const hh = 18 + ((k * 3) % 13); ctx.fillRect(k, gy - hh, 2, hh + 4); ctx.fillRect(k - 1, gy - hh - 6, 4, 6); }   // reeds at the brink
@@ -632,8 +648,8 @@
         ctx.beginPath(); ctx.moveTo(x - 46, gy - 150); ctx.quadraticCurveTo(x, gy - 215, x + 46, gy - 150); ctx.lineTo(x + 32, gy - 150); ctx.quadraticCurveTo(x, gy - 190, x - 32, gy - 150); ctx.fill();
       };
       if (L.exit) arch(L.exit.x, 'rgba(150,40,30,0.28)');
-      for (const [side, E] of [[-1, L.edgeL], [1, L.edgeR]]) if (E && !this.inside) {   // the gorge at the end of the road, and the stub of the old bridge
-        const x0 = side < 0 ? -80 : L.length + 6, x1 = side < 0 ? 22 : L.length + 80, edge = side < 0 ? 22 : L.length - 22;
+      for (const [side, E] of [[-1, L.edgeL], [1, L.edgeR]]) if (E && !this.inside && !E.open) {   // the end of a place, and the stub of the old bridge
+        const m0 = L.minX || 0, x0 = side < 0 ? m0 - 80 : L.length + 6, x1 = side < 0 ? m0 + 22 : L.length + 80, edge = side < 0 ? m0 + 22 : L.length - 22;
         ctx.fillStyle = '#020102'; ctx.fillRect(Math.min(x0, x1), gy - 3, Math.abs(x1 - x0), G.H - gy + 3);
         ctx.fillStyle = '#1a1012'; ctx.fillRect(edge - (side < 0 ? 4 : 0), gy - 3, 4, 90);
         ctx.fillStyle = '#3a2618'; for (let k = 0; k < 4; k++) ctx.fillRect(edge + side * (6 + k * 11), gy - 4 + k * 3, 9, 4);   // planks hanging over the drop
