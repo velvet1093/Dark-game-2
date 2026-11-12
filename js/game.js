@@ -284,7 +284,8 @@
     },
     // ---- buildings: step through a door into a room; the street waits as you left it
     lvKey() { return this.inside ? 'in_' + this.inside.id : this.levelIdx; },
-    enterBuilding(d) {
+    enterBuilding(d) { this.blackout(() => this.enterBuildingNow(d)); },
+    enterBuildingNow(d) {
       const B = G.INTERIORS[d.to]; if (!B) return;
       this.outside = { level: this.level, enemies: this.enemies, npcs: this.npcs, surf: this.surf, boss: this.boss, cam: this.cam, x: d.x, decals: G.fx.decals.slice(), gibs: G.fx.gibs.slice() };
       this.inside = { id: d.to, door: d }; this.level = B; G.fxReset();
@@ -292,11 +293,12 @@
       this.enemies = (B.enemies || []).map(([t, x], i) => { const e = new G.Enemy(t, x); e.inIdx = i; return e; }).filter(e => !gone[e.inIdx]);
       this.npcs = (B.npcs || []).map(n => new G.Npc(n, this)); this.surf = (B.platforms || []).slice(); this.boss = null; this.bossFight = false;
       const p = this.player; Object.assign(p, { x: B.entry, alt: 0, air: false, vy: 0, vx: 0, facing: 1 }); p.set('idle');
-      this.cam = 0; this.fairy.place(p); this.toldGate = {}; this.card = 3; this.fade = 0.5; G.sfx('page'); G.sfx('thud'); G.ambience(B.style === 'glade' ? 'none' : 'hall');
+      this.cam = 0; this.fairy.place(p); this.toldGate = {}; this.card = 3; G.sfx('page'); G.sfx('thud'); G.ambience(B.style === 'glade' ? 'none' : 'hall');
       if (B.music) G.music(B.music);
       if (B.arrival) { const first = !this.flags['arrived_' + d.to]; G.ui.dialogue(first || !B.arrivalAgain ? B.arrival : B.arrivalAgain, () => { this.flags['arrived_' + d.to] = 1; this.save(); }); }
     },
-    leaveBuilding() {
+    leaveBuilding() { this.blackout(() => this.leaveBuildingNow()); },
+    leaveBuildingNow() {
       const o = this.outside; if (!o) return;
       const fromCourt = this.inside && this.inside.id === 'court';
       Object.assign(this, { level: o.level, enemies: o.enemies, npcs: o.npcs, surf: o.surf, boss: o.boss, cam: o.cam, inside: null, outside: null });
@@ -305,7 +307,7 @@
       this.fairyAway = false;
       G.music(musicFor(this.level));
       this.fairy.place(p); if (fromCourt) { this.fairy.cd = 0; this.fairy.sayLine(G.pick(G.FAIRY.backFromCourt)); }
-      this.fade = 0.5; G.sfx('page'); G.ambience(AMB[this.level.theme]);
+      G.sfx('page'); G.ambience(AMB[this.level.theme]);
     },
     onScreen(x) { return x > this.cam - 40 && x < this.cam + W + 40; },
     onEnemyDeath(e) { this.kills = this.kills || {}; this.kills[e.type] = (this.kills[e.type] || 0) + 1;
@@ -327,14 +329,18 @@
       G.sfx('bell'); G.sfx('candle'); this.fairy.cd = 0; this.fairy.bark('rest', true); this.restMenuT = 0.85;   // sit down first, then the candle's menu
     },
     // Return to the far end of the previous area. Its enemies will have wandered back in.
+    // Every ordinary transition: a quick dip to black, the change made in the dark, and up again.
+    // (Story moments, where they happen, are shown while it is dark.)
+    blackout(act) { if (this.zoneT) return; this.zoneT = { t: 0, act }; G.sfx('step'); },
     travelBack() {
       const b = this.level.back, prev = b ? b.to : this.levelIdx - 1, x = b ? b.at : G.LEVELS[prev].exit.x - 100;
-      this.cp = { lv: prev, x }; this.loadLevel(prev, x); this.player.facing = -1; this.save();
+      this.blackout(() => { this.cp = { lv: prev, x }; this.loadLevel(prev, x); this.player.facing = -1; this.save(); });
     },
     // Down a side passage into an optional area (and the area's back arch returns you here).
     travelTo(lv, x, slides) {
-      const go = () => { this.cp = { lv, x }; this.loadLevel(lv, x); this.save(); };
-      if (slides) G.ui.slides(slides, go); else go();
+      const go = () => { this.cp = { lv, x }; this.loadLevel(lv, x); this.save(); }, key = 'passage_' + this.levelIdx + '_' + lv;
+      if (slides && !this.flags[key]) { this.flags[key] = 1; this.blackout(() => G.ui.slides(slides, go)); }   // the first time: what you find there
+      else this.blackout(go);
     },
     equip(id) { this.weaponId = id; this.player.weapon = G.WEAPONS[id]; this.player.combo = 0; },
     gainWeapon(id) {
@@ -431,22 +437,14 @@
       if (G.input.hit('swap') && (this.player.state === 'idle' || this.player.state === 'block')) this.swapWeapon();
       if (this.zoneT) {   // a short black between two screens of one place
         const Z = this.zoneT, p = this.player; Z.t += dt;
-        if (!Z.moved && Z.t >= 0.22) { Z.moved = true; p.x = Z.to; p.vx = 0; p.facing = Z.side; this.cam = this.camFor(p.x - W * 0.42 + p.facing * 40, p.x); this.fairy.place(p); }
+        if (!Z.moved && Z.t >= 0.22) { Z.moved = true; if (Z.act) Z.act(); else { p.x = Z.to; p.vx = 0; p.facing = Z.side; this.cam = this.camFor(p.x - W * 0.42 + p.facing * 40, p.x); this.fairy.place(p); } this.card = Math.min(this.card, 5); }
         if (Z.t >= 0.55) this.zoneT = null;
         return;
       }
-      if (this.level.split != null && !this.inside && !this.bossFight && !this.player.dead && !this.player.air && !this.transit) {
+      if (this.level.split != null && !this.inside && !this.bossFight && !this.player.dead && !this.player.air && !this.zoneT) {
         const L = this.level, p = this.player, inA = p.x < L.split;
         if (!inA && p.x <= L.split + 32 && G.input.down('left')) { this.zoneT = { t: 0, to: L.split - 80, side: -1 }; G.sfx('step'); return; }
         if (inA && p.x >= L.split - 42 && G.input.down('right')) { this.zoneT = { t: 0, to: L.split + 70, side: 1 }; G.sfx('step'); return; }
-      }
-      if (this.transit) {   // walking off the edge: the knight goes on, the world goes dark, and the next place comes up out of it
-        const T = this.transit, p = this.player; T.t += dt; p.vx = T.side * 120; p.x += p.vx * dt; p.facing = T.side; p.walk += dt * 11; p.state = 'idle';
-        if (T.t >= 0.9) {
-          this.transit = null; const E = T.E, key = 'edge_' + this.levelIdx + '_' + E.to, go = () => { this.cp = { lv: E.to, x: E.at }; this.loadLevel(E.to, E.at); this.player.facing = T.side; this.fade = 1.2; this.save(); };
-          if (E.slides && !this.flags[key]) { this.flags[key] = 1; G.ui.slides(E.slides, go); } else go();
-        }
-        return;
       }
       if (this.restMenuT > 0 && (this.restMenuT -= dt) <= 0) { if (this.player.state === 'sit') { G.ui.shrine(); return; } }
       if (this.memQ && this.memQ.length && !(this.restMenuT > 0) && !this.bossFight && !this.player.dead && ['idle', 'block', 'sit'].includes(this.player.state)) { this.playMemory(this.memQ.shift()); return; }
@@ -468,7 +466,11 @@
         if (!E || this.inside || this.bossFight || p.dead || p.air) continue;
         const at = side < 0 ? p.x <= (L.minX || 0) + 32 : p.x >= L.length - 32, pushing = G.input.down(side < 0 ? 'left' : 'right');
         if (!at || !pushing) { if (!at) E.told = false; continue; }
-        if (!E.needs || this.hasTool(E.needs)) { this.transit = { E, side, t: 0 }; G.sfx('whoosh'); return; }   // walk on into the dark; see below
+        if (!E.needs || this.hasTool(E.needs)) {
+          const key = 'edge_' + this.levelIdx + '_' + E.to, go = () => { this.cp = { lv: E.to, x: E.at }; this.loadLevel(E.to, E.at); this.player.facing = side; this.save(); };
+          if (E.slides && !this.flags[key]) { this.flags[key] = 1; this.blackout(() => G.ui.slides(E.slides, go)); } else this.blackout(go);
+          return;
+        }   // walk on into the dark; see below
         if (!E.told) { E.told = true; G.sfx('block'); G.text(side < 0 ? p.x + 300 : p.x - 300, G.GROUND - 200, E.shut, '#d9c9b0', 14); this.fairy.cd = 0; if (E.wist) this.fairy.sayLine(E.wist); }
       }
       this.seen = this.seen || {};
@@ -557,7 +559,6 @@
       ctx.restore();
       G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: (this.inside ? (this.inside.id === 'court' ? 280 : 150) : 115) * (this.mis('glow') ? 1.45 : 1) }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
-      if (this.transit) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.transit.t / 0.8)})`; ctx.fillRect(0, 0, W, H); }
       if (this.zoneT) { const z = this.zoneT.t, a = z < 0.22 ? z / 0.22 : Math.max(0, 1 - (z - 0.22) / 0.33); ctx.fillStyle = `rgba(0,0,0,${a})`; ctx.fillRect(0, 0, W, H); }   // fading out as he walks on
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 1.4)})`; ctx.fillRect(0, 0, W, H); }   // through the door
       this.drawHud(p, L, t);

@@ -252,6 +252,10 @@ What waits in the pits:
 
 The difficulty setting decides how fair they are. **Fair (hard):** false ledges shimmer, crumbling ledges show cracks and settle again if you step off, spikes shake before they drop, and blades keep a steady beat. **Unfair:** none of those tells. Ledges crumble twice as fast, blades change speed, spikes drop just ahead of you as you run, one last ledge in two of the trials gives way the instant you touch it (jump over it), and crows come for you mid-jump.
 
+## Transitions
+
+Every ordinary change of place (through a door, an archway, down a side passage, off the end of a road, between two screens of one place) is a quick dip to black and back. Story moments are kept for what matters: the cards between the chapters of the main road, and a short description the first time you enter a side area, shown while it is dark.
+
 ## Resting
 
 At a vigil candle the knight lowers himself to the ground beside the flame, sword held upright, before the candle's menu opens. He stays seated after you close it, and Misery soon settles on his helmet. Move, attack, roll or jump to get up. After a death you wake already sitting at the last candle you rested at.
