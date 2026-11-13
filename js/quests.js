@@ -207,6 +207,7 @@ G.questLog = {
       if (r.tinct) { g.player.stats.tinct = (g.player.stats.tinct || 0) + r.tinct; g.player.tinct = g.player.tinctMax; got.push('+1 lily tincture, for good'); }
       if (r.str) { g.player.stats.str += r.str; got.push('+1 Strength'); }
       if (r.flask) { g.player.stats.flask = (g.player.stats.flask || 0) + r.flask; g.player.flasks += r.flask; got.push('+1 flask, for good'); }
+      if (r.keepsake) { g.flags[r.keepsake.flag] = 1; got.push(r.keepsake.name); }
       if (d.doneFlag) g.flags[d.doneFlag] = 1;
       this.banner('Quest complete', id, got.join('  ·  '), 'questdone');
     } else { this.enter(id); this.banner('Quest updated', id, this.text(id, q.step), 'quest'); }

@@ -94,6 +94,7 @@
       if (p.state === 'sit' || p.state === 'rise') return null;
       if (p.alt >= 30) return items();   // up on a ledge: only what is up here with you can be reached
       const cp = G.companion && G.companion.prompt(this); if (cp) return cp;
+      for (const f of G.EXTRA_PROMPTS || []) { const r = !this.inside && f(this); if (r) return r; }   /* prompts other modules add to the world */
       for (const n of this.npcs) {   // a wounded villager can be saved with your own tincture, even mid-fight
         if (n.dead || n.gone || n.inf < 35 || !near(n.x, 70)) continue;
         if (p.tinct > 0) return { x: n.x, y: G.GROUND - 132, label: 'Give your tincture to ' + n.def.name, hot: n.turnT != null, fn: () => {
@@ -192,7 +193,8 @@
       if (it.thorns) return { x: it.x, y: y - 54, label: 'Take the bundle of thorns', fn: take(() => { this.misery.thorns += it.thorns; G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.thorns + ' thorns for Misery', '#b89ae0', 16); }) };
       if (it.cache) return { x: it.x, y: y - 54, label: 'Open the reliquary', fn: take(() => { this.ichor += it.cache; G.sfx('ichor'); G.sfx('questdone'); G.text(it.x, y - 50, '+' + it.cache + ' ichor', '#e0b84a', 16); }) };
       if (it.weapon) return { x: it.x, y: y - 70, label: 'Take the ' + G.WEAPONS[it.weapon].name, fn: take(() => this.gainWeapon(it.weapon)) };
-      return { x: it.x, y: y - 40, label: it.id === 'blacklily' ? 'Pull up the black lily' : 'Gather the white lily', fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, it.id === 'blacklily' ? 'Black lily' : 'White lily', '#efeaf2', 13); }) };
+      const FL = (G.FLOWERS && G.FLOWERS[it.id]) || (it.id === 'blacklily' ? { take: 'Pull up the black lily', name: 'Black lily' } : { take: 'Gather the white lily', name: 'White lily' });
+      return { x: it.x, y: y - 40, label: FL.take, fn: take(() => { this.items[it.id] = (this.items[it.id] || 0) + 1; G.sfx('chime'); G.text(it.x, y - 50, FL.name, FL.text || '#efeaf2', 13); }) };
     },
     iconTotal() { return G.LEVELS.concat(Object.values(G.INTERIORS)).reduce((n, l) => n + (l.items || []).filter(it => it.icon).length, 0); },
     // Icons still to be found in the area the knight is in (Misery hints at these).
@@ -733,6 +735,7 @@
         ctx.fillStyle = 'rgba(255,190,110,0.5)'; ctx.beginPath(); ctx.moveTo(x - 20 * k, gy); ctx.lineTo(x - 20 * k, gy - 52 * k); ctx.quadraticCurveTo(x, gy - 84 * k, x + 20 * k, gy - 52 * k); ctx.lineTo(x + 20 * k, gy); ctx.fill();
       }
       if (!this.inside && G.drawStatue) for (const st of L.statues || []) { if (st.litT > 0) st.litT -= 1 / 60; G.drawStatue(ctx, st.x, gy, t, st.big, st.litT > 0); }   // Aurelle, faceless
+      if (!this.inside) for (const f of G.EXTRA_DRAW || []) f(ctx, this, t);   /* things other modules draw into the world */
       // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
         if (this.flags['item_' + this.lvKey() + '_' + i] || (it.needs && !this.flags[it.needs])) return;
@@ -796,9 +799,9 @@
           else { ctx.fillStyle = '#7d808c'; ctx.fillRect(x + 2, gy - 60, 2, 2); ctx.fillRect(x + 6, gy - 56, 2, 2); ctx.fillRect(x + 10, gy - 50, 2, 2); ctx.fillStyle = '#b9bcc6'; ctx.fillRect(x + 8, gy - 46, 12, 12); ctx.fillRect(x + 12, gy - 50, 4, 20); ctx.fillRect(x + 4, gy - 42, 20, 4); }
           return;
         }
-        glow(it.x, gy - 12, 30 + Math.sin(t * 3 + i) * 4, 'rgba(235,225,255,0.4)');
+        glow(it.x, gy - 12, 30 + Math.sin(t * 3 + i) * 4, (G.FLOWERS && G.FLOWERS[it.id] && G.FLOWERS[it.id].glow) || 'rgba(235,225,255,0.4)');
         ctx.strokeStyle = '#3a5a3a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(it.x, gy); ctx.lineTo(it.x + 1, gy - 14); ctx.stroke();
-        ctx.fillStyle = it.id === 'blacklily' ? '#3a1a40' : '#f4f0fa'; for (let k = 0; k < 5; k++) { const a = k * 1.257 + 0.3; ctx.beginPath(); ctx.ellipse(it.x + 1 + Math.cos(a) * 4, gy - 16 + Math.sin(a) * 3, 3.2, 1.8, a, 0, 7); ctx.fill(); }
+        ctx.fillStyle = (G.FLOWERS && G.FLOWERS[it.id] && G.FLOWERS[it.id].petal) || (it.id === 'blacklily' ? '#3a1a40' : '#f4f0fa'); for (let k = 0; k < 5; k++) { const a = k * 1.257 + 0.3; ctx.beginPath(); ctx.ellipse(it.x + 1 + Math.cos(a) * 4, gy - 16 + Math.sin(a) * 3, 3.2, 1.8, a, 0, 7); ctx.fill(); }
         ctx.fillStyle = '#e0b84a'; ctx.beginPath(); ctx.arc(it.x + 1, gy - 16, 1.4, 0, 7); ctx.fill();
       });
       // vigil candles

@@ -187,6 +187,82 @@
     mid: (g, e, p) => { G.sfx('block'); G.sfx('guardbreak'); G.spark(e.x, G.GROUND - 120 * e.scale, 18); g.hitstop = 0.1; g.shake = 9; e.interKneel = true; G.text(e.x, G.GROUND - 160 * e.scale, 'TO HIS KNEES', '#d9c9b0', 15); },
     fin: (g, e) => { e.interT = 0; G.sfx('thud'); G.sfx('bell'); g.shake = 12; g.slow = 0.7; },
   };
+
+  // ---- Flowers for the Fallen: Elsie, daughter of a man in the second line, and the poppies that came up the summer after
+  G.LOOKS.elsie = { soft: 1, skin: '#c8b4a0', body: '#4a3a30', arm: '#4a3a30', leg: '#3a2e26', helm: 'hood', helmCol: '#6a2a24', hair: '#7a5a3a' };
+  G.FLOWERS = Object.assign(G.FLOWERS || {}, { poppy: { take: 'Pick the red poppy', name: 'Red poppy', text: '#e06060', petal: '#c0242a', glow: 'rgba(230,80,70,0.35)' } });
+  G.BESTIARY_EXTRA.people.push({ id: 'elsie', name: 'Elsie Annet', look: 'elsie', text: 'Eleven days old when her father marched with the Marcher host. She has his letter, and since last spring, his name on a stone.' });
+  const LB = G.LEVELS[BG];
+  LB.npcs.push({ id: 'elsie', x: 400, name: 'Elsie Annet', look: 'elsie', pose: 'stand', essential: true,
+    lines: [
+      ['Elsie', 'Oh... you are not one of them. Your eyes are clear. Forgive me, ser. I thought you had climbed up out of the ground.'],
+      ['Elsie', 'My father is out there. Piers Annet, second line, by the elm. I was eleven days old when he marched. Tamsin carved his stone last spring. It is the first time he has had his name since I was born.'],
+      ['Elsie', 'Mother always meant to put flowers on him. Every year she meant to, and every year the dead were walking, and she never got past the first row. She died last winter.'],
+      ['Knight', 'And you want to do it for her.'],
+      ['Elsie', 'I cannot get through. You can. The poppies still grow out there, red ones. They came up the summer after the battle and never stopped.'],
+      ['Elsie', 'Pick five. One for Father, and one each for the men he stood with: Hob Tanner, Will and Ned Carrow, and Gil, the drummer boy.'],
+      ['Misery', 'Flowers. For dead men. Who get up and walk about. You know they will just tread on them.'],
+      ['Elsie', 'Tamsin carved all five. You will know the stones. They are the only ones out there with fresh names on them.'],
+    ],
+    repeat: [['Elsie', 'Five poppies. Father, Hob, Will, Ned and little Gil. Second line, by the elm.']] });
+  [760, 1380, 1880, 2160, 3120, 3620].forEach(x => LB.items.push({ x, id: 'poppy' }));
+  const GRAVES = [
+    { id: 'piers', x: 1250, name: 'Piers Annet', text: 'PIERS ANNET\nSECOND LINE, BY THE ELM\nHE SENT HIS NAME HOME' },
+    { id: 'hob', x: 1990, name: 'Hob Tanner', text: 'HOB TANNER\nHE CARRIED THE OTHERS\' WATER' },
+    { id: 'will', x: 2300, name: 'Will Carrow', text: 'WILL CARROW, THE ELDER\nHE WOULD NOT LEAVE HIS BROTHER' },
+    { id: 'ned', x: 2350, name: 'Ned Carrow', text: 'NED CARROW, THE YOUNGER\nFIFTEEN' },
+    { id: 'gil', x: 3330, name: 'Gil the Drummer', text: 'GIL, THE DRUMMER\nNO OTHER NAME WAS KNOWN\nHE WAS TWELVE' },
+  ];
+  G.QUESTS.flowers = {
+    title: 'Flowers for the Fallen', start: { talk: 'elsie' }, giver: 'elsie', doneFlag: 'flowers_done',
+    reward: { ichor: 300, keepsake: { flag: 'locket', name: 'Piers Annet\'s Locket: the infection takes you more slowly' } },
+    steps: [
+      { type: 'collect', item: 'poppy', n: 5, text: 'Pick five red poppies on the Lost Battlegrounds' },
+      { type: 'flag', flag: 'graves_flowered', text: 'Lay a poppy on the graves of Piers, Hob, Will, Ned and Gil' },
+      { type: 'talk', npc: 'elsie', text: 'Go back to Elsie at the edge of the field', lines: [
+        ['Knight', 'It is done. A poppy on each of them.'],
+        ['Elsie', '...Thank you. I could see the red from here, through the fog. Five little spots of red.'],
+        ['Elsie', 'This was his. Mother wore it on a string round her neck for forty years. There is a curl of my hair in it, from when I was born, and a scrap of paper with his name.'],
+        ['Elsie', 'She always said it kept the bad things off her. I do not know. She never once wept red, not even at the end. Take it. You need it more than I do.'],
+        ['Misery', 'A locket. With HAIR in it. Humans are disgusting. ...Keep it close, though. Keep it very close.'],
+      ] },
+    ],
+  };
+  const laid = (g, gr) => !!g.flags['poppy_' + gr.id], here = g => g.levelIdx === BG;
+  G.EXTRA_PROMPTS = (G.EXTRA_PROMPTS || []).concat([g => {
+    if (!here(g)) return null;
+    const p = g.player, gr = GRAVES.find(o => Math.abs(p.x - o.x) < 26 && (p.alt || 0) < 20); if (!gr) return null;
+    const q = G.questLog.state.flowers, y = G.GROUND - 80, read = () => G.ui.note('A Stone Carved by Tamsin', gr.text);
+    if (laid(g, gr) || !q || q.status !== 'active' || q.step < 1) return { x: gr.x, y, label: 'Read the stone: ' + gr.name, fn: read };
+    if (!(g.items.poppy > 0)) return { x: gr.x, y, label: gr.name + ': you have no poppy left', fn: read };
+    return { x: gr.x, y, label: 'Lay a poppy on ' + gr.name + '\'s grave', fn: () => {
+      g.items.poppy--; g.flags['poppy_' + gr.id] = 1; G.sfx('chime'); G.sfx('bell');
+      const n = GRAVES.filter(o => laid(g, o)).length; G.text(gr.x, G.GROUND - 96, gr.name + '  ·  ' + n + ' / 5', '#e06060', 15);
+      if (n >= GRAVES.length) g.flags.graves_flowered = 1;
+      g.save();
+    } };
+  }]);
+  G.EXTRA_DRAW = (G.EXTRA_DRAW || []).concat([(ctx, g, t) => {
+    if (!here(g)) return;
+    const gy = G.GROUND;
+    for (const gr of GRAVES) {   // a stone Tamsin carved: paler than the rest, and lettered
+      const x = Math.round(gr.x / 2) * 2;
+      ctx.fillStyle = '#3e4440'; ctx.beginPath(); ctx.moveTo(x - 10, gy + 2); ctx.lineTo(x - 10, gy - 30); ctx.arc(x, gy - 30, 10, Math.PI, 0); ctx.lineTo(x + 10, gy + 2); ctx.fill();
+      ctx.fillStyle = '#5c625e'; ctx.fillRect(x + 7, gy - 36, 2, 34); ctx.fillStyle = '#1c201e'; for (const [w, yy] of [[12, 32], [8, 26], [10, 21], [6, 16]]) ctx.fillRect(x - w / 2, gy - yy, w, 2);
+      const q = G.questLog.state.flowers;
+      if (!laid(g, gr) && q && q.status === 'active' && q.step >= 1) { const gl = ctx.createRadialGradient(x, gy - 26, 2, x, gy - 26, 34); gl.addColorStop(0, `rgba(230,225,210,${0.22 + Math.sin(t * 2.5 + x) * 0.1})`); gl.addColorStop(1, 'rgba(230,225,210,0)'); ctx.fillStyle = gl; ctx.fillRect(x - 34, gy - 60, 68, 68); }   // a stone still waiting
+      if (laid(g, gr)) {   // the poppy, red against the grey
+        const gl = ctx.createRadialGradient(x - 6, gy - 6, 1, x - 6, gy - 6, 22); gl.addColorStop(0, `rgba(230,60,60,${0.35 + Math.sin(t * 2 + x) * 0.08})`); gl.addColorStop(1, 'rgba(230,60,60,0)'); ctx.fillStyle = gl; ctx.fillRect(x - 28, gy - 28, 44, 44);
+        ctx.fillStyle = '#2e4a2a'; ctx.fillRect(x - 6, gy - 10, 1, 10); ctx.fillRect(x - 3, gy - 7, 1, 7);
+        ctx.fillStyle = '#c0242a'; ctx.fillRect(x - 9, gy - 13, 6, 4); ctx.fillRect(x - 8, gy - 14, 4, 6); ctx.fillRect(x - 5, gy - 9, 5, 3);
+        ctx.fillStyle = '#1a0a0a'; ctx.fillRect(x - 7, gy - 12, 2, 2);
+      }
+    }
+  }]);
+  // the locket: the infection takes hold a little slower
+  const PI = G.Player.prototype.infect;
+  G.Player.prototype.infect = function (n, g) { if (g && g.flags && g.flags.locket) n *= 0.85; return PI.call(this, n, g); };
+
   const EPose = EP.pose; EP.pose = function () { const P = EPose.call(this); if (this.interKneel) Object.assign(P, { sit: true, lean: 0.15, head: 0.5 }); return P; };
   const EK = G.execKindFor;
   G.execKindFor = (e, p) => e.type === 'marshal' ? { kind: 'interred', text: 'THE LAST GRAVE' } : EK(e, p);
