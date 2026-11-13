@@ -193,7 +193,7 @@
       const g = G.game, ab = Object.keys(G.ABILITIES).filter(k => g.abilities[k]).map(k => G.ABILITIES[k].name).concat(g.weapons.includes('greataxe') ? ["Headsman's Greataxe (breaks bars)"] : []);
       const mem = Object.keys(G.MEMORIES).filter(k => g.flags['mem_' + k]);
       const memHtml = `<div class="found">Remembrances <b>${mem.length} / ${Object.keys(G.MEMORIES).length}</b>${g.flags.named ? ` &nbsp;·&nbsp; Your name is <b>${esc(G.NAME)}</b>` : mem.length ? ': ' + mem.map(k => esc(G.MEMORIES[k].title.replace('Remembrance: ', ''))).join(', ') : ' &nbsp;·&nbsp; <small>somewhere, the road still has your name</small>'}</div>`;
-      const found = `<div class="found">Weeping icons <b>${g.items.icon || 0} / ${g.iconTotal()}</b> &nbsp;·&nbsp; Tools: ${ab.length ? ab.map(esc).join(', ') : 'none yet'}</div>` + memHtml;
+      const found = `<div class="found">Weeping icons <b>${g.items.icon || 0} / ${g.iconTotal()}</b>${G.SOUL_TOTAL ? ` &nbsp;·&nbsp; Soul lilies <b>${g.items.soul || 0} / ${G.SOUL_TOTAL}</b>` : ''} &nbsp;·&nbsp; Tools: ${ab.length ? ab.map(esc).join(', ') : 'none yet'}</div>` + memHtml;
       this.show(`<div class="screen dim journal"><h2>Quests</h2>${found}<div class="quests">${html}</div><div class="hint">Tab / Esc to close</div></div>`, () => this.clear());
       this.escAdvance = true; G.sfx('page');
     },

@@ -319,6 +319,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/wardrobe.js` | the Wardrobe: knight, weapon, wing and Misery skins, their unlocks and the screen |
 | `js/executions.js` | the executions: choreography per kind of foe and per boss |
 | `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
+| `js/soullily.js` | the soul lilies: where they grow, the souls in them, the wisps, and what they give |
 | `js/battlegrounds.js` | the Lost Battlegrounds: the war dead rising from their graves, Tamsin, Lord-Marshal Vane and his execution |
 | `js/voice.js` | Aurelle, the goddess only the knight can hear |
 | `js/fane.js` | the Fane of the Dawn and Aurelle's statues |
@@ -348,6 +349,12 @@ The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen
 
 **Beneath it** is **Saint Hild's Undercroft**, and **Saint Hild** herself: the *first* well. Three hundred years ago she drank the spring so it would not reach Hildsmere. She wept once, and that tear is the Saint's Tear. She says the Tear only moves the weeping from one well to the next, and that the spring is **grief**: the weeping of every dead thing nobody named. The Long Battalion's seven hundred struck-out names have fed it like a river. To end the weeping, **name them**. The priests wrote every name in a muster book before they struck them out. This starts the quest **Seven Hundred Names**, the road toward cleansing the infection for good. Its next step is still to come.
 
+## Soul lilies
+
+Twelve pale, faintly glowing lilies grow where someone died whom nobody named, one in each of twelve areas. Most are somewhere awkward: past the gorge at the far west of the Gallows Road (it takes the Moth Wings), up on ledges, under the swinging blade at the end of the Wreck's rigging trial, at the top of the Ossuary's bone bridge, out on the Gloamwater's boardwalks. Picking one frees the soul in it: a small pale figure rises, says its name once (Ada, who kept bees; Hal Brennick, the ship's boy; Fennick, of the third line, whose mother was never told), and goes.
+
+Each soul freed adds **5 to the knight's maximum life** for good. Freeing all twelve lights his wings: the **Soul-Lit** wing dye in the Wardrobe. The count shows under the weapon name and in the journal.
+
 ## The knight wears down
 
 The infection shows on the knight as the story goes on, whatever harness he wears. With every boss that falls (and when he remembers his name) it gets worse:
@@ -369,7 +376,7 @@ Skins, chosen at any vigil candle or from the pause menu. Each tab shows a live 
 | --- | --- |
 | **Knight** | Harness of the Long Battalion · Headsman's Black (Gaunt) · Red of the Marches (Lord-Marshal Vane) · Gilded Sun of Osric (Standard-Bearer) · Knight of the Lily (the lily quest) · Pilgrim of the Pass (Windcaller) · Moth-Knight (Lamplight Mother) · The Weeping Knight (die ten times) · Corin, Bareheaded (remember your name) |
 | **Weapon** (chosen per weapon) | Plain Steel · Bloodied (a hundred kills) · Gilded (fifteen icons) · Bone (Malvern) · Rimed (Windcaller) · Moth-Dust (Lamplight Mother) · Oathkeeper's Black (Ser Garrick) |
-| **Wings** | Lamplight · Luna (find Nell) · Ghost (the Lantern Court) · Ember (Charcoal Widow) · Death's-Head (Gravewarden) · Seraph (thirty icons) |
+| **Wings** | Lamplight · Soul-Lit (every soul lily) · Luna (find Nell) · Ghost (the Lantern Court) · Ember (Charcoal Widow) · Death's-Head (Gravewarden) · Seraph (thirty icons) |
 | **Misery** | Misery · Mercy, As She Was (the Court, and your name) · Crimson (die twenty-five times) · Moonmoth (lead the moths to the roots) · Thorned (give her every gift) |
 
 Defeating or sparing a boss both count.

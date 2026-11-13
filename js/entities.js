@@ -21,7 +21,7 @@ G.Player = class {
     this.inf = 0; this.turnT = null; this.tinct = 1;
     this.reset();
   }
-  get maxHp() { return 100 + this.stats.vig * 16; }
+  get maxHp() { const g = G.game; return 100 + this.stats.vig * 16 + ((g && g.items && g.items.soul) || 0) * (G.SOUL_HP || 0); }
   get flaskMax() { return 3 + (this.stats.flask || 0); }
   get maxSt() { return 100 + this.stats.end * 12; }
   get dmgMul() { const g = G.game, lv = (g.weaponLv && g.weaponLv[g.weaponId]) || 0, S = G.skills, art = S && S.art(g); return (1 + this.stats.str * 0.09) * (1 + 0.15 * lv) * (this.turnT != null ? 1.25 : 1) * (S && S.has(g, 'edge') ? 1.15 : 1) * (art === 'greatsword' && this.hp > this.maxHp * 0.75 ? 1.3 : 1); }

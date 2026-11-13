@@ -36,6 +36,7 @@
   const WINGS = {
     lamplight: { name: 'Lamplight', pal: null, need: null },
     luna: { name: 'Luna', pal: { b: '#9ac8a0', s: '#5a8a62', band: '#e8f4d8', edge: '#2a4a32', eye: '#c87040' }, need: [g => F(g).met_nell, 'Find Nell, if you let her live'] },
+    soul: { name: 'Soul-Lit', pal: { b: '#bfe4f4', s: '#7ab0d0', band: '#ffffff', edge: '#3a6a8a', eye: '#e8fbff' }, need: [g => (g.items.soul || 0) >= (G.SOUL_TOTAL || 12), 'Find every soul lily'] },
     ghost: { name: 'Ghost', pal: { b: '#d8d4e0', s: '#a8a4b4', band: '#ffffff', edge: '#6a6878', eye: '#8a70c0' }, need: [g => F(g).court_met, 'Find the Lantern Court'] },
     ember: { name: 'Ember', pal: { b: '#8a3a1a', s: '#4a1a0a', band: '#f0a040', edge: '#1a0a06', eye: '#ffe080' }, need: [g => F(g).boss_widow_dead, 'Defeat (or spare) the Charcoal Widow'] },
     deathshead: { name: 'Death\'s-Head', pal: { b: '#4a3a2a', s: '#2a2018', band: '#c8a860', edge: '#140c08', eye: '#e8e0d0' }, need: [g => F(g).boss_gravewarden_dead, 'Defeat (or spare) the Gravewarden'] },

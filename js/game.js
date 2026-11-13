@@ -179,6 +179,7 @@
       const k = 'item_' + this.lvKey() + '_' + i, alt = it.alt || 0, y = G.GROUND - alt;
       if (this.flags[k] || Math.abs(p.x - it.x) > 40 || Math.abs(p.alt - alt) > 30 || (it.needs && !this.flags[it.needs])) return null;
       const take = fn => () => { this.flags[k] = 1; fn(); this.save(); };
+      if (it.kind && G.ITEM_KINDS && G.ITEM_KINDS[it.kind]) return G.ITEM_KINDS[it.kind].prompt(this, it, i, take, y);   /* kinds of pickup other modules define */
       if (it.icon) {
         // some icons are shut away until the right tool has been found elsewhere
         const need = it.gate === 'bars' ? !this.weapons.includes('greataxe') : it.gate === 'veil' ? !this.abilities.lantern : false;
@@ -739,6 +740,7 @@
       // things lying in the world: white lilies, and weapons left where their owners fell
       (L.items || []).forEach((it, i) => {
         if (this.flags['item_' + this.lvKey() + '_' + i] || (it.needs && !this.flags[it.needs])) return;
+        if (it.kind && G.ITEM_KINDS && G.ITEM_KINDS[it.kind]) { G.ITEM_KINDS[it.kind].draw(ctx, this, it, i, t, gy - (it.alt || 0)); return; }
         if (it.icon) {
           const x = it.x, y = gy - (it.alt || 0), bob = Math.round(Math.sin(t * 2 + i) * 2);
           if (it.gate === 'bars') { ctx.fillStyle = '#17110f'; ctx.fillRect(x - 22, y - 58, 44, 58); ctx.fillStyle = '#060304'; ctx.fillRect(x - 16, y - 50, 32, 50); ctx.fillStyle = '#241a1c'; ctx.fillRect(x - 24, y - 62, 48, 6); }
@@ -861,6 +863,7 @@
       const wl = this.weaponLv[this.weaponId] || 0;
       ctx.fillText(p.weapon.name + (wl ? ' +' + wl : '') + (this.weapons.length > 1 ? '  [' + G.keyName('swap') + ']' : ''), 26, 114);
       if (this.items.icon) { ctx.fillStyle = '#c9a13b'; ctx.fillText('Icons  ' + this.items.icon + ' / ' + this.iconTotal(), 26, 132); }
+      if (this.items.soul && G.SOUL_TOTAL) { ctx.fillStyle = '#a8d8f0'; ctx.fillText('Soul lilies  ' + this.items.soul + ' / ' + G.SOUL_TOTAL, 26, this.items.icon ? 150 : 132); }
       if (p.turnT != null && !p.dead) {
         const s = Math.ceil(p.turnT); ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(W / 2 - 230, 150, 460, 58);
