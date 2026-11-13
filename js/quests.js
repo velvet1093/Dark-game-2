@@ -9,7 +9,7 @@
 //   reach {level}               arrive in a chapter
 //   read  {lore: 'level:index'} read a note
 //   flag  {flag}                any game flag becomes set
-//   collect {item, n}           gather n of an item lying in the world
+//   collect {item, n} | {items} gather n of an item lying in the world, or one of each of several
 // start: {auto} | {talk: npcId} | {read: loreKey}. failIfDead: npcId.
 // ---------------------------------------------------------------------------
 G.QUESTS = {
@@ -184,8 +184,8 @@ G.questLog = {
   text(id, i) {
     const s = G.QUESTS[id].steps[i], q = this.state[id];
     if (!q || q.status !== 'active' || q.step !== i) return s.text;
-    const n = s.type === 'kill' ? q.count : s.type === 'collect' ? (G.game.items[s.item] || 0) : null;
-    return s.text + (n == null ? '' : ` (${Math.min(n, s.n)}/${s.n})`);
+    const n = s.type === 'kill' ? q.count : s.type === 'collect' ? (s.items ? s.items.filter(k => G.game.items[k] > 0).length : G.game.items[s.item] || 0) : null, of = s.items ? s.items.length : s.n;
+    return s.text + (n == null ? '' : ` (${Math.min(n, of)}/${of})`);
   },
   // Set up the step that has just become current.
   enter(id) {
@@ -233,7 +233,7 @@ G.questLog = {
       const s = this.cur(id);
       if (d.failIfDead && g.flags['dead_' + d.failIfDead]) { const n = G.LEVELS.flatMap(l => l.npcs).find(x => x.id === d.failIfDead); this.fail(id, (n ? n.name : 'They') + ' did not survive.'); continue; }
       const done = s.type === 'reach' ? g.reachedLv(s.level) : s.type === 'read' ? !!g.read[s.lore] : s.type === 'flag' ? !!g.flags[s.flag]
-        : s.type === 'kill' ? q.count >= s.n : s.type === 'collect' ? (g.items[s.item] || 0) >= s.n : s.type === 'talk' ? !!(s.meet && g.flags['met_' + s.npc]) : false;
+        : s.type === 'kill' ? q.count >= s.n : s.type === 'collect' ? (s.items ? s.items.every(k => g.items[k] > 0) : (g.items[s.item] || 0) >= s.n) : s.type === 'talk' ? !!(s.meet && g.flags['met_' + s.npc]) : false;
       if (done) this.advance(id);
     }
     if (this.banners.length && (this.banners[0].t -= dt) <= 0) this.banners.shift();
