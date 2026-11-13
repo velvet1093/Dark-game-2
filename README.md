@@ -320,6 +320,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/wardrobe.js` | the Wardrobe: knight, weapon, wing and Misery skins, their unlocks and the screen |
 | `js/executions.js` | the executions: choreography per kind of foe and per boss |
 | `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
+| `js/bossdesign.js` | each boss's own look: taller than the rank and file, and what each wears, carries or grows |
 | `js/cave.js` | the Blind Deep: darkness, Misery's fading light, glowcaps, the blind things and the Lightless |
 | `js/soullily.js` | the soul lilies: where they grow, the souls in them, the wisps, and what they give |
 | `js/battlegrounds.js` | the Lost Battlegrounds: the war dead rising from their graves, Tamsin, Lord-Marshal Vane and his execution |
@@ -350,6 +351,27 @@ The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen
 **At the door**, choose *Call the moths to the roots*. Misery refuses, then gives in. If you took her to the Lantern Court, she tells you why Mercy stopped leading the dying into the dark: *"Because they always went."* Then she drifts to the roots, and the moths follow her in a white storm and eat the door open. **If you executed Nell**, her orphaned moths can still be led; it is only colder.
 
 **Beneath it** is **Saint Hild's Undercroft**, and **Saint Hild** herself: the *first* well. Three hundred years ago she drank the spring so it would not reach Hildsmere. She wept once, and that tear is the Saint's Tear. She says the Tear only moves the weeping from one well to the next, and that the spring is **grief**: the weeping of every dead thing nobody named. The Long Battalion's seven hundred struck-out names have fed it like a river. To end the weeping, **name them**. The priests wrote every name in a muster book before they struck them out. This starts the quest **Seven Hundred Names**, the road toward cleansing the infection for good. Its next step is still to come.
+
+## How the bosses look
+
+No boss is a recoloured foe. The human ones stand about a third taller than anything else on the road, and each has its own silhouette:
+
+| Boss | Look |
+| --- | --- |
+| Gaunt | bare to the waist under a tall pointed executioner's cowl; a leather apron, dark; nooses at his belt |
+| the Drowned Matron | black wet hair hanging over her face to the knee, reeds and a dead lily in it, water running off her, a ring of keys |
+| Ser Garrick | he held a door, so he carries one on his back, iron-banded; a three-horned crest; the wax seals of his oath |
+| the Standard-Bearer | the Battalion's colours on a pole over his shoulder, the sun of Osric on them, flying |
+| Malvern | a halo of iron nails, a cracked white mask for a face, a red stole |
+| Abbess Severine | a crown of black lilies, more growing out of her, wash-water running from her mouth |
+| Brother Hask | a staff of prayer-flags on his back, a fur mantle, the great horn at his hip |
+| the Gravewarden | a spade over his shoulder, keys, and a lantern that never goes out |
+| the Charcoal Widow | burnt black under a veil, fire still glowing in her cracks, smoke rising |
+| the Carrion King | a crown of knotted rope and a necklace of finger-bones |
+| Abbot Ulric | rimed white, a beard frozen into a spike, icicles, his breath steaming |
+| the Oathwarden | a gilded statue with a turning sunburst behind it and light in its visor |
+| Lord-Marshal Vane | a tall black crest, and the hangman's rope still round his neck |
+| the Lightless | what is left of a miner's cap, its lamp dead; empty sockets |
 
 ## Soul lilies
 

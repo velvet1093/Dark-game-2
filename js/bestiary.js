@@ -78,6 +78,7 @@
     e.facing = 1; e.dormant = false; e.state = 'idle'; e.alt = d.fly ? 30 : 0;
     const k = big ? 0.62 : d.model === 'bloodfly' ? 1.4 : 0.95;
     ctx.translate(w / 2, h - 12); ctx.scale(k, k); ctx.translate(0, -G.GROUND); e.x = 0;
+    if (d.boss && G.BOSS_SIZE && G.BOSS_SIZE[type] && G.game) { const k2 = 0.85; ctx.scale(k2, k2); ctx.translate(0, G.GROUND / k2 - G.GROUND); const scr = document.createElement('canvas').getContext('2d'); e.draw(scr, G.game); e.draw(ctx, G.game); return; }   /* bosses in their own likeness */
     if (d.model) G.drawBeast(ctx, e, 1.3); else G.drawHumanoid(ctx, { x: 0, y: G.GROUND, facing: 1, scale: e.scale, pose: e.pose(), look: d.look, limbs: e.limbs, weapon: d.weapon, wlen: d.wlen, flash: 0, time: 1.3, vx: 0 });
   });
   const personArt = p => portrait('npc_' + p.id, (ctx, w, h) => {
