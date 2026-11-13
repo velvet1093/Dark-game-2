@@ -321,6 +321,7 @@ const THEMES = {
   swamp: { sky: ['#040806', '#0c1610', '#1e2a1a'], moon: true, mid: ['willow', 'tree', 'stilt', 'willow', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#0a100c', edge: '#1e2c20', weather: 'spores', water: true },
   orchard: { sky: ['#0a0606', '#2a0e08', '#6a2410'], moon: true, mid: ['tree', 'tree', 'house', 'tree', 'cart', 'tree'], near: ['stake', 'fence', 'grave', 'cross', 'stake', 'fence'], ground: '#140c0a', edge: '#3a1e14', weather: 'ash' },
   dawn: { sky: ['#1a1428', '#6a4058', '#f0b070'], mid: ['cloister', 'wall', 'cloister', 'tree'], near: ['grave', 'lilies', 'cross', 'candles', 'lilies'], ground: '#1a1416', edge: '#5a4a3a', weather: 'ash' },
+  cave: { sky: ['#030304', '#060607', '#0a0a0c'], mid: ['stalactites', 'rockcol'], near: ['stalagmite', 'minebeam', 'rocks', 'stalagmite', 'minecart', 'rocks'], ground: '#0a0a0b', edge: '#26262a', weather: 'drip', indoor: true, dark: 0.97 },
   battlefield: { sky: ['#08090a', '#1a1e1e', '#363c3a'], moon: true, mid: ['banner', 'trebuchet', 'tree', 'tombrow', 'banner', 'tombrow', 'tree'], near: ['tomb', 'swordgrave', 'tomb', 'cairn', 'tomb', 'grave', 'tomb', 'swordgrave'], ground: '#101211', edge: '#2a302c', weather: 'fog', fog: true },
   crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
@@ -495,6 +496,9 @@ G.drawAtmosphere = (ctx, level, cam, t, light, hurt, fever = 0) => {
       const x = ((i * 113.7 + Math.sin(t * 0.5 + i) * 40 - cam * 0.4) % W + W) % W, y = H - ((i * 47.3 + t * (10 + i % 4 * 5)) % H);
       c.fillStyle = i % 7 === 0 ? `rgba(220,240,120,${0.5 + Math.sin(t * 3 + i) * 0.4})` : 'rgba(190,210,180,0.5)'; c.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, 2, 2);
     }
+  } else if (T.weather === 'drip') {   // water falling from the roof, catching the light
+    c.fillStyle = 'rgba(170,200,210,0.55)';
+    for (let i = 0; i < 18; i++) { const x = Math.round((((i * 211.7 - cam) % W) + W) % W / 2) * 2, y = Math.round(((i * 97.1 + t * (240 + i % 4 * 60)) % H) / 2) * 2; c.fillRect(x, y, 2, 4); }
   } else if (T.weather === 'fog') {   // banks of fog rolling across the field, and pale motes hanging in it
     for (let i = 0; i < 6; i++) {
       const span = W + 900, fx = ((i * 330 - cam * (0.5 + i * 0.08) + t * (9 + i * 4)) % span + span) % span - 450, fy = G.GROUND - 40 - (i % 3) * 70 + Math.sin(t * 0.3 + i) * 10, r = 260 + (i % 3) * 60;
@@ -516,6 +520,12 @@ G.drawAtmosphere = (ctx, level, cam, t, light, hurt, fever = 0) => {
   }
   const ring = (inner, outer, col, a) => { if (a <= 0) return; const g = c.createRadialGradient(W / 2, H / 2, H * inner, W / 2, H / 2, H * outer); g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${a})`); c.fillStyle = g; c.fillRect(0, 0, W, H); };
   ring(0.35, 0.95, '0,0,0', 0.8); ring(0.3, 0.8, '140,0,6', hurt); ring(0.28, 0.8, '120,20,130', fever);
+  if (T.dark) {   // a cave: black, but for what glows
+    c.fillStyle = `rgba(0,0,0,${T.dark})`; c.fillRect(0, 0, W, H);
+    c.globalCompositeOperation = 'destination-out';
+    for (const L of G.lightsNow || []) { const g = c.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r); g.addColorStop(0, `rgba(0,0,0,${L.a || 0.85})`); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(L.x - L.r, L.y - L.r, L.r * 2, L.r * 2); }
+    c.globalCompositeOperation = 'source-over';
+  }
   if (light) {   // the dark gives way around Misery
     const g = c.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.r); g.addColorStop(0, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     c.globalCompositeOperation = 'destination-out'; c.fillStyle = g; c.fillRect(light.x - light.r, light.y - light.r, light.r * 2, light.r * 2); c.globalCompositeOperation = 'source-over';
@@ -682,6 +692,12 @@ G.drawFar = (ctx, level, cam, t) => {
   else if (th === 'swamp') each(170, (x, h) => {     // dead trees standing in the mist
     const hh = 90 + h % 80; ctx.fillRect(x, gy - hh, 4, hh); ctx.fillRect(x - 12, gy - hh * 0.75, 16, 3); ctx.fillRect(x + 4, gy - hh * 0.6, 14, 3);
     ctx.fillStyle = 'rgba(40,70,50,0.4)'; ctx.fillRect(x - 10, gy - hh * 0.75, 2, 22); ctx.fillRect(x + 14, gy - hh * 0.6, 2, 16); ctx.fillStyle = '#0b1210';
+  });
+  else if (th === 'cave') each(300, (x, h) => {       // the far wall of the cavern, ribbed, and a seam of something glinting
+    ctx.fillStyle = '#0c0c0e'; ctx.fillRect(x, 0, 300, gy); ctx.fillStyle = '#121216';
+    for (let k = 0; k < 5; k++) { const cx = x + (h >>> (k * 3)) % 280; ctx.beginPath(); ctx.moveTo(cx - 30, gy); ctx.quadraticCurveTo(cx, gy - 120 - (h >>> k) % 140, cx + 30, gy); ctx.fill(); }
+    ctx.fillStyle = 'rgba(120,200,190,0.35)'; for (let k = 0; k < 6; k++) ctx.fillRect(x + (h >>> k) % 290, 140 + ((h >>> (k + 4)) % 200), 2, 2);
+    ctx.fillStyle = '#150b0f';
   });
   else if (th === 'battlefield') {                    // the long hill the armies met on, stones up it in rows, and the Marcher keep broken on the crest
     ctx.fillStyle = '#141817'; ctx.beginPath(); ctx.moveTo(0, gy);
@@ -945,3 +961,13 @@ G.drawGraveRows = (ctx, cam) => {
     }
   }
 };
+
+// ---- caves: stone teeth above and below, the timbers and carts of the men who dug here
+Object.assign(PROPS, {
+  stalactites(c, x, y, s, seed) { const r = G.rng(seed); c.fillRect(x - 85, 0, 170, 40); for (let k = 0; k < 7; k++) { const bx = x - 80 + k * 24 + r() * 10, len = 40 + r() * 110; c.beginPath(); c.moveTo(bx - 9, 30); c.lineTo(bx + 1, 30 + len); c.lineTo(bx + 9, 30); c.fill(); } },
+  rockcol(c, x, y) { c.beginPath(); c.moveTo(x - 40, 0); c.quadraticCurveTo(x - 10, y * 0.5, x - 34, y); c.lineTo(x + 34, y); c.quadraticCurveTo(x + 10, y * 0.5, x + 40, 0); c.fill(); },
+  stalagmite(c, x, y, s, seed) { const r = G.rng(seed); for (let k = 0; k < 3; k++) { const bx = x + k * 18 * s, h = (30 + r() * 60) * s; c.beginPath(); c.moveTo(bx - 10 * s, y); c.lineTo(bx + r() * 4, y - h); c.lineTo(bx + 10 * s, y); c.fill(); } c.save(); c.fillStyle = '#2a2a30'; c.fillRect(x + 1, y - 40 * s, 2, 30 * s); c.restore(); },
+  rocks(c, x, y, s, seed) { const r = G.rng(seed); for (let k = 0; k < 4; k++) { c.beginPath(); c.ellipse(x + k * 16 * s + r() * 6, y - 4, (8 + r() * 8) * s, (6 + r() * 6) * s, 0, Math.PI, 0); c.fill(); } },
+  minebeam(c, x, y, s) { c.save(); c.fillStyle = '#1a120c'; c.fillRect(x - 40 * s, y - 150 * s, 8 * s, 150 * s); c.fillRect(x + 32 * s, y - 150 * s, 8 * s, 150 * s); c.fillRect(x - 46 * s, y - 156 * s, 92 * s, 10 * s); c.fillStyle = '#2a1e14'; c.fillRect(x - 40 * s, y - 150 * s, 2, 150 * s); c.restore(); },
+  minecart(c, x, y, s) { c.fillRect(x, y - 30 * s, 60 * s, 22 * s); c.beginPath(); c.arc(x + 12 * s, y - 6 * s, 7 * s, 0, 7); c.arc(x + 48 * s, y - 6 * s, 7 * s, 0, 7); c.fill(); c.fillRect(x - 30, y - 3, 130 * s, 2); c.save(); c.fillStyle = '#26262c'; c.beginPath(); c.ellipse(x + 30 * s, y - 30 * s, 26 * s, 8 * s, 0, Math.PI, 0); c.fill(); c.restore(); },
+});

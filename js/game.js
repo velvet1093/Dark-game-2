@@ -6,8 +6,8 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
-  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain', orchard: 'wind', dawn: 'wind', battlefield: 'wind' };
-  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road', orchard: 'village', dawn: 'court', battlefield: 'road' }[L.theme] || L.theme);
+  const AMB = { cave: 'hall', road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain', orchard: 'wind', dawn: 'wind', battlefield: 'wind' };
+  const musicFor = L => ({ cave: 'cathedral', fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road', orchard: 'village', dawn: 'court', battlefield: 'road' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {
@@ -566,7 +566,7 @@
         ctx.fillStyle = pr.hot ? '#ff5a5a' : '#cfc4b8'; ctx.fillText(s, px, by);
       }
       ctx.restore();
-      G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: (this.inside ? (this.inside.id === 'court' ? 280 : 150) : 115) * (this.mis('glow') ? 1.45 : 1) }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
+      G.drawAtmosphere(ctx, L, cam, t, this.fairyAway ? { x: 640 - cam + shx, y: G.GROUND - 110, r: 300 } : { x: this.fairy.x - cam + shx, y: this.fairy.y + shy, r: (this.inside ? (this.inside.id === 'court' ? 280 : 150) : L._theme.dark && G.cave ? G.cave.radius(this) : 115) * (this.mis('glow') ? 1.45 : 1) }, p.dead ? 0.6 : p.hp < p.maxHp * 0.35 ? 0.25 + Math.sin(t * 5) * 0.1 : 0,
         p.turnT != null ? 0.42 + Math.sin(t * 7) * 0.12 : p.inf > 40 ? (p.inf - 40) / 60 * 0.3 : 0);   // the fever closing in
       if (this.zoneT) { const z = this.zoneT.t, a = z < 0.22 ? z / 0.22 : Math.max(0, 1 - (z - 0.22) / 0.33); ctx.fillStyle = `rgba(0,0,0,${a})`; ctx.fillRect(0, 0, W, H); }   // fading out as he walks on
       if (this.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, this.fade * 1.4)})`; ctx.fillRect(0, 0, W, H); }   // through the door
@@ -863,6 +863,7 @@
       const wl = this.weaponLv[this.weaponId] || 0;
       ctx.fillText(p.weapon.name + (wl ? ' +' + wl : '') + (this.weapons.length > 1 ? '  [' + G.keyName('swap') + ']' : ''), 26, 114);
       if (this.items.icon) { ctx.fillStyle = '#c9a13b'; ctx.fillText('Icons  ' + this.items.icon + ' / ' + this.iconTotal(), 26, 132); }
+      for (const f of G.EXTRA_HUD || []) f(ctx, this);   /* HUD pieces other modules add */
       if (this.items.soul && G.SOUL_TOTAL) { ctx.fillStyle = '#a8d8f0'; ctx.fillText('Soul lilies  ' + this.items.soul + ' / ' + G.SOUL_TOTAL, 26, this.items.icon ? 150 : 132); }
       if (p.turnT != null && !p.dead) {
         const s = Math.ceil(p.turnT); ctx.textAlign = 'center';

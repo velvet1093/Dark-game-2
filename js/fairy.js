@@ -139,6 +139,7 @@ G.Fairy = class {
     const fight = g.enemies.some(e => !e.dead && !e.dormant && e.state !== 'idle' && e.state !== 'broken' && Math.abs(e.x - p.x) < 320);
     // hover behind the knight; keep well clear of the fighting; lean in close to enjoy a death
     let tx = p.x - p.facing * (fight ? 96 : 50), ty = gy - (fight ? 168 : 118);
+    if (g.level && g.level._theme && g.level._theme.dark && !g.inside) { tx = p.x + p.facing * (fight ? 40 : 80); ty = gy - (fight ? 140 : 104); }   /* in the dark she goes first, and lights the way */
     if (this.dive) {   // darting in, and back out
       const e = this.dive.e; this.dive.t += dt;
       if (e.dead || e.state === 'broken' || this.dive.t > 0.7 || p.dead) this.dive = null;
