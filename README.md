@@ -90,6 +90,7 @@ Ten **side areas** branch off the main road. Neither is needed to finish the gam
 | The Ashfall Orchard | Hollowmere's first lane | nothing (one relic wants the wings) | the burnt orchard, still warm: Ash-Pickers with coal-bright eyes, and Teodor, who lit it with his wife inside. Mini-boss: **the Charcoal Widow** |
 | The Hanging Wood | behind the last gibbet of the Gallows Road, past Gaunt | nothing | a wood where every tree is a gibbet: Noosed Dead swinging their ropes, crows, and Wilm, Gaunt's son, who cut the hanged down at night and knows all seventy-one names. Mini-boss: **the Carrion King** |
 | The Frozen Chapel | a side-path off the Pilgrims' Pass | nothing (the wind still blows) | a choir frozen mid-hymn and still singing, and Gerd the blind bell-ringer. Mini-boss: **Abbot Ulric, the Frozen**, who calls the wind down the nave |
+| The Lost Battlegrounds | an old shield-road north out of the Weeping Fen, before the Matron's arena | nothing | the field where King Edmar broke the Marcher lords forty years ago: nine thousand dead, buried together under blank stones, in fog so thick you can hear it. Rows of headstones, swords left standing as markers, torn banners, a wrecked trebuchet. **The dead climb out of their graves** as you pass (watch for the heaped earth; they cannot be hurt until they stand): the Fallen of the Marches and the Halberdiers of King Edmar. Tamsin the Stonecutter has carved 3,112 of the names back (quest: *Nine Thousand Stones*). Boss: **Lord-Marshal Aldous Vane**, who yielded, was hanged anyway, and has held the hill since |
 | The Fane of the Dawn | walk west from where you wake, to a gorge where the bridge fell; a normal jump falls short and the fall kills you; double-jump and glide to cross | the wings | a ruined temple on the sea cliffs under a dawn that never quite comes. Faceless Sentinels and Dawn-Moths, Old Bettany who sweeps it and does not know whose house it was, votive tablets of vows kept. Boss: **the Oathwarden**, a great statue that holds every oath. It leaves the **Dawnbrand** (art: Dawnfire) |
 | The Ossuary | a stair halfway through the cathedral nave | Lily Lantern | the bone vaults under Saint Avaric. Sister Amabel hides here (she cleanses), and the bishop who cut the Saint is chained at the bottom. Boss: **Malvern, the Unmade Bishop** |
 
@@ -318,6 +319,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/wardrobe.js` | the Wardrobe: knight, weapon, wing and Misery skins, their unlocks and the screen |
 | `js/executions.js` | the executions: choreography per kind of foe and per boss |
 | `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
+| `js/battlegrounds.js` | the Lost Battlegrounds: the war dead rising from their graves, Tamsin, Lord-Marshal Vane and his execution |
 | `js/voice.js` | Aurelle, the goddess only the knight can hear |
 | `js/fane.js` | the Fane of the Dawn and Aurelle's statues |
 | `js/areas.js` | the three side areas, their enemies, bosses and weapons, and the stairs down to them |
@@ -365,7 +367,7 @@ Skins, chosen at any vigil candle or from the pause menu. Each tab shows a live 
 
 | | Skins (how to unlock) |
 | --- | --- |
-| **Knight** | Harness of the Long Battalion · Headsman's Black (Gaunt) · Gilded Sun of Osric (Standard-Bearer) · Knight of the Lily (the lily quest) · Pilgrim of the Pass (Windcaller) · Moth-Knight (Lamplight Mother) · The Weeping Knight (die ten times) · Corin, Bareheaded (remember your name) |
+| **Knight** | Harness of the Long Battalion · Headsman's Black (Gaunt) · Red of the Marches (Lord-Marshal Vane) · Gilded Sun of Osric (Standard-Bearer) · Knight of the Lily (the lily quest) · Pilgrim of the Pass (Windcaller) · Moth-Knight (Lamplight Mother) · The Weeping Knight (die ten times) · Corin, Bareheaded (remember your name) |
 | **Weapon** (chosen per weapon) | Plain Steel · Bloodied (a hundred kills) · Gilded (fifteen icons) · Bone (Malvern) · Rimed (Windcaller) · Moth-Dust (Lamplight Mother) · Oathkeeper's Black (Ser Garrick) |
 | **Wings** | Lamplight · Luna (find Nell) · Ghost (the Lantern Court) · Ember (Charcoal Widow) · Death's-Head (Gravewarden) · Seraph (thirty icons) |
 | **Misery** | Misery · Mercy, As She Was (the Court, and your name) · Crimson (die twenty-five times) · Moonmoth (lead the moths to the roots) · Thorned (give her every gift) |
@@ -395,7 +397,7 @@ The top of each tree (3 marks, both branches, and a **Martyr's Relic**) is that 
 | The Abbess's Scythe | **Harvest**: every kill restores your stamina and 4% of your life |
 | Pilgrim's Ice-Axe | **Frostbite**: what you strike is slowed for three seconds |
 
-**Martyr's Relics** (eleven so far: two each in the Hanging Wood and the Frozen Chapel too): two in the Under-Hold and two in the Ashfall Orchard (one of each behind its mini-boss), and one at the far end of each of the three trials.
+**Martyr's Relics** (eleven so far: two each in the Hanging Wood, the Frozen Chapel and the Lost Battlegrounds too): two in the Under-Hold and two in the Ashfall Orchard (one of each behind its mini-boss), and one at the far end of each of the three trials.
 
 ## Executions
 
@@ -417,6 +419,7 @@ Every boss has its own:
 | the Drowned Matron | **returned to the water**: the knight drives his sword into the mud, takes her head in both hands and forces her down. **Mash Use (E, or the Use button on touch)** to hold her under while she claws and thrashes up out of the water. Fill the bar before it runs out and she slowly goes under and is still. Fail and **she drowns you instead**: she rises out of the water, takes your head, and holds you under until you die |
 | the Standard-Bearer | **relieved of duty**: his greatsword struck spinning from his hands, a salute with the blade, a thrust through, and the Battalion's colours falling over him |
 | Abbot Ulric | skewered, lifted high on the blade, then flung down |
+| Lord-Marshal Vane | **the last grave**: a blow to the helm drops him to his knees, a thrust through, and the earth takes him back while the fog closes over the place |
 | Malvern, the Charcoal Widow | six cuts and a thrust ("SEVEN CUTS") |
 | the Carrion King | torn apart |
 | Ser Garrick, the Abbess, the Lamplight Mother | a quiet thrust to the heart, kneeling with them ("AT REST") |

@@ -321,6 +321,7 @@ const THEMES = {
   swamp: { sky: ['#040806', '#0c1610', '#1e2a1a'], moon: true, mid: ['willow', 'tree', 'stilt', 'willow', 'tree'], near: ['reeds', 'stake', 'reeds', 'grave', 'reeds', 'reeds'], ground: '#0a100c', edge: '#1e2c20', weather: 'spores', water: true },
   orchard: { sky: ['#0a0606', '#2a0e08', '#6a2410'], moon: true, mid: ['tree', 'tree', 'house', 'tree', 'cart', 'tree'], near: ['stake', 'fence', 'grave', 'cross', 'stake', 'fence'], ground: '#140c0a', edge: '#3a1e14', weather: 'ash' },
   dawn: { sky: ['#1a1428', '#6a4058', '#f0b070'], mid: ['cloister', 'wall', 'cloister', 'tree'], near: ['grave', 'lilies', 'cross', 'candles', 'lilies'], ground: '#1a1416', edge: '#5a4a3a', weather: 'ash' },
+  battlefield: { sky: ['#08090a', '#1a1e1e', '#363c3a'], moon: true, mid: ['banner', 'trebuchet', 'tree', 'tombrow', 'banner', 'tombrow', 'tree'], near: ['tomb', 'swordgrave', 'tomb', 'cairn', 'tomb', 'grave', 'tomb', 'swordgrave'], ground: '#101211', edge: '#2a302c', weather: 'fog', fog: true },
   crypt: { sky: ['#040304', '#080607', '#0e0809'], mid: ['bonewall', 'niche'], near: ['coffin', 'skulls', 'candles', 'coffin', 'skulls'], ground: '#0b090a', edge: '#2a2422', weather: 'dust', indoor: true },
 };
 
@@ -454,6 +455,7 @@ G.drawBackdrop = (ctx, level, cam, t) => {
   if (T.water) { ctx.fillStyle = 'rgba(40,70,60,0.22)'; for (let x = -(cam % 190); x < W; x += 190) { ctx.beginPath(); ctx.ellipse(x + 60, gy + 34 + ((x + cam) % 3) * 9, 70, 5, 0, 0, 7); ctx.fill(); } }
   if (T.indoor) { ctx.strokeStyle = '#191316'; ctx.lineWidth = 1; for (let x = -(cam % 80); x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x - 30, H); ctx.stroke(); } }
   else { ctx.strokeStyle = T.edge; ctx.lineWidth = 1.5; for (let x = -(cam % 37); x < W; x += 37) { const h = 4 + ((x + cam) * 7 % 9); ctx.beginPath(); ctx.moveTo(x, gy - 2); ctx.lineTo(x + 3, gy - 2 - h); ctx.moveTo(x + 5, gy - 2); ctx.lineTo(x + 9, gy - h); ctx.stroke(); } }
+  if (T.fog) G.drawGraveRows(ctx, cam);
   ctx.fillStyle = ctx.strokeStyle = '#060304';
   for (const p of level._near) { const x = Math.round((p.x - cam) / 2) * 2; if (x > -200 && x < W + 200) PROPS[p.k](ctx, x, gy + 2, p.s, p.seed, t); }
 };
@@ -461,6 +463,11 @@ G.drawBackdrop = (ctx, level, cam, t) => {
 // Ground fog, drawn into the backdrop buffer so it is dithered with the scenery.
 G.drawFog = (ctx, level, cam, t) => {
   const W = G.W;
+  if (level._theme && level._theme.fog) for (let i = 0; i < 5; i++) {   // the battlefield: thick, grey, and higher
+    const fx = ((i * 300 - cam * 0.7 + t * (7 + i * 5)) % (W + 700) + W + 700) % (W + 700) - 350, fy = G.GROUND - 30 - (i % 2) * 50;
+    const fg = ctx.createRadialGradient(fx, fy, 10, fx, fy, 340); fg.addColorStop(0, 'rgba(140,150,146,0.16)'); fg.addColorStop(1, 'rgba(140,150,146,0)');
+    ctx.fillStyle = fg; ctx.fillRect(fx - 340, fy - 340, 680, 680);
+  }
   for (let i = 0; i < 3; i++) {
     const fx = ((i * 420 - cam * 0.8 + t * (12 + i * 7)) % (W + 600) + W + 600) % (W + 600) - 300;
     const fg = ctx.createRadialGradient(fx, G.GROUND - 10, 10, fx, G.GROUND - 10, 280);
@@ -488,6 +495,15 @@ G.drawAtmosphere = (ctx, level, cam, t, light, hurt, fever = 0) => {
       const x = ((i * 113.7 + Math.sin(t * 0.5 + i) * 40 - cam * 0.4) % W + W) % W, y = H - ((i * 47.3 + t * (10 + i % 4 * 5)) % H);
       c.fillStyle = i % 7 === 0 ? `rgba(220,240,120,${0.5 + Math.sin(t * 3 + i) * 0.4})` : 'rgba(190,210,180,0.5)'; c.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, 2, 2);
     }
+  } else if (T.weather === 'fog') {   // banks of fog rolling across the field, and pale motes hanging in it
+    for (let i = 0; i < 6; i++) {
+      const span = W + 900, fx = ((i * 330 - cam * (0.5 + i * 0.08) + t * (9 + i * 4)) % span + span) % span - 450, fy = G.GROUND - 40 - (i % 3) * 70 + Math.sin(t * 0.3 + i) * 10, r = 260 + (i % 3) * 60;
+      const fg = c.createRadialGradient(fx, fy, 20, fx, fy, r); fg.addColorStop(0, `rgba(170,180,176,${0.13 + Math.sin(t * 0.4 + i * 2) * 0.04})`); fg.addColorStop(1, 'rgba(170,180,176,0)');
+      c.fillStyle = fg; c.fillRect(fx - r, fy - r, r * 2, r * 2);
+    }
+    const lg = c.createLinearGradient(0, G.GROUND - 150, 0, H); lg.addColorStop(0, 'rgba(150,160,156,0)'); lg.addColorStop(0.5, 'rgba(150,160,156,0.1)'); lg.addColorStop(1, 'rgba(150,160,156,0.05)'); c.fillStyle = lg; c.fillRect(0, G.GROUND - 150, W, H);
+    c.fillStyle = 'rgba(210,216,212,0.45)';
+    for (let i = 0; i < 34; i++) { const x = ((i * 127.1 + Math.sin(t * 0.4 + i) * 50 - cam * 0.5) % W + W) % W, y = (i * 61.3 + Math.sin(t * 0.6 + i * 1.7) * 20) % (H - 60); c.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, 2, 2); }
   } else if (T.weather === 'rain') {
     c.fillStyle = 'rgba(170,170,195,0.5)';
     for (let i = 0; i < 70; i++) {
@@ -667,6 +683,15 @@ G.drawFar = (ctx, level, cam, t) => {
     const hh = 90 + h % 80; ctx.fillRect(x, gy - hh, 4, hh); ctx.fillRect(x - 12, gy - hh * 0.75, 16, 3); ctx.fillRect(x + 4, gy - hh * 0.6, 14, 3);
     ctx.fillStyle = 'rgba(40,70,50,0.4)'; ctx.fillRect(x - 10, gy - hh * 0.75, 2, 22); ctx.fillRect(x + 14, gy - hh * 0.6, 2, 16); ctx.fillStyle = '#0b1210';
   });
+  else if (th === 'battlefield') {                    // the long hill the armies met on, stones up it in rows, and the Marcher keep broken on the crest
+    ctx.fillStyle = '#141817'; ctx.beginPath(); ctx.moveTo(0, gy);
+    const hill = wx => gy - 64 - Math.sin(wx * 0.0021) * 46 - Math.sin(wx * 0.007) * 12;
+    for (let x = 0; x <= W; x += 16) ctx.lineTo(x, hill(x + off * 0.6)); ctx.lineTo(W, gy); ctx.fill();
+    ctx.fillStyle = '#222826';
+    for (let row = 0; row < 4; row++) for (let x = -(off * 0.6 + row * 9) % 14; x < W; x += 14) { const top = hill(x + off * 0.6) + 8 + row * 12; if (top < gy - 6) ctx.fillRect(Math.round(x / 2) * 2, Math.round(top / 2) * 2, 4, 6 - row); }
+    each(1300, (x, h) => { const y = hill(x + off * 0.6) + 4; ctx.fillStyle = '#121615'; ctx.fillRect(x, y - 90, 34, 90); ctx.fillRect(x + 34, y - 52, 70, 52); ctx.fillRect(x - 4, y - 100, 10, 12); ctx.fillRect(x + 22, y - 96, 10, 8); ctx.fillRect(x + 60, y - 62, 10, 10); ctx.fillStyle = '#05060a'; ctx.fillRect(x + 12, y - 70, 6, 12); });
+    ctx.fillStyle = '#150b0f';
+  }
   else if (th === 'crypt') each(260, (x, h) => {     // low vaults, receding
     ctx.fillRect(x, 0, 30, gy); ctx.beginPath(); ctx.moveTo(x + 30, 230); ctx.quadraticCurveTo(x + 145, 120, x + 260, 230); ctx.lineTo(x + 260, 0); ctx.lineTo(x + 30, 0); ctx.fill();
     ctx.fillStyle = '#060405'; for (let k = 0; k < 4; k++) ctx.fillRect(x + 6, gy - 60 - k * 70, 18, 30); ctx.fillStyle = '#0c080b';
@@ -833,3 +858,90 @@ Object.assign(PROPS, {
     c.restore();
   },
 });
+
+// ---- the Lost Battlegrounds: stones in rows, swords left standing, the banners of a war forty years done
+const STONE = '#1e2120', STONE_HI = '#3a3f3c', STONE_DK = '#0c0e0d', MOSS = '#1c2a1a';
+Object.assign(PROPS, {
+  tomb(c, x, y, s, seed) {   // a cluster of headstones, leaning every way, most of them blank
+    const r = G.rng(seed), n = 3 + (r() * 3 | 0);
+    c.save();
+    for (let i = 0, bx = x; i < n; i++, bx += (24 + r() * 20) * s) {
+      const k = r() * 4 | 0, h = (24 + r() * 26) * s, w = (14 + r() * 8) * s, tilt = (r() - 0.5) * 0.4;
+      c.save(); c.translate(Math.round(bx), y + 2); c.rotate(tilt); c.fillStyle = STONE;
+      c.beginPath();
+      if (k === 0) { c.moveTo(-w / 2, 0); c.lineTo(-w / 2, -h + w / 2); c.arc(0, -h + w / 2, w / 2, Math.PI, 0); c.lineTo(w / 2, 0); }
+      else if (k === 1) { c.rect(-3 * s, -h - 8 * s, 6 * s, h + 8 * s); c.rect(-11 * s, -h + 2 * s, 22 * s, 5 * s); }
+      else if (k === 2) { c.moveTo(-w / 2, 0); c.lineTo(-w / 2, -h); c.lineTo(0, -h - 7 * s); c.lineTo(w / 2, -h); c.lineTo(w / 2, 0); }
+      else { c.moveTo(-w / 2, 0); c.lineTo(-w / 2, -h * 0.62); c.lineTo(-w * 0.1, -h * 0.78); c.lineTo(w * 0.15, -h * 0.5); c.lineTo(w / 2, -h * 0.64); c.lineTo(w / 2, 0); }
+      c.fill();
+      c.fillStyle = STONE_HI; if (k === 1) c.fillRect(1 * s, -h - 8 * s, 2, h + 8 * s); else c.fillRect(w / 2 - 2, -h * (k === 3 ? 0.6 : 0.95) + 4, 2, h * 0.8);   // moonlight on one edge
+      c.fillStyle = STONE_DK; if (k !== 1 && r() < 0.35) { c.fillRect(-w * 0.3, -h * 0.6, w * 0.6, 2); c.fillRect(-w * 0.22, -h * 0.48, w * 0.44, 2); c.fillRect(-w * 0.26, -h * 0.36, w * 0.5, 2); }   // a name, on a few
+      if (k === 3) { c.fillRect(-w * 0.1, -h * 0.76, 2, h * 0.3); }   // the break
+      c.fillStyle = MOSS; c.fillRect(-w / 2, -4, w * 0.7, 4); c.fillRect(-w / 2, -h * 0.4, 3, 6);
+      c.restore();
+    }
+    c.restore();
+  },
+  swordgrave(c, x, y, s, seed, t) {   // a sword driven into the earth for a marker, a helm hung on the cross, a rag of tabard
+    const r = G.rng(seed), lean = (r() - 0.5) * 0.3, h = 70 * s;
+    c.save(); c.translate(x, y + 2); c.rotate(lean);
+    c.fillStyle = '#3a3c3e'; c.fillRect(-2, -h, 4, h); c.fillStyle = '#5a5e60'; c.fillRect(-1, -h, 1, h);
+    c.fillStyle = '#2a2220'; c.fillRect(-12 * s, -h, 24 * s, 4); c.fillRect(-2, -h - 16 * s, 4, 16 * s); c.fillRect(-3, -h - 20 * s, 6, 5);
+    c.fillStyle = '#2e3230'; c.beginPath(); c.arc(0, -h + 10 * s, 9 * s, Math.PI, 0); c.fill(); c.fillRect(-9 * s, -h + 10 * s, 18 * s, 8 * s);   // the helm
+    c.fillStyle = '#050606'; c.fillRect(-6 * s, -h + 9 * s, 12 * s, 2);
+    const sw = Math.sin(t * 1.3 + seed) * 3; c.fillStyle = '#4a1414'; c.beginPath(); c.moveTo(4, -h + 2); c.lineTo(16 * s + sw, -h + 6); c.lineTo(12 * s + sw, -h + 24 * s); c.lineTo(8 * s + sw * 0.5, -h + 18 * s); c.lineTo(4, -h + 22 * s); c.fill();
+    c.restore();
+    c.fillStyle = '#141614'; c.beginPath(); c.ellipse(x, y + 2, 22 * s, 5, 0, Math.PI, 0); c.fill();   // the mound
+  },
+  cairn(c, x, y, s, seed) {   // shields and helms heaped where they were dropped, a spear through the pile
+    const r = G.rng(seed);
+    c.save();
+    c.fillStyle = '#3a2a1c'; c.save(); c.translate(x + 20 * s, y); c.rotate(-0.35 + r() * 0.2); c.fillRect(-1.5, -110 * s, 3, 110 * s); c.fillStyle = '#4a4e50'; c.beginPath(); c.moveTo(-4, -110 * s); c.lineTo(0, -124 * s); c.lineTo(4, -110 * s); c.fill(); c.restore();
+    for (let i = 0; i < 6; i++) {
+      const bx = x + (r() - 0.5) * 50 * s, by = y - (i > 3 ? 18 : i > 1 ? 9 : 0) * s, kind = r() < 0.6;
+      if (kind) { c.fillStyle = r() < 0.5 ? '#3a1414' : '#2a2c30'; c.beginPath(); c.moveTo(bx - 11 * s, by - 18 * s); c.lineTo(bx + 11 * s, by - 18 * s); c.lineTo(bx + 9 * s, by - 4 * s); c.lineTo(bx, by + 2); c.lineTo(bx - 9 * s, by - 4 * s); c.fill(); c.fillStyle = '#8a7a50'; c.fillRect(bx - 1, by - 16 * s, 2, 12 * s); }
+      else { c.fillStyle = '#34383a'; c.beginPath(); c.arc(bx, by - 6 * s, 7 * s, Math.PI, 0); c.fill(); c.fillRect(bx - 7 * s, by - 6 * s, 14 * s, 6 * s); c.fillStyle = '#060707'; c.fillRect(bx - 5 * s, by - 7 * s, 10 * s, 2); }
+    }
+    c.restore();
+  },
+  banner(c, x, y, s, seed, t) {   // a war banner on a broken pole, torn to strips, still flying
+    const h = 200 * s, lean = ((seed % 9) - 4) * 0.03;
+    c.save(); c.translate(x, y); c.rotate(lean);
+    c.fillRect(-3, -h, 6, h); c.fillRect(-14 * s, -h, 28 * s, 4);
+    c.fillStyle = '#2a0c0e';
+    for (let k = 0; k < 5; k++) { const len = (60 + ((seed >>> k) % 40)) * s, wv = Math.sin(t * 1.6 + k * 0.7 + seed) * 8; c.beginPath(); c.moveTo(4 + k * 0, -h + 4 + k * 12 * s); c.quadraticCurveTo(len * 0.5, -h + 4 + k * 12 * s + wv, len + wv, -h + 8 + k * 12 * s + wv * 0.6); c.lineTo(len + wv - 6, -h + 14 + k * 12 * s + wv * 0.6); c.quadraticCurveTo(len * 0.5, -h + 14 + k * 12 * s + wv, 4, -h + 14 + k * 12 * s); c.fill(); }
+    c.fillStyle = '#3a2a14'; c.fillRect(14 * s, -h + 24 * s, 8, 8);   // what is left of the device
+    c.restore();
+  },
+  trebuchet(c, x, y, s, seed) {   // a siege engine, burnt, its arm snapped
+    const w = 150 * s, h = 130 * s;
+    c.lineWidth = 7 * s; c.beginPath(); c.moveTo(x, y); c.lineTo(x + w * 0.35, y - h); c.lineTo(x + w * 0.7, y); c.moveTo(x + w * 0.12, y - h * 0.35); c.lineTo(x + w * 0.58, y - h * 0.35); c.stroke();
+    c.fillRect(x - 10, y - 12 * s, w + 20, 12 * s);
+    c.beginPath(); c.arc(x + 10, y - 4, 13 * s, 0, 7); c.arc(x + w - 10, y - 4, 13 * s, 0, 7); c.fill();
+    c.save(); c.translate(x + w * 0.35, y - h); c.rotate(-1.1); c.fillRect(-4 * s, -4 * s, 120 * s, 8 * s); c.restore();   // the arm, broken short
+    c.save(); c.translate(x + w * 0.35, y - h); c.rotate(0.9); c.fillRect(-6, 0, 12, 34 * s); c.fillRect(-14 * s, 30 * s, 28 * s, 24 * s); c.restore();   // the counterweight
+    c.save(); c.translate(x + w * 0.85, y); c.rotate(0.5); c.fillRect(-3, -90 * s, 6, 90 * s); c.restore();   // the other half, in the mud
+  },
+  tombrow(c, x, y, s, seed) {   // a far row of small stones
+    const r = G.rng(seed); for (let i = 0; i < 12; i++) { const bx = x + i * 18 * s, h = (12 + r() * 10) * s; if (r() < 0.2) continue; c.fillRect(bx, y - h, 8 * s, h); if (r() < 0.5) c.fillRect(bx - 3 * s, y - h + 3 * s, 14 * s, 3 * s); }
+  },
+});
+
+// rows past counting: two ranks of headstones behind the road, the far one paler in the fog
+G.drawGraveRows = (ctx, cam) => {
+  const W = G.W, gy = G.GROUND;
+  for (const [par, step, sc, body, hi, dy] of [[0.72, 46, 0.7, '#3a403d', '#5a605c', -14], [0.86, 58, 0.95, '#0e100f', '#4a504c', -4]]) {
+    const off = cam * par;
+    for (let i = Math.floor(off / step) - 1; i * step - off < W + step; i++) {
+      const h = Math.imul(i + 31 + step, 2654435761) >>> 0; if (h % 7 === 0) continue;
+      const x = Math.round((i * step - off + (h % 13)) / 2) * 2, y = gy + dy, k = h % 4, hh = (22 + (h >>> 4) % 16) * sc, w = (13 + (h >>> 9) % 6) * sc;
+      ctx.save(); ctx.translate(x, y); ctx.rotate((((h >>> 13) % 9) - 4) * 0.04); ctx.fillStyle = body; ctx.beginPath();
+      if (k === 0) { ctx.moveTo(-w / 2, 2); ctx.lineTo(-w / 2, -hh + w / 2); ctx.arc(0, -hh + w / 2, w / 2, Math.PI, 0); ctx.lineTo(w / 2, 2); }
+      else if (k === 1) { ctx.rect(-2.5 * sc, -hh - 6 * sc, 5 * sc, hh + 8 * sc); ctx.rect(-9 * sc, -hh + 1, 18 * sc, 4 * sc); }
+      else if (k === 2) { ctx.moveTo(-w / 2, 2); ctx.lineTo(-w / 2, -hh); ctx.lineTo(0, -hh - 6 * sc); ctx.lineTo(w / 2, -hh); ctx.lineTo(w / 2, 2); }
+      else { ctx.rect(-w / 2, -hh * 0.7, w, hh * 0.7 + 2); }
+      ctx.fill(); ctx.fillStyle = hi; if (k !== 1) ctx.fillRect(w / 2 - 2, -hh * (k === 3 ? 0.66 : 0.9), 2, hh * 0.7); else ctx.fillRect(0, -hh - 6 * sc, 2, hh);
+      ctx.restore();
+    }
+  }
+};

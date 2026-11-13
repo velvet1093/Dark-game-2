@@ -6,8 +6,8 @@
   const SAVE = 'ashenvow_save_v2', W = G.W, H = G.H, { clamp, rand } = G;
   let ctx = null;
   const BACK_X = 52;   // where the way back to the previous area stands
-  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain', orchard: 'wind', dawn: 'wind' };
-  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road', orchard: 'village', dawn: 'court' }[L.theme] || L.theme);
+  const AMB = { road: 'rain', fen: 'rain', village: 'wind', town: 'wind', cathedral: 'hall', harbour: 'rain', crypt: 'hall', convent: 'wind', mountain: 'wind', swamp: 'rain', orchard: 'wind', dawn: 'wind', battlefield: 'wind' };
+  const musicFor = L => ({ fen: 'road', harbour: 'road', crypt: 'cathedral', convent: 'village', swamp: 'road', orchard: 'village', dawn: 'court', battlefield: 'road' }[L.theme] || L.theme);
   const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(SAVE, JSON.stringify(v)) : localStorage.removeItem(SAVE); } catch (e) { /* storage is optional */ } } };
 
   const game = G.game = {

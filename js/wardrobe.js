@@ -18,6 +18,7 @@
     lily: { name: 'Knight of the Lily', look: { body: '#e8e2d8', trim: '#8a5fd0', arm: '#c8c2b8', leg: '#9a948c', helmCol: '#ece6de', plume: '#b79be8', cape: '#141216' }, need: [() => done('lilies'), 'Bring the white lilies to Sister Liese'] },
     pilgrim: { name: 'Pilgrim of the Pass', look: { body: '#8a8e98', trim: '#c8ccd6', arm: '#6a707a', leg: '#4a4e58', helmCol: '#c8ccd6', plume: '#5a6070', cape: '#d8dce4' }, need: [g => F(g).boss_windcaller_dead, 'Defeat (or spare) the Windcaller'] },
     moth: { name: 'Moth-Knight', look: { body: '#8a6478', trim: '#d8c4b4', arm: '#6a4a5a', leg: '#4a3442', helmCol: '#a888b0', plume: '#e6d8b4', cape: '#5a3c4e' }, need: [g => F(g).boss_mothmother_dead, 'Take the Lamplight Mother\'s wings'] },
+    marcher: { name: 'Red of the Marches', look: { body: '#5a1a18', trim: '#8a7a50', arm: '#4a4440', leg: '#2a2624', helmCol: '#5a5048', plume: '#2a0a0a', cape: '#4a1010' }, need: [g => F(g).boss_marshal_dead, 'Defeat (or spare) Lord-Marshal Vane'] },
     weeping: { name: 'The Weeping Knight', look: { body: '#5a2a2e', trim: '#a00a12', arm: '#4a2a2e', leg: '#2e1a1c', helmCol: '#6a3a3e', plume: '#c20d16', cape: '#3a0a10' }, need: [g => (F(g).deaths || 0) >= 10, 'Die ten times'] },
     corin: { name: 'Corin, Bareheaded', look: { helm: 'none', skin: '#d0b098', hair: '#6a4a30' }, need: [g => F(g).named, 'Remember your name'] },
   };
