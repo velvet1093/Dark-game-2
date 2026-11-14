@@ -705,7 +705,7 @@ G.Enemy = class {
   }
 
   draw(ctx, g) {
-    const d = this.def, o = { x: this.x, y: G.GROUND - Math.round((this.alt + (this.lift || 0)) / 2) * 2, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
+    const d = this.def, o = { x: this.x, y: G.GROUND - Math.round((this.alt + (this.lift || 0)) / 2) * 2, facing: this.facing, scale: this.scale, pose: this.pose(), look: d.look, limbs: this.limbs, weapon: d.weapon, wlen: d.wlen, wdraw: d.wdraw, flash: this.flash, time: g.time, vx: this.vx, weeping: d.boss && this.phase2 };
     // attack telegraph
     if (this.state === 'windup') {   // a blinking pixel warning over the attacker
       const u = Math.min(1, this.t / this.atk.wind), on = Math.sin(this.t * (14 + u * 30)) > -0.3, x = Math.round(this.x / 2) * 2;

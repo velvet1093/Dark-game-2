@@ -252,7 +252,8 @@
     if (fh && armed) {
       const w = p.w || 0, ux = Math.sin(w), uy = Math.cos(w), px = uy, py = -ux, len = Math.round((o.wlen || 40) / 2 * (1 + big * 0.5)), x0 = fh[0], y0 = fh[1], x1 = x0 + ux * len, y1 = y0 + uy * len, t = o.weapon;
       const red = (o.bloody || 0) > 0.05;
-      if (t === 'sword' || t === 'greatsword') {
+      if (o.wdraw) tip = o.wdraw({ line, R, x0, y0, x1, y1, ux, uy, px, py, len, red, WOOD, BLOOD, time, P: (a, c) => [x0 + ux * a + px * c, y0 + uy * a + py * c] }) || null;   /* a weapon of its own */
+      else if (t === 'sword' || t === 'greatsword') {
         const th = t === 'sword' ? 2 : 3, g = t === 'sword' ? 2 : 4;
         line(x0 - ux * 2, y0 - uy * 2, x0 + ux, y0 + uy, WOOD.s, th - 1 || 1);
         line(x0 + ux * 2, y0 + uy * 2, x1, y1, STEEL.s, th); line(x0 + ux * 2, y0 + uy * 2, x1, y1, STEEL.b, th - 1);

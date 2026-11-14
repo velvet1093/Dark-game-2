@@ -321,6 +321,7 @@ The journal counts them. With all five you remember your name. After that Garric
 | `js/executions.js` | the executions: choreography per kind of foe and per boss |
 | `js/optional2.js` | the Hanging Wood and the Frozen Chapel |
 | `js/bossdesign.js` | each boss's own look: taller than the rank and file, and what each wears, carries or grows |
+| `js/bossweapons.js` | each boss's own weapon, drawn into its sprite |
 | `js/cave.js` | the Blind Deep: darkness, Misery's fading light, glowcaps, the blind things and the Lightless |
 | `js/soullily.js` | the soul lilies: where they grow, the souls in them, the wisps, and what they give |
 | `js/battlegrounds.js` | the Lost Battlegrounds: the war dead rising from their graves, Tamsin, Lord-Marshal Vane and his execution |
@@ -372,6 +373,22 @@ No boss is a recoloured foe. The human ones stand about a third taller than anyt
 | the Oathwarden | a gilded statue with a turning sunburst behind it and light in its visor |
 | Lord-Marshal Vane | a tall black crest, and the hangman's rope still round his neck |
 | the Lightless | what is left of a miner's cap, its lamp dead; empty sockets |
+
+Their weapons are their own too:
+
+| Boss | Weapon |
+| --- | --- |
+| Gaunt | the headsman's axe: black iron, a moon of a blade bloodied at the edge, rope bound round the haft |
+| Ser Garrick | the Oathkeeper: black steel with a violet edge and faint runes, a gold guard, a red oath-seal, a tassel |
+| the Standard-Bearer | the Battalion greatsword in parade dress: a gold fuller, the sun of Osric on the guard and the pommel |
+| Malvern | a gold crozier, the crook coiled over, a red stole knotted below it |
+| Abbess Severine | a lily scythe: bone-white snath wound with vines and lilies, the white blade rotting black |
+| Brother Hask | an ice-axe of the pass: leather-bound ash, a long rimed pick, frost and an icicle on it |
+| the Gravewarden | a grave-spade with a D-grip, the blade crusted with earth |
+| the Charcoal Widow | a scythe burnt black and split, its edge still glowing red-hot |
+| Abbot Ulric | his conductor's staff, frozen to his hand and grown into a lance of ice |
+| the Oathwarden | the Dawnbrand: gold-white, light down its middle, a turning sunburst for a guard |
+| Lord-Marshal Vane | the sword he surrendered: rusted, notched, still tied with the hangman's cord |
 
 ## Soul lilies
 
