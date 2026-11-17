@@ -355,40 +355,25 @@ The wall in Hollowmere needs them, so the Gloamwater is on the way: from the fen
 
 ## How the bosses look
 
-No boss is a recoloured foe. The human ones stand about a third taller than anything else on the road, and each has its own silhouette:
+The bosses follow a concept sheet. Each keeps the animated body every figure uses, stretched to its own build (the brutes broad, the wraiths tall), recoloured and dressed, with its own weapon:
 
-| Boss | Look |
-| --- | --- |
-| Gaunt | bare to the waist under a tall pointed executioner's cowl; a leather apron, dark; nooses at his belt |
-| the Drowned Matron | black wet hair hanging over her face to the knee, reeds and a dead lily in it, water running off her, a ring of keys |
-| Ser Garrick | he held a door, so he carries one on his back, iron-banded; a three-horned crest; the wax seals of his oath |
-| the Standard-Bearer | the Battalion's colours on a pole over his shoulder, the sun of Osric on them, flying |
-| Malvern | a halo of iron nails, a cracked white mask for a face, a red stole |
-| Abbess Severine | a crown of black lilies, more growing out of her, wash-water running from her mouth |
-| Brother Hask | a staff of prayer-flags on his back, a fur mantle, the great horn at his hip |
-| the Gravewarden | a spade over his shoulder, keys, and a lantern that never goes out |
-| the Charcoal Widow | burnt black under a veil, fire still glowing in her cracks, smoke rising |
-| the Carrion King | a crown of knotted rope and a necklace of finger-bones |
-| Abbot Ulric | rimed white, a beard frozen into a spike, icicles, his breath steaming |
-| the Oathwarden | a gilded statue with a turning sunburst behind it and light in its visor |
-| Lord-Marshal Vane | a tall black crest, and the hangman's rope still round his neck |
-| the Lightless | what is left of a miner's cap, its lamp dead; empty sockets |
-
-Their weapons are their own too:
-
-| Boss | Weapon |
-| --- | --- |
-| Gaunt | the headsman's axe: black iron, a moon of a blade bloodied at the edge, rope bound round the haft |
-| Ser Garrick | the Oathkeeper: black steel with a violet edge and faint runes, a gold guard, a red oath-seal, a tassel |
-| the Standard-Bearer | the Battalion greatsword in parade dress: a gold fuller, the sun of Osric on the guard and the pommel |
-| Malvern | a gold crozier, the crook coiled over, a red stole knotted below it |
-| Abbess Severine | a lily scythe: bone-white snath wound with vines and lilies, the white blade rotting black |
-| Brother Hask | an ice-axe of the pass: leather-bound ash, a long rimed pick, frost and an icicle on it |
-| the Gravewarden | a grave-spade with a D-grip, the blade crusted with earth |
-| the Charcoal Widow | a scythe burnt black and split, its edge still glowing red-hot |
-| Abbot Ulric | his conductor's staff, frozen to his hand and grown into a lance of ice |
-| the Oathwarden | the Dawnbrand: gold-white, light down its middle, a turning sunburst for a guard |
-| Lord-Marshal Vane | the sword he surrendered: rusted, notched, still tied with the hangman's cord |
+| Boss | Look | Weapon |
+| --- | --- | --- |
+| Gaunt | a slab of a man in a pointed sack hood, a coil of rope over one shoulder, a butcher's apron in rags | a cleaver the size of a door, its edge chewed into teeth, red to the spine |
+| the Drowned Matron | up to her waist in cattails and black water, hair like weed over her face, a gold key on a cord, a pale hand held out, a lily on the water | bare hands |
+| Ser Garrick | a wall of grey plate, wide pauldrons, a baldric and chains, a red cape in rags | the Oathkeeper: a broad violet blade, gold guard, red seal |
+| the Standard-Bearer | a kettle helm, a gold tabard in tatters, the torn red colours on a tall pole at his back | a short curved sabre, sea-pitted |
+| Malvern | the tall mitre, red over white in tatters, a cracked mask, a skull at his shoulder | a thorned gold crozier with a smoking censer swinging from the crook |
+| Abbess Severine | a crown of white lilies, dead roots grown up behind her like antlers, black tears, moss at her hem | a lily scythe |
+| Brother Hask | three pennants on poles at his back, a blue-grey hood, a white beard to his belt, the wind circling him | an ice-axe |
+| the Lamplight Mother | her own moth sprite, now crowned, a lamp glowing at her breast | her moths |
+| the Gravewarden | a mossy coffin strapped to his back, a deep hood, a lantern at his belt | a grave-spade |
+| the Charcoal Widow | burnt to cinder under a deep hood, fire in every crack, a brazier of coals carried before her | a kiln poker, its hook white-hot |
+| the Carrion King | far bigger than any crow, a crown of gold, a collar of finger-bones | beak and talons |
+| Abbot Ulric | a white hooded shape with ice hanging off every edge, shards standing out of the floor behind him | his staff, its head grown into a cross of ice |
+| the Oathwarden | gold plate over a white tabard in rags, a blank white face with a black cross cut in it, a spiked halo | the Dawnbrand, a broad gold blade |
+| Lord-Marshal Vane | the heaviest harness on the field, a red horsehair crest, a cross on a red tabard, the rope still round his neck | a notched, bloodied war-sword |
+| the Lightless | a tall rag of a thing in a hood of black spikes, a narrow white mask with two slits, arms that reach the floor | bare hands |
 
 ## Soul lilies
 
